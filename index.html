@@ -17,6 +17,7 @@
 <link rel="preload" href="fonts/mona-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/print.css" media="print">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Person","name":"Abdulaziz Alkhlaiwe","jobTitle":"AI Product & Systems","url":"https://justabdulaziz10.github.io/Abdulaziz/","email":"mailto:abdulazizalkhlaiwe@gmail.com","alumniOf":{"@type":"CollegeOrUniversity","name":"King Saud University"},"knowsLanguage":["ar","en"],"sameAs":["https://www.linkedin.com/in/abdulaziz-alkhlaiwe","https://github.com/justAbdulaziz10","https://gitlab.com/abdulaziz.alkhlaiwe","https://x.com/AlkhlaiweA"]}
 </script>
@@ -33,10 +34,25 @@
     <a href="#offclock">Off the clock</a>
     <a href="#contact">Contact</a>
   </nav>
+  <button class="pm-switch" type="button" role="switch" aria-checked="false" data-pm-switch><span class="pm-switch__track" aria-hidden="true"></span>Product work</button>
   <a class="btn btn--small" href="mailto:abdulazizalkhlaiwe@gmail.com">Email me</a>
 </header>
 
 <main id="main">
+
+  <section class="print-only print-header" hidden aria-label="Curriculum vitae">
+    <div class="print-header__identity">
+      <h1>Abdulaziz Alkhlaiwe</h1>
+      <p>AI Product &amp; Systems</p>
+    </div>
+    <ul class="print-header__links">
+      <li><a href="mailto:abdulazizalkhlaiwe@gmail.com">abdulazizalkhlaiwe@gmail.com</a></li>
+      <li><a href="https://justabdulaziz10.github.io/Abdulaziz/">https://justabdulaziz10.github.io/Abdulaziz/</a></li>
+      <li><a href="https://www.linkedin.com/in/abdulaziz-alkhlaiwe" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+      <li><a href="https://github.com/justAbdulaziz10" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+    </ul>
+    <p class="print-header__statement">I turn user and business problems into requirements, system workflows, API integrations and shipped products.</p>
+  </section>
 
   <!-- HERO -->
   <section class="hero" id="hero" data-world="paper" aria-labelledby="hero-name">
@@ -71,12 +87,14 @@
     <div class="wrap">
       <h2 class="year__title" id="year-title"><span class="num" data-count="6341" data-live="github.total">6,341</span> contributions in the last year</h2>
       <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">25 October 2026</span>. <span data-live="github.activeDays">298</span> active days, and a run of <span data-live="github.streak">76</span> days in a row that is still going.</p>
+      <p class="year__week" data-week hidden><span class="year__week-label">This week:</span> <span class="year__week-items" data-week-items></span></p>
       <div class="scene-slot" data-scene="year"></div>
     </div>
   </section>
 
   <!-- WORK -->
   <div id="work">
+    <h2 class="print-only print-section-title" hidden>Selected work</h2>
 
     <section class="project project--mara" id="mara" data-world="mara" aria-labelledby="mara-title">
       <div class="wrap project__grid">
@@ -88,6 +106,15 @@
             <div><dt>What I did</dt><dd>Product requirements, AI workflows, APIs, QA, analytics and system integrations.</dd></div>
             <div><dt>Outcome</dt><dd><strong>38</strong> private beta users. Completed <strong>Misk Launchpad Cohort 9</strong>.</dd></div>
           </dl>
+          <div class="pm" data-pm hidden>
+            <div class="pm__inner">
+              <dl class="project__facts pm__facts">
+                <div><dt>Requirement</dt><dd>Show today's health target only when the backend has a valid one for that exact day. Otherwise show nothing, never a guess.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Read the profile and the local date</li><li>Fingerprint the fields that change the target</li><li>Fetch it through the provider and repository</li><li>Accept only valid v2 data for that day</li><li>Format the result for each screen</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Validated backend targets only.<span class="pm__why">Over client-side formulas, cached goals or a v1 fallback. The backend owns the calculation, so no screen invents a substitute. When a target is missing, comparisons hide and the recorded data stays visible.</span></dd></div>
+              </dl>
+            </div>
+          </div>
           <p class="project__links"><a class="link" href="https://iammara.com" target="_blank" rel="noopener noreferrer">iammara.com</a></p>
         </div>
         <div class="project__scene"><div class="scene-slot" data-scene="mara"></div></div>
@@ -102,8 +129,18 @@
           <p class="project__kind">A 0-to-1, privacy-first photo-memory app for iPhone.</p>
           <dl class="project__facts">
             <div><dt>What I did</dt><dd>Product development, UX, monetization, analytics and release management.</dd></div>
-            <div><dt>Outcome</dt><dd><strong>1,200</strong> weekly users. Rated <strong data-live="apps.echo.rating">4.8</strong> on the App Store, in <strong data-live="apps.echo.languages">37</strong> languages, now on version <span data-live="apps.echo.version">1.44</span>.</dd></div>
+            <div><dt>Outcome</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,152</strong> active users in the last 28 days. Rated <strong data-live="apps.echo.rating">4.8</strong> on the App Store, in <strong data-live="apps.echo.languages">37</strong> languages, now on version <span data-live="apps.echo.version">1.44</span>.</dd></div>
           </dl>
+          <div class="pm" data-pm hidden>
+            <div class="pm__inner">
+              <dl class="project__facts pm__facts">
+                <div><dt>Requirement</dt><dd>People with years of photos rarely look back at them. Surface one photo a day from their own library, processed on the device and never uploaded.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Today</li><li>See a photo from your camera roll</li><li>Keep it</li><li>Add words or a voice note, if you want</li><li>Save, and Today moves on</li><li>The saved photo stays off Today, even after relaunch</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Start from photos people already have.<span class="pm__why">Over a blank journal page or an upload service. No account and no server copy of anyone's photos.</span></dd></div>
+                <div><dt>Result</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,152</strong> active users in the last 28 days. In a simulated library of about 2,700 photos, 40 picks in a row had no two from within three days.</dd></div>
+              </dl>
+            </div>
+          </div>
           <p class="project__links"><a class="link" href="https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634" target="_blank" rel="noopener noreferrer">Echo on the App Store</a></p>
         </div>
         <div class="project__scene"><div class="scene-slot" data-scene="echo"></div></div>
@@ -119,6 +156,15 @@
             <div><dt>What it does</dt><dd>Natural-language assistance, personalized trip planning and traveler safety.</dd></div>
             <div><dt>How</dt><dd>The OpenAI API grounded in a local knowledge base. FastAPI, Supabase and Firebase Auth. A King Saud University team project.</dd></div>
           </dl>
+          <div class="pm" data-pm hidden>
+            <div class="pm__inner">
+              <dl class="project__facts pm__facts">
+                <div><dt>Requirement</dt><dd>Ask for a three-day trip and get at most three dated days, with the activity, meal and cafe counts you asked for and no overlapping times.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Sign in</li><li>Start a new trip</li><li>Enter a destination and a start date</li><li>Get a day-by-day schedule</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Answer itinerary questions first, then offer the planner.<span class="pm__why">Over sending people straight to the planner. They get guidance before the builder opens.</span></dd></div>
+              </dl>
+            </div>
+          </div>
         </div>
         <div class="project__scene"><div class="scene-slot" data-scene="daleelk"></div></div>
       </div>
@@ -133,6 +179,16 @@
             <div><dt>Built</dt><dd>End to end in two days, in Tuwaiq Academy's AI product programme with Startupbootcamp and Meta.</dd></div>
             <div><dt>How</dt><dd>Gemini reads Arabic and English product pages, a 3D packing engine picks the cheapest safe carton, and every run is monitored in production.</dd></div>
           </dl>
+          <div class="pm" data-pm hidden>
+            <div class="pm__inner">
+              <dl class="project__facts pm__facts">
+                <div><dt>Requirement</dt><dd>A small-store packer needs a safe carton even when product sizes are missing. With no usable size, ask for a measurement; never guess.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Enter an order number</li><li>Use cached product facts or read them from the product pages</li><li>Search for the cheapest carton that fits safely</li><li>Ask for a measurement, or split into up to four cartons</li><li>Validate the layout</li><li>Show the carton, Arabic packing steps and the 3D layout</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Gemini reads the product text; code packs and checks.<span class="pm__why">Over letting a language model compute and approve the layout. Geometry needs exact maths.</span></dd></div>
+                <div><dt>Result</dt><dd>All 258 feasible benchmark cases produced valid layouts, on synthetic data rather than a live store.</dd></div>
+              </dl>
+            </div>
+          </div>
           <p class="project__links"><a class="link" href="https://rassah.vercel.app" target="_blank" rel="noopener noreferrer">Open Rassah</a><a class="link" href="https://github.com/justAbdulaziz10/Rassah" target="_blank" rel="noopener noreferrer">Source</a></p>
         </div>
         <div class="project__scene"><div class="scene-slot" data-scene="rassah"></div></div>
@@ -153,7 +209,24 @@
             <div><dt>Inside</dt><dd>Live timing, standings, driver comparisons, track maps and every season from 2023 to 2026.</dd></div>
             <div><dt>Why</dt><dd>I follow Formula 1 closely enough to build my own timing screen.</dd></div>
           </dl>
-          <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name"></span> <time class="race__clock"></time></p>
+          <div class="pm" data-pm hidden>
+            <div class="pm__inner">
+              <dl class="project__facts pm__facts">
+                <div><dt>Requirement</dt><dd>Follow a session live: timing and positions, or the entry list when no live data is coming in.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Live</li><li>Load the session</li><li>Show real positions, or the entry list</li><li>Refresh every ten seconds while a session runs</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Show the entry list when there's no live data.<span class="pm__why">Over drawing a timing grid with made-up positions.</span></dd></div>
+              </dl>
+            </div>
+          </div>
+          <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name"></span> <time class="race__clock"></time> <a class="race__follow link" href="https://f1-xi-weld.vercel.app/live" target="_blank" rel="noopener noreferrer" hidden>Follow it live on Pit Lane Hub</a></p>
+          <div class="last-race" data-last-race hidden aria-labelledby="last-race-title">
+            <div class="last-race__heading">
+              <h3 class="last-race__label" id="last-race-title">Last race</h3>
+              <p class="last-race__event"><span data-last-race-name></span>, <time data-last-race-date></time></p>
+            </div>
+            <ol class="last-race__podium" data-last-race-podium aria-label="Podium"></ol>
+            <p class="last-race__fastest" data-last-race-fastest hidden></p>
+          </div>
           <p class="project__links"><a class="link" href="https://f1-xi-weld.vercel.app" target="_blank" rel="noopener noreferrer">Open Pit Lane Hub</a><a class="link" href="https://github.com/justAbdulaziz10/Pit-Lane-Hub" target="_blank" rel="noopener noreferrer">Source</a></p>
         </div>
         <div class="project__scene project__scene--wide"><div class="scene-slot" data-scene="circuit"></div></div>
@@ -172,6 +245,7 @@
     <div class="wrap more__grid">
       <div class="more__record"><div class="scene-slot" data-scene="tracklist"></div></div>
       <div class="sleeve">
+        <h2 class="print-only print-section-title" hidden>More projects</h2>
         <p class="sleeve__artist">Abdulaziz Alkhlaiwe</p>
         <h2 class="section-title sleeve__title" id="more-title">The full record</h2>
         <div class="sleeve__sides">
@@ -222,6 +296,7 @@
   <!-- SKILLS -->
   <section class="skills" id="skills" data-world="paper" aria-labelledby="skills-title">
     <div class="wrap">
+      <h2 class="print-only print-section-title" hidden>Skills</h2>
       <h2 class="section-title" id="skills-title">What I work with</h2>
       <div class="skills__grid">
         <div class="skill"><h3>AI &amp; Automation</h3><p>LLMs, prompt engineering, AI workflows, conversational AI</p></div>
@@ -310,6 +385,7 @@
 
 <script type="module" src="js/site.js"></script>
 <script type="module" src="js/live.js"></script>
+<script type="module" src="js/pm.js"></script>
 <script type="module" src="js/eggs.js"></script>
 </body>
 </html>

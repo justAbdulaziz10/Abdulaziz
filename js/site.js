@@ -129,7 +129,7 @@ thread.setAttribute('aria-hidden', 'true');
 document.querySelector('main').prepend(thread);
 let connectors = []; // { path, y0, y1 }
 
-const obstacleSel = '.project__text, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .shot';
+const obstacleSel = '.project__text, .pm, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .shot';
 
 function anchorsOf(rec) {
   const r = rec.el.getBoundingClientRect();

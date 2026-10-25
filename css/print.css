@@ -1,0 +1,595 @@
+/* A compact CV from the portfolio's existing content. */
+@page {
+  size: auto;
+  margin: 12mm;
+}
+
+@media print {
+  /* Reset the portfolio worlds to a plain paper document. */
+  html {
+    background: #fff !important;
+    scroll-behavior: auto;
+  }
+
+  body,
+  body[data-world] {
+    --bg: #fff;
+    --fg: #000;
+    --fg-2: #222;
+    --fg-3: #333;
+    --rule-c: #bdbdbd;
+    --accent: #000;
+    --line: #000;
+    margin: 0;
+    background: #fff !important;
+    color: #000 !important;
+    font: 8.5pt/1.2 var(--font);
+    overflow: visible !important;
+    orphans: 2;
+    widows: 2;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  ul,
+  ol,
+  dl,
+  dd {
+    text-wrap: wrap;
+  }
+
+  a {
+    color: #000 !important;
+  }
+
+  .top,
+  .pm,
+  .pm-switch,
+  .skip,
+  .hero,
+  .offclock,
+  .foot,
+  #contact,
+  .scene-slot,
+  .scene,
+  .project__scene,
+  .thread,
+  svg,
+  img,
+  .shot,
+  button,
+  .btn,
+  .hero__actions,
+  .project__links,
+  .race,
+  .last-race,
+  .year__week,
+  .year__sub,
+  .side__name,
+  .toast,
+  .hint,
+  [data-hint],
+  [data-toast],
+  [role="tooltip"],
+  .sr-only {
+    display: none !important;
+  }
+
+  [hidden].print-only {
+    display: block !important;
+  }
+
+  /* Keep the print identity separate from the screen hero. */
+  #main {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+    grid-template-areas:
+      "header header"
+      "stats stats"
+      "work more"
+      "experience experience"
+      "skills skills";
+    align-content: start;
+    gap: 3mm 4mm;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  #main > * {
+    position: static;
+    z-index: auto;
+    min-width: 0;
+  }
+
+  .wrap {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-header {
+    grid-area: header;
+    padding-bottom: 2mm;
+    border-bottom: .6pt solid #000;
+    break-inside: avoid;
+  }
+
+  .print-header__identity,
+  .print-header__links {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .print-header__identity {
+    width: 35%;
+  }
+
+  .print-header__identity h1 {
+    margin: 0;
+    font-size: 22pt;
+    line-height: 1;
+    letter-spacing: -.035em;
+    font-weight: 800;
+  }
+
+  .print-header__identity p {
+    margin-top: .7mm;
+    font-size: 10pt;
+    line-height: 1.1;
+    font-weight: 600;
+  }
+
+  .print-header__links {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .7mm 2mm;
+    width: 63%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 7.5pt;
+    line-height: 1.2;
+  }
+
+  .print-header__links li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .print-header__links a {
+    text-decoration: none;
+  }
+
+  .print-header__links a[href^="https://www.linkedin.com"]::after,
+  .print-header__links a[href^="https://github.com"]::after {
+    content: " " attr(href);
+    font-size: 7pt;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+  }
+
+  .print-header__statement {
+    margin-top: 1.2mm;
+    font-size: 8.5pt;
+    line-height: 1.2;
+  }
+
+  /* Preserve the live contribution figures without the oversized graph. */
+  #year {
+    grid-area: stats;
+    min-width: 0;
+    padding: 0;
+    background: transparent !important;
+    break-inside: avoid;
+  }
+
+  .year__title {
+    display: inline;
+    max-width: none;
+    font-size: 9.5pt;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-stretch: normal;
+  }
+
+  .year__sub {
+    display: inline;
+    margin: 0 0 0 1mm;
+    max-width: none;
+    color: #222;
+    font-size: 8pt;
+    line-height: 1.2;
+  }
+
+  #work {
+    grid-area: work;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .print-section-title {
+    margin: 0 0 1.2mm;
+    font-size: 11pt;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  /* Compact project descriptions and the relevant outcome for each. */
+  #work .project {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    color: #000 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #work .project + .project {
+    margin-top: 1mm;
+    padding-top: 1mm;
+    border-top: .4pt solid #bdbdbd;
+  }
+
+  #work .project__grid,
+  #work .project__text {
+    display: block;
+    grid-column: auto;
+    position: static;
+  }
+
+  #work .project__name {
+    display: inline;
+    font-size: 10pt;
+    line-height: 1.15;
+    letter-spacing: 0;
+    font-stretch: normal;
+    font-weight: 700;
+  }
+
+  #work .project__kind {
+    display: inline;
+    max-width: none;
+    margin: 0;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.2;
+    font-weight: 420;
+  }
+
+  #work .project__facts {
+    display: block;
+    margin: 0;
+  }
+
+  #work .project__facts > div {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  #work .project__facts dt,
+  #work .project__facts dd {
+    display: inline;
+    max-width: none;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.2;
+  }
+
+  #work .project__facts dt {
+    font-weight: 620;
+  }
+
+  #work .project__facts dt::after {
+    content: ": ";
+  }
+
+  #work .project__facts strong {
+    font-weight: 700;
+  }
+
+  #mara .project__facts > div:first-child,
+  #echo .project__facts > div:first-child,
+  #daleelk .project__facts > div:first-child,
+  #rassah .project__facts > div:nth-child(2),
+  #pitlane .project__facts > div:nth-child(2) {
+    display: none;
+  }
+
+  #more {
+    grid-area: more;
+    min-width: 0;
+    padding: 0;
+    background: transparent !important;
+    color: #000 !important;
+    break-inside: avoid;
+  }
+
+  /* Keep only the back-of-record list. */
+  .more__grid {
+    display: block;
+  }
+
+  .more__record,
+  .sleeve__artist,
+  .sleeve__title,
+  .side:first-child {
+    display: none !important;
+  }
+
+  .sleeve {
+    position: static;
+    grid-column: auto;
+    grid-row: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none;
+  }
+
+  .sleeve::before {
+    display: none;
+  }
+
+  .sleeve__sides {
+    display: block;
+    margin: 0;
+  }
+
+  .side__name {
+    padding: 0 0 1mm;
+    border-bottom: .6pt solid #000;
+    font-size: 11pt;
+    line-height: 1.1;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .more__list {
+    display: block;
+  }
+
+  .track {
+    display: block;
+    padding: 1mm 0;
+    border: 0;
+    border-bottom: .4pt solid #d0d0d0;
+    color: #000;
+    text-decoration: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .track__no {
+    display: none;
+  }
+
+  .track__name,
+  .track__year {
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.15;
+  }
+
+  .track__name {
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .track__year {
+    font-family: var(--mono);
+    font-size: 7.5pt;
+  }
+
+  .track__year::before {
+    content: " (";
+  }
+
+  .track__year::after {
+    content: ")";
+  }
+
+  .track__desc {
+    display: block;
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+    color: #222;
+    font-size: 8.5pt;
+    line-height: 1.18;
+  }
+
+  #experience {
+    grid-area: experience;
+    min-width: 0;
+    padding: 0;
+    background: transparent !important;
+    color: #000 !important;
+  }
+
+  /* Restore the semantic timeline list hidden by the scene presentation. */
+  #experience .exp__lead {
+    display: block;
+  }
+
+  #experience .section-title,
+  #skills .print-section-title {
+    margin: 0 0 1.2mm;
+    font-size: 11pt;
+    line-height: 1.1;
+    letter-spacing: 0;
+    font-stretch: normal;
+  }
+
+  #experience .exp__summary,
+  #skills #skills-title {
+    display: none !important;
+  }
+
+  #experience .tube__list {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 1mm 0 0 !important;
+    border: 0 !important;
+    border-top: .6pt solid #000 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 4mm;
+    row-gap: 0;
+    list-style: none;
+  }
+
+  #experience .tube__list li {
+    display: grid;
+    grid-template-columns: 27mm minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 0 1.5mm;
+    padding: .6mm 0;
+    border-top: .4pt solid #d0d0d0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #experience .tube__list time {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    color: #222;
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  #experience .tube__list h3,
+  #experience .tube__list p {
+    grid-column: 2;
+    margin: 0;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.18;
+  }
+
+  #experience .tube__list h3 {
+    font-weight: 650;
+  }
+
+  #skills {
+    grid-area: skills;
+    min-width: 0;
+    padding: 0;
+    background: transparent !important;
+    color: #000 !important;
+  }
+
+  /* Skills, certifications, and learning progress share the final row. */
+  #skills .skills__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 4mm;
+    margin: 0;
+    border-top: .6pt solid #000;
+  }
+
+  #skills .skill {
+    padding: .7mm 0;
+    border: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #skills .skill h3,
+  #skills .skill p {
+    display: inline;
+    margin: 0;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.18;
+  }
+
+  #skills .skill h3 {
+    font-weight: 650;
+  }
+
+  #skills .skill h3::after {
+    content: ": ";
+  }
+
+  #skills .learn {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2mm;
+    margin-top: 1.8mm;
+  }
+
+  #skills .sub-title {
+    margin: 0 0 .8mm;
+    font-size: 10pt;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  #skills .certs li {
+    display: grid;
+    grid-template-columns: 9mm minmax(0, 1fr);
+    gap: 1.5mm;
+    padding: .8mm 0;
+    border-top: .4pt solid #d0d0d0;
+    color: #000;
+    font-size: 8.5pt;
+    line-height: 1.16;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #skills .certs__year {
+    padding: 0;
+    color: #222;
+    font-family: var(--mono);
+    font-size: 7.5pt;
+  }
+
+  #skills .certs strong {
+    display: inline;
+    color: #000;
+    font-weight: 650;
+  }
+
+  #skills .progress li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 1.5mm;
+    padding: .7mm 0;
+    border-top: .4pt solid #d0d0d0;
+    font-size: 8.5pt;
+    line-height: 1.16;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #skills .progress__val {
+    color: #222;
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    white-space: nowrap;
+  }
+
+  #skills .progress__bar,
+  #skills .learn__link {
+    display: none !important;
+  }
+}

@@ -21,9 +21,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch GitHub, Letterboxd, F1 and App Store numbers
+      - name: Fetch GitHub, Letterboxd, F1, App Store and RevenueCat numbers
         env:
           GH_CONTRIB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          REVENUECAT_ECHO_KEY: ${{ secrets.REVENUECAT_ECHO_KEY }}
+          REVENUECAT_DOCMARA_KEY: ${{ secrets.REVENUECAT_DOCMARA_KEY }}
         run: node tools/refresh-data.mjs
       - name: Commit if anything changed
         run: |

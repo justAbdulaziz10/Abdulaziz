@@ -298,6 +298,140 @@ main > *, .foot > * { position: relative; z-index: 1; }
 /* easter egg: the Konami code turns the paper sections to night */
 html.is-night body[data-world="paper"], html.is-night body:not([data-world]) { --bg: var(--night); --fg: #f3efe4; --fg-2: #c9c3b3; --fg-3: #8f8a7e; --rule-c: rgba(243, 239, 228, .14); --accent: var(--window-warm); --line: #f3efe4; }
 html.is-switching body { transition: background-color 600ms var(--ease), color 600ms var(--ease); }
+
+/* round 3: product work */
+.pm-switch {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  flex: none;
+  padding: .5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 540;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease);
+}
+.pm-switch:hover { color: var(--fg); }
+.pm-switch__track {
+  position: relative;
+  box-sizing: border-box;
+  width: 2rem;
+  height: 1.15rem;
+  flex: none;
+  border: 1px solid var(--rule-c);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 82%, var(--fg) 18%);
+  transition: background-color var(--t-state) var(--ease), border-color var(--t-state) var(--ease);
+}
+.pm-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: .16rem;
+  width: .68rem;
+  height: .68rem;
+  border-radius: 50%;
+  background: var(--fg-2);
+  transform: translateY(-50%);
+  transition: background-color var(--t-state) var(--ease), transform var(--t-state) var(--ease);
+}
+html.is-pm .pm-switch__track { background: var(--line); border-color: var(--line); }
+html.is-pm .pm-switch__track::after { background: var(--bg); transform: translate(1rem, -50%); }
+.pm {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--t-state) var(--ease), opacity var(--t-state) var(--ease);
+}
+.pm[hidden] { display: none; }
+.pm.is-open { grid-template-rows: 1fr; opacity: 1; }
+.pm__inner { min-height: 0; overflow: hidden; }
+.pm__facts { margin-top: 0; }
+.pm__facts dd { min-width: 0; overflow-wrap: anywhere; }
+.pm__why { display: block; margin-top: .35em; color: var(--fg-2); }
+.pm__flow { margin: 0; padding: 0; list-style: none; }
+.pm__flow li {
+  position: relative;
+  min-width: 0;
+  padding: .3rem 0 .3rem 1.25rem;
+  overflow-wrap: anywhere;
+}
+.pm__flow li::before {
+  content: "";
+  position: absolute;
+  top: .58rem;
+  bottom: -.58rem;
+  left: .27rem;
+  width: 2px;
+  background: var(--line);
+}
+.pm__flow li::after {
+  content: "";
+  position: absolute;
+  top: .3rem;
+  left: 0;
+  box-sizing: border-box;
+  width: .56rem;
+  height: .56rem;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--bg);
+}
+.pm__flow li:first-child::after,
+.pm__flow li:last-child::after { background: var(--line); }
+.pm__flow li:last-child::before { display: none; }
+@media (max-width: 380px) {
+  .top { gap: .25rem; }
+  .top__name { font-size: .72rem; letter-spacing: -.03em; white-space: nowrap; }
+  .pm-switch { gap: .25rem; font-size: .72rem; }
+  .pm-switch__track { width: 1.55rem; height: .95rem; }
+  .pm-switch__track::after { left: .14rem; width: .62rem; height: .62rem; }
+  html.is-pm .pm-switch__track::after { transform: translate(.65rem, -50%); }
+  .top .btn--small { min-height: 36px; padding-inline: .45rem; font-size: .72rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-switch,
+  .pm-switch__track,
+  .pm-switch__track::after,
+  .pm { transition: none; }
+}
 .toast { position: fixed; left: 50%; bottom: max(1.25rem, env(safe-area-inset-bottom)); z-index: 50; margin: 0; padding: .6em 1em; border-radius: 999px; background: var(--fg); color: var(--bg); font-size: var(--step--1, .875rem); font-weight: 560; opacity: 0; transform: translate(-50%, 8px); pointer-events: none; transition: opacity 240ms var(--ease), transform 240ms var(--ease); }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+/* round 3: race result, this week */
+.race__follow { font-size: .88em; }
+.last-race { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--rule-c); color: var(--fg-2); font-size: var(--step--1); }
+.last-race[hidden] { display: none; }
+.last-race__heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .85rem; }
+.last-race__label { color: var(--fg-3); font-size: var(--step--1); font-weight: 560; }
+.last-race__event { color: var(--fg); font-weight: 560; }
+.last-race__podium { margin-top: .65rem; border-top: 1px solid var(--rule-c); }
+.last-race__row { display: grid; grid-template-columns: 2.3rem minmax(0, 1fr) auto; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid var(--rule-c); }
+.last-race__position, .last-race__code, .last-race__time { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.last-race__position { color: var(--fg-3); font-size: .72em; }
+.last-race__position.is-p1 { color: var(--kerb-red); }
+.last-race__driver { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .45rem; min-width: 0; }
+.last-race__name { color: var(--fg); font-weight: 560; }
+.last-race__code { color: var(--fg-3); font-size: .64em; letter-spacing: .04em; }
+.last-race__team { flex-basis: 100%; color: var(--fg-3); font-size: .78em; line-height: 1.25; }
+.last-race__time { color: var(--fg); font-size: .72em; white-space: nowrap; text-align: right; }
+.last-race__fastest { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .4rem; margin-top: .65rem; color: var(--fg-2); font-size: .88em; }
+.last-race__fastest[hidden] { display: none; }
+.last-race__fastest-label { color: var(--fg-3); }
+.year__week { max-width: 68ch; margin-top: var(--s-1); color: var(--fg-2); font-size: var(--step--1); line-height: 1.55; }
+.year__week[hidden] { display: none; }
+.year__week-label { color: var(--fg-3); white-space: nowrap; }
+.year__week-count { color: var(--fg); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* small phones: the switch takes the header button's place; email stays in the hero and contact */
+@media (max-width: 479px) {
+  .top > .btn--small { display: none; }
+  .top__name { white-space: nowrap; }
+}

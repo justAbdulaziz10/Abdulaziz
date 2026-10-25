@@ -24,20 +24,20 @@
  },
  "f1": {
   "season": "2026",
-  "round": 18,
-  "raceName": "United States Grand Prix",
-  "circuit": "Circuit of the Americas",
-  "locality": "Austin",
-  "country": "USA",
-  "start": "2026-10-25T20:00:00Z"
+  "round": 19,
+  "raceName": "Mexico City Grand Prix",
+  "circuit": "Autódromo Hermanos Rodríguez",
+  "locality": "Mexico City",
+  "country": "Mexico",
+  "start": "2026-11-01T20:00:00Z"
  },
  "apps": {
   "echo": {
    "rating": 4.8,
    "ratings": 24,
-   "version": "1.44",
+   "version": "1.45",
    "languages": 37,
-   "currentVersionReleaseDate": "2026-10-22T11:11:06Z",
+   "currentVersionReleaseDate": "2026-10-25T22:59:39Z",
    "url": "https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634?uo=4"
   },
   "docmara": {
@@ -49,47 +49,54 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-10-25T22:42:19.567Z",
+ "updated": "2026-10-25T23:25:36.515Z",
  "f1Result": {
-  "raceName": "Singapore Grand Prix",
-  "round": 17,
-  "date": "2026-10-11",
-  "circuit": "Marina Bay Street Circuit",
+  "raceName": "United States Grand Prix",
+  "round": 18,
+  "date": "2026-10-25",
+  "circuit": "Circuit of the Americas",
   "podium": [
    {
     "pos": 1,
-    "driver": "Max Verstappen",
-    "code": "VER",
-    "team": "Red Bull",
-    "time": "1:42:00.785"
+    "driver": "Andrea Kimi Antonelli",
+    "code": "ANT",
+    "team": "Mercedes",
+    "time": "1:35:16.650"
    },
    {
     "pos": 2,
     "driver": "Charles Leclerc",
     "code": "LEC",
     "team": "Ferrari",
-    "time": "+7.335"
+    "time": "+13.078"
    },
    {
     "pos": 3,
-    "driver": "Andrea Kimi Antonelli",
-    "code": "ANT",
-    "team": "Mercedes",
-    "time": "+24.573"
+    "driver": "Max Verstappen",
+    "code": "VER",
+    "team": "Red Bull",
+    "time": "+17.485"
    }
   ],
   "fastestLap": {
    "driver": "Charles Leclerc",
-   "time": "1:35.202"
+   "time": "1:37.976"
   }
  },
  "week": {
   "items": [
    {
+    "kind": "app",
+    "app": "echo",
+    "label": "Echo 1.45 on the App Store",
+    "date": "2026-10-25T22:59:39Z",
+    "url": "https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634?uo=4"
+   },
+   {
     "kind": "push",
     "repo": "justAbdulaziz10/Abdulaziz",
-    "label": "9 commits to Abdulaziz",
-    "count": 9,
+    "label": "10 commits to Abdulaziz",
+    "count": 10,
     "date": "2026-10-25T21:32:32Z",
     "url": "https://github.com/justAbdulaziz10/Abdulaziz"
    },
@@ -118,13 +125,6 @@
     "url": "https://github.com/justAbdulaziz10/Rassah"
    },
    {
-    "kind": "app",
-    "app": "echo",
-    "label": "Echo 1.44 on the App Store",
-    "date": "2026-10-22T11:11:06Z",
-    "url": "https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634?uo=4"
-   },
-   {
     "kind": "release",
     "repo": "justAbdulaziz10/Rassah",
     "label": "Rassah v1.0.0",
@@ -135,7 +135,7 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1152,
+   "activeUsers": 1159,
    "period": "P28D"
   },
   "docmara": {

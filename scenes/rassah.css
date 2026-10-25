@@ -1,0 +1,113 @@
+.scene--rassah {
+  --rs-mat: 0;
+  --rs-done: 0;
+  --rs-line: var(--rassah-ink);
+  --rs-carton-hi: color-mix(in oklab, var(--carton), var(--paper) 24%);
+  --rs-shade: color-mix(in oklab, var(--rassah), var(--ink) 35%);
+  --rs-bottle: var(--echo);
+  position: relative;
+  aspect-ratio: 21 / 12.6;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 38%, color-mix(in oklab, var(--rassah), var(--rassah-ink) 7%) 0%, var(--rassah) 58%, color-mix(in oklab, var(--rassah), var(--ink) 22%) 100%);
+  color: var(--rassah-ink);
+}
+.scene--rassah[data-layout="narrow"] { aspect-ratio: 14.6 / 13.8; }
+.scene--rassah svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.scene--rassah .rs-dot { fill: var(--rassah-ink); }
+.scene--rassah .rs-dots { opacity: 0.11; }
+.scene--rassah .rs-shadow-stop { stop-color: var(--rs-shade); }
+
+/* the line */
+.scene--rassah .rs-line {
+  fill: none;
+  stroke: var(--rs-line);
+  stroke-width: calc(var(--line-w) * var(--rs-u, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.scene--rassah .rs-line--hidden { stroke-opacity: 0.45; }
+
+/* carton */
+.scene--rassah .rs-wall,
+.scene--rassah .rs-floor { stroke: none; }
+.scene--rassah .rs-wall--bx { fill: color-mix(in oklab, var(--carton-dark), var(--rs-shade) 30%); }
+.scene--rassah .rs-wall--by { fill: color-mix(in oklab, var(--carton), var(--rs-shade) 22%); }
+.scene--rassah .rs-floor { fill: color-mix(in oklab, var(--carton-dark), var(--rs-shade) 12%); }
+.scene--rassah .rs-grid path {
+  fill: none; stroke: var(--paper); stroke-opacity: 0.14; stroke-width: 1px; vector-effect: non-scaling-stroke;
+}
+.scene--rassah .rs-wall--fy { fill: var(--carton); fill-opacity: calc(0.1 + 0.9 * var(--rs-mat)); }
+.scene--rassah .rs-wall--fx { fill: var(--carton-dark); fill-opacity: calc(0.14 + 0.86 * var(--rs-mat)); }
+
+.scene--rassah .rs-flap {
+  fill: color-mix(in oklab, color-mix(in oklab, var(--carton-dark), var(--rs-carton-hi) calc(var(--k, 50) * 1%)), var(--paper) calc(var(--side, 0) * 26%));
+  stroke: var(--rs-line);
+  stroke-width: var(--line-w);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* products */
+.scene--rassah .it-t { fill: color-mix(in oklab, var(--c), var(--paper) 30%); }
+.scene--rassah .it-l { fill: var(--c); }
+.scene--rassah .it-r { fill: color-mix(in oklab, var(--c), var(--rs-shade) 30%); }
+.scene--rassah .it-t,
+.scene--rassah .it-l,
+.scene--rassah .it-r { stroke: none; }
+.scene--rassah .it-hi {
+  fill: none; stroke: color-mix(in oklab, var(--c), var(--paper) 70%); stroke-width: 1px; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.scene--rassah .it-crease {
+  fill: none; stroke: color-mix(in oklab, var(--c), var(--paper) 45%); stroke-opacity: 0.6; stroke-width: 1px; vector-effect: non-scaling-stroke;
+}
+.scene--rassah .it-tape { fill: color-mix(in oklab, var(--carton), var(--paper) 55%); fill-opacity: 0.85; }
+.scene--rassah .it-tape--side { fill: color-mix(in oklab, var(--carton), var(--paper) 35%); }
+.scene--rassah .it-label { fill: var(--paper); }
+.scene--rassah .it-label-line { fill: none; stroke: var(--ink-3); stroke-width: 1.2px; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+
+.scene--rassah .it-pages { fill: var(--paper); }
+.scene--rassah .it-pages--r { fill: var(--paper-2); }
+.scene--rassah .it-page-line { fill: none; stroke: var(--ink-3); stroke-opacity: 0.35; stroke-width: 0.75px; vector-effect: non-scaling-stroke; }
+.scene--rassah .it-cover-rule { fill: none; stroke: color-mix(in oklab, var(--c), var(--paper) 55%); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+
+.scene--rassah .rs-b0 { stop-color: color-mix(in oklab, var(--rs-bottle), var(--rs-shade) 18%); }
+.scene--rassah .rs-b1 { stop-color: color-mix(in oklab, var(--rs-bottle), var(--paper) 22%); }
+.scene--rassah .rs-b2 { stop-color: color-mix(in oklab, var(--rs-bottle), var(--paper) 10%); }
+.scene--rassah .rs-b3 { stop-color: var(--rs-bottle); }
+.scene--rassah .rs-b4 { stop-color: color-mix(in oklab, var(--rs-bottle), var(--rs-shade) 42%); }
+.scene--rassah .it-bottle { fill: url(#rs-bottle); }
+.scene--rassah .it-bottle-label { fill: var(--paper); fill-opacity: 0.92; }
+.scene--rassah .it-cap { fill: var(--ink-2); }
+.scene--rassah .it-cap-top { fill: var(--ink-3); }
+.scene--rassah .it-spec { fill: none; stroke: var(--paper); stroke-opacity: 0.55; stroke-width: 2.5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+
+.scene--rassah .rs-ghost {
+  fill: none;
+  stroke: var(--rassah-ink);
+  stroke-width: 1px;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+  stroke-opacity: 0.75;
+}
+
+/* lid */
+.scene--rassah .rs-tape { fill: color-mix(in oklab, var(--carton), var(--paper) 42%); }
+.scene--rassah .rs-tape--side { fill: color-mix(in oklab, var(--carton-dark), var(--paper) 30%); }
+.scene--rassah .rs-tick,
+.scene--rassah .rs-tick-ring {
+  fill: none;
+  stroke: var(--rassah);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.scene--rassah .rs-tick-disc { fill: var(--rassah); stroke: none; }
+.scene--rassah .rs-tick { stroke: var(--rassah-ink); }
+.scene--rassah .rs-tick { stroke-width: calc(var(--line-w) * 2 * var(--rs-u, 1)); }
+.scene--rassah .rs-tick-ring { stroke-width: calc(var(--line-w) * var(--rs-u, 1)); }

@@ -1,0 +1,128 @@
+// The year: weekly GitHub contributions drawn as the line, with real milestones marked on it.
+const NS = 'http://www.w3.org/2000/svg';
+const MARKS = [
+  { date: '2026-06-02', label: 'Echo on the App Store' },
+  { date: '2026-07-22', label: 'DocMara on the App Store' },
+  { date: '2026-09-10', label: 'Busiest day: 194' },
+  { date: '2026-10-23', label: 'Rassah, built in two days' },
+];
+
+function el(tag, attrs = {}, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.append(n);
+  return n;
+}
+
+// monotone cubic through points (Fritsch–Carlson), returns path data
+function smooth(pts) {
+  const n = pts.length, dx = [], dy = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${(pts[i][0] + h).toFixed(1)} ${(pts[i][1] + h * t[i]).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)} ${(pts[i + 1][1] - h * t[i + 1]).toFixed(1)} ${pts[i + 1][0].toFixed(1)} ${pts[i + 1][1].toFixed(1)}`;
+  }
+  return d;
+}
+
+export function mount(root, { reduced }) {
+  const mq = matchMedia('(min-width: 761px)');
+  let data = null, L = null, line, area, marks = [], months = [];
+  let lastP = reduced ? 1 : 0;
+
+  function render() {
+    if (!data) return;
+    const wide = mq.matches;
+    const W = wide ? 1200 : 360, H = wide ? 380 : 360;
+    const padT = wide ? 70 : 64, padB = 36;
+    const weeks = data.weeks.slice(0, -1); // drop the partial current week
+    const max = Math.max(...weeks.map(w => w[1]));
+    const x = i => (i / (weeks.length - 1)) * W;
+    const y = v => padT + (1 - Math.sqrt(v / max)) * (H - padT - padB);
+    const pts = weeks.map((w, i) => [x(i), y(w[1])]);
+    L = { W, H, pts, base: H - padB };
+    root.replaceChildren();
+    root.style.aspectRatio = `${W} / ${H}`;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Weekly GitHub contributions from ${data.from} to ${data.to}, ${data.total.toLocaleString('en-US')} in total. Activity climbs through the year and peaks in September and October 2026.` }, root);
+    const defs = el('defs', {}, svg);
+    const grad = el('linearGradient', { id: 'year-fill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el('stop', { offset: '0', 'stop-color': 'currentColor', 'stop-opacity': '.14' }, grad);
+    el('stop', { offset: '1', 'stop-color': 'currentColor', 'stop-opacity': '0' }, grad);
+    const clip = el('clipPath', { id: 'year-reveal' }, defs);
+    const reveal = el('rect', { x: 0, y: 0, width: 0, height: H, class: 'year__reveal' }, clip);
+    // month ticks
+    const g = el('g', { class: 'year__axis', 'aria-hidden': 'true' }, svg);
+    el('line', { x1: 0, x2: W, y1: L.base, y2: L.base, class: 'year__base' }, g);
+    months = [];
+    let lastMonth = '';
+    weeks.forEach((w, i) => {
+      const dt = new Date(w[0] + 'T00:00:00Z');
+      const mon = dt.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+      if (mon !== lastMonth && dt.getUTCDate() <= 7) {
+        lastMonth = mon;
+        if (!wide && dt.getUTCMonth() % 3 !== 1) return;
+        const t = el('text', { x: x(i), y: H - 10, class: 'year__month' }, g);
+        t.textContent = mon;
+      }
+    });
+    const d = smooth(pts);
+    area = el('path', { d: `${d}L${W} ${L.base}L0 ${L.base}Z`, class: 'year__area', fill: 'url(#year-fill)', 'clip-path': 'url(#year-reveal)' }, svg);
+    // after the last week the line drops past the axis, so the thread leaves below the months
+    line = el('path', { d: `${d}V${H}`, pathLength: 1, class: 'year__line' }, svg);
+    // milestones
+    marks = MARKS.map((m, j) => {
+      const idx = weeks.findIndex((w, i) => i === weeks.length - 1 || weeks[i + 1][0] > m.date);
+      const px = x(idx), py = pts[idx][1];
+      const mg = el('g', { class: 'year__mark', 'aria-hidden': 'true' }, svg);
+      const top = wide ? padT - 46 + (j % 2) * 26 : 14 + j * 0;
+      if (wide) {
+        el('line', { x1: px, x2: px, y1: top + 8, y2: py - 8, class: 'year__stem' }, mg);
+        const t = el('text', { x: px, y: top, 'text-anchor': px > W - 160 ? 'end' : 'middle', class: 'year__label' }, mg);
+        t.textContent = m.label;
+      }
+      el('circle', { cx: px, cy: py, r: wide ? 5 : 4, class: 'year__dot' }, mg);
+      return { g: mg, t: idx / (weeks.length - 1) };
+    });
+    if (!wide) {
+      // compact legend under the title on phones: only the two launches
+      const lg = el('g', { class: 'year__legend', 'aria-hidden': 'true' }, svg);
+      ['Echo launched', 'DocMara launched'].forEach((s, i) => {
+        const m = marks[i];
+        const c = pts[Math.round(m.t * (weeks.length - 1))];
+        el('line', { x1: c[0], x2: c[0], y1: 20 + i * 22, y2: c[1] - 8, class: 'year__stem' }, lg);
+        const t = el('text', { x: c[0] - 6, y: 24 + i * 22, 'text-anchor': 'end', class: 'year__label' }, lg);
+        t.textContent = s;
+      });
+      marks.slice(2).forEach(m => m.g.remove());
+      marks = marks.slice(0, 2);
+    }
+    L.reveal = reveal;
+    update(lastP);
+  }
+
+  function update(p) {
+    lastP = p;
+    if (!L) return;
+    const k = reduced ? 1 : Math.min(1, Math.max(0, (p - 0.12) / 0.4));
+    line.style.strokeDashoffset = String(1 - k);
+    L.reveal.setAttribute('width', (L.W * k).toFixed(1));
+    marks.forEach(m => m.g.classList.toggle('is-on', k >= m.t - 0.005));
+  }
+
+  fetch('assets/data/weeks.json').then(r => r.json()).then(j => { data = j; render(); });
+  const onChange = () => render();
+  mq.addEventListener('change', onChange);
+  return {
+    update,
+    anchors: () => L ? { entry: { x: 0, y: L.pts[0][1] / L.H }, exit: { x: 1, y: 1 } } : null,
+    destroy() { mq.removeEventListener('change', onChange); root.replaceChildren(); },
+  };
+}

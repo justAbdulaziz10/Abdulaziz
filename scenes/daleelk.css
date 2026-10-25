@@ -1,0 +1,84 @@
+.scene--daleelk {
+  --dk-u: 1;
+  --dk-ratio: 1320 / 1000;
+  position: relative;
+  aspect-ratio: var(--dk-ratio);
+  color: var(--ink);
+}
+.scene--daleelk svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* map */
+.scene--daleelk .dk-land { fill: var(--daleelk-soft); }
+.scene--daleelk .dk-grat path {
+  fill: none;
+  stroke: var(--daleelk);
+  stroke-opacity: 0.22;
+  stroke-width: calc(1px * var(--dk-u) / var(--dk-ms, 1));
+  stroke-dasharray: calc(2px / var(--dk-ms, 1)) calc(5px / var(--dk-ms, 1));
+}
+.scene--daleelk .dk-coast {
+  fill: none;
+  stroke: var(--daleelk);
+  stroke-width: calc(1.15px * var(--dk-u) / var(--dk-ms, 1));
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.scene--daleelk .dk-credit {
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  fill: var(--ink-3);
+}
+.scene--daleelk[data-layout="narrow"] .dk-credit { font-size: 8.5px; }
+
+/* the line */
+.scene--daleelk .dk-line {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: calc(var(--line-w) * var(--dk-u));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+/* waypoints */
+.scene--daleelk .dk-wp { opacity: 0; }
+.scene--daleelk .dk-wp-halo { fill: var(--paper); fill-opacity: 0.0; }
+.scene--daleelk .dk-wp-ring { fill: var(--paper); stroke: var(--ink); stroke-width: calc(var(--line-w) * var(--dk-u)); }
+.scene--daleelk .dk-wp-core { fill: var(--daleelk); }
+.scene--daleelk .dk-wp-pulse {
+  fill: none;
+  stroke: var(--daleelk);
+  stroke-width: calc(1.5px * var(--dk-u));
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.scene--daleelk.dk-live .dk-wp.is-on .dk-wp-pulse {
+  animation: dk-pulse 2.6s var(--ease) infinite;
+}
+@keyframes dk-pulse {
+  0% { transform: scale(1); opacity: 0.85; }
+  100% { transform: scale(4.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene--daleelk .dk-wp-pulse { animation: none !important; }
+}
+
+/* diagram */
+.scene--daleelk .dk-node { fill: var(--paper); stroke: none; }
+.scene--daleelk .dk-node--q { fill: var(--paper); }
+.scene--daleelk .dk-node--out { fill: var(--daleelk-soft); }
+.scene--daleelk .dk-label {
+  font-family: var(--font);
+  font-weight: 520;
+  font-stretch: 100%;
+  letter-spacing: -0.005em;
+  fill: var(--ink);
+}
+.scene--daleelk[data-layout="narrow"] .dk-label { font-stretch: 92%; }
+.scene--daleelk .dk-junction { fill: var(--ink); }

@@ -1,0 +1,154 @@
+.scene--echo {
+  --echo-frame: color-mix(in oklab, var(--paper) 72%, var(--echo-soft));
+  --echo-shade: color-mix(in oklab, var(--echo-deep) 42%, transparent);
+  --echo-shade-soft: color-mix(in oklab, var(--echo-deep) 18%, transparent);
+  position: relative;
+  width: 100%;
+  overflow: clip;
+  overflow-clip-margin: 16px;
+}
+
+.scene--echo .echo__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1200 / 760;
+}
+
+/* warm late-afternoon air behind the hand of cards */
+.scene--echo .echo__haze {
+  position: absolute;
+  inset: 8% 4% 0;
+  background:
+    radial-gradient(46% 50% at 50% 48%, color-mix(in oklab, var(--echo-soft) 95%, transparent) 0%, color-mix(in oklab, var(--echo-soft) 45%, transparent) 55%, transparent 100%);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.scene--echo .echo__sun {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in oklab, var(--paper) 55%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg, var(--echo-soft) 0%, color-mix(in oklab, var(--echo) 45%, var(--echo-soft)) 55%, color-mix(in oklab, var(--echo) 85%, var(--echo-soft)) 100%);
+  box-shadow: 0 0 90px 24px color-mix(in oklab, var(--echo) 16%, transparent);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.scene--echo .echo__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.scene--echo .echo__stop-ink { stop-color: var(--line); }
+.scene--echo .echo__stop-echo { stop-color: var(--echo); }
+.scene--echo .echo__stop-deep { stop-color: var(--echo-deep); }
+
+.scene--echo .echo__line {
+  fill: none;
+  stroke-width: var(--line-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+.scene--echo .echo__fanwrap {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+  perspective-origin: 50% 40%;
+  will-change: opacity;
+}
+
+.scene--echo .echo__fan {
+  position: absolute;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.scene--echo .echo__card {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 4.5% 4.5% 0;
+  border-radius: 6px;
+  background: var(--echo-frame);
+  box-shadow:
+    0 0 0 0.5px color-mix(in oklab, var(--echo-deep) 10%, transparent),
+    0 1px 2px var(--echo-shade-soft),
+    0 12px 22px -10px var(--echo-shade),
+    22px 40px 60px -26px var(--echo-shade);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.scene--echo .echo__photo {
+  position: relative;
+  aspect-ratio: 0.7;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--echo-deep);
+}
+
+.scene--echo .echo__photo img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: auto;
+  max-width: none;
+  display: block;
+}
+
+/* sunset light grazing the print */
+.scene--echo .echo__light {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(155deg, color-mix(in oklab, var(--echo) 22%, transparent) 0%, transparent 38%),
+    linear-gradient(0deg, color-mix(in oklab, var(--echo-deep) 18%, transparent) 0%, transparent 30%);
+  box-shadow: inset 0 0 0 0.5px color-mix(in oklab, var(--echo-deep) 25%, transparent);
+  pointer-events: none;
+}
+
+.scene--echo .echo__cap {
+  display: flex;
+  align-items: center;
+  gap: 7%;
+  margin: 0;
+  padding: 0 4%;
+}
+.scene--echo .echo__cap { height: auto; aspect-ratio: 0.91 / 0.16; }
+
+.scene--echo .echo__play {
+  flex: none;
+  width: 11%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--echo-deep) 16%, var(--echo-frame));
+  position: relative;
+}
+.scene--echo .echo__play::after {
+  content: "";
+  position: absolute;
+  left: 38%;
+  top: 29%;
+  width: 34%;
+  height: 42%;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  background: color-mix(in oklab, var(--echo-deep) 50%, var(--echo-frame));
+}
+
+.scene--echo .echo__bars {
+  flex: 1;
+  height: 34%;
+  fill: color-mix(in oklab, var(--echo-deep) 30%, var(--echo-frame));
+}
+
+.scene--echo .echo__card--hero .echo__play { background: var(--echo); box-shadow: 0 0 10px color-mix(in oklab, var(--echo) 55%, transparent); }
+.scene--echo .echo__card--hero .echo__play::after { background: var(--echo-frame); }
+.scene--echo .echo__card--hero .echo__bars { fill: var(--echo); }

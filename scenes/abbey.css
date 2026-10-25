@@ -1,0 +1,96 @@
+.scene--abbey {
+  --ab-sf: var(--zebra);
+  --ab-ln: var(--line);
+  position: relative;
+}
+.scene--abbey svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* sky + ground */
+.scene--abbey .ab-sky0 { stop-color: var(--sky); }
+.scene--abbey .ab-sky1 { stop-color: var(--paper); }
+.scene--abbey .ab-ground { fill: var(--ink-2); }
+.scene--abbey .ab-tree-base { fill: var(--paper); }
+.scene--abbey .ab-tree { fill: var(--rassah); }
+.scene--abbey .ab-tree-shade { fill: var(--ink); opacity: 0.22; }
+.scene--abbey .ab-garden { fill: var(--rassah); }
+.scene--abbey .ab-hedge { fill: var(--ink); opacity: 0.28; }
+
+/* road */
+.scene--abbey .ab-road0 { stop-color: var(--road); stop-opacity: 0.62; }
+.scene--abbey .ab-road1 { stop-color: var(--road); stop-opacity: 1; }
+.scene--abbey .ab-kerb { fill: var(--ink-3); }
+.scene--abbey .ab-stripe { fill: var(--ab-sf); }
+
+/* the Beetle */
+.scene--abbey .ab-car { fill: var(--zebra); }
+.scene--abbey .ab-car-shade { fill: var(--paper-2); }
+.scene--abbey .ab-glass { fill: var(--road); }
+.scene--abbey .ab-lid { fill: var(--paper-2); }
+.scene--abbey .ab-louvre { fill: none; stroke: var(--ink-3); stroke-width: 1.4; stroke-linecap: round; }
+.scene--abbey .ab-tyre { fill: var(--ink); }
+.scene--abbey .ab-tail { fill: var(--kerb-red); }
+.scene--abbey .ab-bumper { fill: var(--ink-2); }
+.scene--abbey .ab-shadow { fill: var(--ink); opacity: 0.35; }
+
+/* Belisha beacons */
+.scene--abbey .ab-pole { fill: var(--zebra); }
+.scene--abbey .ab-pole-b { fill: var(--ink); }
+.scene--abbey .ab-globe { fill: var(--echo); }
+
+/* the line */
+.scene--abbey .ab-line {
+  fill: none;
+  stroke: var(--ab-ln, var(--line));
+  stroke-width: calc(var(--line-w) * var(--ab-u, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+.scene--abbey .ab-lines--inv { --ab-ln: var(--zebra); }
+
+/* the four crossers — outfits in walking order (lead first) */
+.scene--abbey {
+  --ab-skin: color-mix(in oklab, var(--carton) 40%, var(--echo-soft));
+  --ab-skinf: color-mix(in oklab, var(--ab-skin) 80%, var(--carton-dark));
+}
+/* white suit, long brown hair, beard */
+.scene--abbey .ab-fig[data-n="0"] {
+  --jk: var(--zebra); --jkf: color-mix(in oklab, var(--zebra) 78%, var(--ink-3));
+  --tr: var(--zebra); --trf: color-mix(in oklab, var(--zebra) 78%, var(--ink-3));
+  --sh: var(--paper-2); --shf: color-mix(in oklab, var(--paper-2) 75%, var(--ink-3));
+  --hr: color-mix(in oklab, var(--carton-dark) 62%, var(--ink));
+}
+/* the white suit's hairline: a fattened single-colour clone drawn underneath */
+.scene--abbey .ab-edge {
+  --eg: 2.4px;
+  --egs: color-mix(in oklab, var(--ink-3) 70%, var(--zebra));
+  --jk: var(--egs); --jkf: var(--egs); --tr: var(--egs); --trf: var(--egs);
+  --sh: var(--egs); --shf: var(--egs); --hr: var(--egs);
+  --ab-skin: var(--egs); --ab-skinf: var(--egs);
+}
+/* black suit, dark hair */
+.scene--abbey .ab-fig[data-n="1"] {
+  --jk: var(--ink); --jkf: color-mix(in oklab, var(--ink) 70%, var(--ink-2));
+  --tr: var(--ink); --trf: color-mix(in oklab, var(--ink) 70%, var(--ink-2));
+  --sh: var(--ink); --shf: var(--ink);
+  --hr: color-mix(in oklab, var(--carton-dark) 22%, var(--ink));
+}
+/* slate suit, barefoot, cigarette */
+.scene--abbey .ab-fig[data-n="2"] {
+  --jk: color-mix(in oklab, var(--ink-3) 72%, var(--night-2)); --jkf: color-mix(in oklab, var(--ink-3) 45%, var(--night-2));
+  --tr: color-mix(in oklab, var(--ink-3) 72%, var(--night-2)); --trf: color-mix(in oklab, var(--ink-3) 45%, var(--night-2));
+  --hr: color-mix(in oklab, var(--carton-dark) 40%, var(--ink));
+}
+/* denim: blue jacket and jeans, long dark hair, beard */
+.scene--abbey .ab-fig[data-n="3"] {
+  --jk: color-mix(in oklab, var(--mara) 52%, var(--night-2)); --jkf: color-mix(in oklab, var(--mara) 34%, var(--night-2));
+  --tr: color-mix(in oklab, var(--mara) 42%, var(--night-2)); --trf: color-mix(in oklab, var(--mara) 26%, var(--night-2));
+  --sh: color-mix(in oklab, var(--carton-dark) 45%, var(--ink)); --shf: var(--ink);
+  --hr: color-mix(in oklab, var(--carton-dark) 30%, var(--ink));
+}

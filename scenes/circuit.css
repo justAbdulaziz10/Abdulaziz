@@ -1,0 +1,197 @@
+/* Pit Lane Hub — Suzuka. Every selector is scoped to .scene--circuit. */
+.scene--circuit {
+  --c-bg: var(--asphalt);
+  --c-line: var(--kerb-white);
+  --c-ink: color-mix(in srgb, var(--kerb-white) 64%, transparent);
+  --c-ink-2: color-mix(in srgb, var(--kerb-white) 40%, transparent);
+  --c-edge: color-mix(in srgb, var(--kerb-white) 26%, transparent);
+  --c-car-a: var(--kerb-red);
+  --c-car-b: var(--echo);
+  --c-car-c: var(--mara);
+  --c-u: 1.6; /* SVG units per CSS px; set by the scene on resize */
+  position: relative;
+  color: var(--kerb-white);
+}
+.scene--circuit .c-stage {
+  position: relative;
+  width: 100%;
+}
+.scene--circuit .c-base,
+.scene--circuit .c-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.scene--circuit .c-base { will-change: opacity; }
+.scene--circuit .c-live { will-change: transform; }
+
+/* floodlight + ribbon */
+.scene--circuit .c-flood-stop { stop-color: var(--kerb-white); }
+.scene--circuit .c-shadow {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: 0.55;
+  stroke-linejoin: round;
+}
+.scene--circuit .c-edge,
+.scene--circuit .c-road,
+.scene--circuit .c-deck-cut,
+.scene--circuit .c-deck-shade {
+  fill: none;
+  stroke-linejoin: round;
+}
+.scene--circuit .c-edge { stroke: var(--c-edge); }
+.scene--circuit .c-road { stroke: var(--road); }
+.scene--circuit .c-deck .c-edge,
+.scene--circuit .c-deck .c-road,
+.scene--circuit .c-deck-cut,
+.scene--circuit .c-deck-shade,
+.scene--circuit .c-sector--deck path { stroke-linecap: butt; }
+.scene--circuit .c-deck-cut { stroke: var(--c-bg); }
+.scene--circuit .c-deck-shade { stroke: #000; stroke-opacity: 0.15; }
+
+/* kerbs + chequer */
+.scene--circuit .c-kerb-w,
+.scene--circuit .c-kerb-r { fill: none; stroke-linecap: butt; stroke-linejoin: round; }
+.scene--circuit .c-kerb-w { stroke: var(--kerb-white); stroke-opacity: 0.9; }
+.scene--circuit .c-kerb-r { stroke: var(--kerb-red); }
+.scene--circuit .c-chq-l { fill: var(--kerb-white); }
+.scene--circuit .c-chq-d { fill: var(--asphalt); }
+
+/* the line */
+.scene--circuit .c-line {
+  fill: none;
+  stroke: var(--c-line);
+  stroke-width: calc(var(--line-w) * var(--c-u));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+/* sectors (timing-screen colours) */
+.scene--circuit .c-sector--1 { color: var(--sector-1); }
+.scene--circuit .c-sector--2 { color: var(--sector-2); }
+.scene--circuit .c-sector--3 { color: var(--sector-3); }
+.scene--circuit .c-sector-halo {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.075;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scene--circuit .c-sector-band {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.62;
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* leaders + pen tip */
+.scene--circuit .c-leader {
+  fill: none;
+  stroke: var(--c-ink-2);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.scene--circuit .c-pen-dot,
+.scene--circuit .c-pen-glow,
+.scene--circuit .c-car-dot,
+.scene--circuit .c-car-glow {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.scene--circuit .c-pen-dot { stroke: var(--c-line); stroke-width: 6px; }
+.scene--circuit .c-pen-glow { stroke: var(--c-line); stroke-width: 16px; stroke-opacity: 0.12; }
+
+/* ambient cars */
+.scene--circuit .c-car--a { color: var(--c-car-a); }
+.scene--circuit .c-car--b { color: var(--c-car-b); }
+.scene--circuit .c-car--c { color: var(--c-car-c); }
+.scene--circuit .c-car-dot { stroke: currentColor; stroke-width: 7px; }
+.scene--circuit .c-car-glow { stroke: currentColor; stroke-width: 20px; stroke-opacity: 0.22; }
+.scene--circuit .c-trail {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scene--circuit .c-trail--1 { stroke-width: calc(3.5px * var(--c-u)); stroke-opacity: 0.55; }
+.scene--circuit .c-trail--2 { stroke-width: calc(3px * var(--c-u)); stroke-opacity: 0.26; }
+.scene--circuit .c-trail--3 { stroke-width: calc(2.5px * var(--c-u)); stroke-opacity: 0.12; }
+
+/* labels */
+.scene--circuit .c-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 100;
+}
+.scene--circuit .c-corner {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-ink);
+}
+.scene--circuit .c-corner--r { transform: translate(5px, -50%); }
+.scene--circuit .c-corner--l { transform: translate(calc(-100% - 5px), -50%); }
+.scene--circuit .c-corner--c { transform: translate(-50%, -50%); }
+.scene--circuit .c-corner--c.c-corner--t { transform: translate(-50%, calc(-100% - 4px)); }
+.scene--circuit .c-corner--c.c-corner--b { transform: translate(-50%, 4px); }
+
+.scene--circuit .c-title {
+  position: absolute;
+  display: grid;
+  gap: 9px;
+  color: var(--kerb-white);
+}
+.scene--circuit .c-name {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.scene--circuit .c-facts {
+  display: flex;
+  gap: 16px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--c-ink);
+}
+.scene--circuit .c-strip { display: flex; gap: 6px; }
+.scene--circuit .c-chip {
+  display: grid;
+  gap: 5px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-2);
+}
+.scene--circuit .c-chip i {
+  display: block;
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.2;
+}
+.scene--circuit .c-chip b { font-weight: 400; }
+.scene--circuit .c-chip--1 i { background: var(--sector-1); }
+.scene--circuit .c-chip--2 i { background: var(--sector-2); }
+.scene--circuit .c-chip--3 i { background: var(--sector-3); }
+
+@media (max-width: 639px) {
+  .scene--circuit .c-corner { font-size: 9.5px; letter-spacing: 0.06em; }
+  .scene--circuit .c-name { font-size: 12px; }
+  .scene--circuit .c-facts { font-size: 10px; gap: 12px; }
+  .scene--circuit .c-chip i { width: 26px; }
+}

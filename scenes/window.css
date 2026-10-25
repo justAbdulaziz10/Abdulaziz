@@ -1,0 +1,135 @@
+.scene--window {
+  --wn-line: var(--zebra);
+  position: relative;
+}
+.scene--window svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* night */
+.scene--window .wn-s0 { stop-color: var(--night); }
+.scene--window .wn-s1 { stop-color: var(--night-2); }
+.scene--window .wn-star { fill: var(--zebra); opacity: 0.55; }
+.scene--window .wn-moon { fill: var(--window-warm); opacity: 0.9; }
+
+/* architecture */
+.scene--window .wn-bld--main { fill: var(--echo-deep); }
+.scene--window .wn-bld--side { fill: var(--night-2); }
+.scene--window .wn-cornice { fill: var(--zebra); opacity: 0.1; }
+.scene--window .wn-hair {
+  fill: none;
+  stroke: var(--zebra);
+  stroke-opacity: 0.16;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.scene--window .wn-hair--edge { stroke-opacity: 0.24; }
+
+/* windows */
+.scene--window .wn-pane { fill: var(--night); }
+.scene--window .wn-reflect { fill: var(--zebra); opacity: 0.05; }
+.scene--window .wn-frame {
+  fill: none;
+  stroke: var(--night);
+  stroke-width: 3;
+}
+.scene--window .wn-sash {
+  fill: none;
+  stroke: var(--night);
+  stroke-width: 3;
+}
+.scene--window .wn-sill { fill: var(--zebra); opacity: 0.2; }
+.scene--window .wn-lintel { fill: var(--zebra); opacity: 0.1; }
+.scene--window .wn-w0 { stop-color: var(--window-warm); }
+.scene--window .wn-w1 { stop-color: var(--carton); }
+.scene--window .wn-glow { fill: var(--window-warm); opacity: 0.32; }
+.scene--window .wn-blind { fill: var(--daleelk); }
+.scene--window .wn-blind-bar { fill: var(--carton-dark); }
+.scene--window .wn-slat { fill: none; stroke: var(--carton-dark); stroke-width: 1; opacity: 0.55; }
+.scene--window .wn-cord { fill: none; stroke: var(--carton-dark); stroke-width: 1; }
+
+/* film title cards */
+.scene--window .wn-ink { fill: var(--night); }
+.scene--window .wn-warm { fill: var(--window-warm); }
+.scene--window .wn-stroke { fill: none; stroke: var(--night); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.scene--window .wn-title {
+  fill: var(--night);
+  font-family: var(--font);
+  font-weight: 640;
+  font-stretch: 88%;
+  letter-spacing: -0.01em;
+}
+.scene--window .wn-year {
+  fill: var(--night);
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 450;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.78;
+}
+
+/* fire escape */
+.scene--window .wn-escape path {
+  fill: none;
+  stroke: var(--wn-line);
+  stroke-opacity: 0.42;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.scene--window .wn-slab { fill: var(--night); }
+
+/* water tower */
+.scene--window .wn-tank { fill: var(--night-2); }
+.scene--window .wn-tank-shade { fill: var(--night); opacity: 0.45; }
+.scene--window .wn-tower-legs {
+  fill: none;
+  stroke: var(--night-2);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* rooftop neon sign */
+.scene--window .wn-truss {
+  fill: none;
+  stroke: var(--night-2);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.scene--window .wn-panel { fill: var(--night); stroke: var(--night-2); stroke-width: 3; }
+.scene--window .wn-tube { fill: none; stroke: var(--docmara); stroke-width: 1.6; }
+.scene--window .wn-num {
+  fill: var(--docmara);
+  font-family: var(--font);
+  font-weight: 760;
+  font-stretch: 108%;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.scene--window .wn-label {
+  fill: var(--window-warm);
+  font-family: var(--font);
+  font-weight: 560;
+  font-stretch: 112%;
+  letter-spacing: 0.08em;
+}
+.scene--window .wn-neon-glow { opacity: 0.85; }
+
+/* courtyard */
+.scene--window .wn-court { fill: var(--night); }
+.scene--window .wn-picket { fill: var(--night-2); }
+.scene--window .wn-wall { fill: var(--night); }
+
+/* the line */
+.scene--window .wn-line {
+  fill: none;
+  stroke: var(--wn-line);
+  stroke-width: calc(var(--line-w) * var(--wn-u, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}

@@ -1,0 +1,96 @@
+/* One line — design tokens. Every scene and the shell read only from here. */
+@font-face {
+  font-family: "Mona Sans";
+  src: url("../fonts/mona-sans.woff2") format("woff2-variations");
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Mona Sans";
+  src: url("../fonts/mona-sans-italic.woff2") format("woff2-variations");
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Martian Mono";
+  src: url("../fonts/martian-mono.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-stretch: 75% 112.5%;
+  font-display: swap;
+}
+
+:root {
+  /* base world */
+  --paper: #f2f3ee;
+  --paper-2: #e8eae3;
+  --ink: #121417;
+  --ink-2: #4a4f57;
+  --ink-3: #646a73;
+  --rule: rgba(18, 20, 23, 0.12);
+
+  /* the line */
+  --line: var(--ink);
+  --line-w: 2px;
+
+  /* product & scene worlds (taken from the real icons/products) */
+  --mara: #22a9e0;
+  --mara-soft: #e3f4fb;
+  --echo: #ee7a43;
+  --echo-deep: #3a1a17;
+  --echo-soft: #fbe9df;
+  --daleelk: #c08a2e;
+  --daleelk-soft: #f3ead8;
+  --rassah: #0f4a3f;
+  --rassah-ink: #e9f1ee;
+  --carton: #d98a3d;
+  --carton-dark: #a9632a;
+  --asphalt: #15171b;
+  --asphalt-2: #22252b;
+  --kerb-red: #e10600;
+  --kerb-white: #f4f4f2;
+  --sector-1: #a855f7;
+  --sector-2: #22c55e;
+  --sector-3: #facc15;
+  --road: #2b2e33;
+  --zebra: #f4f4f0;
+  --sky: #c9dbe6;
+  --night: #0f1424;
+  --night-2: #1a2136;
+  --window-warm: #f6c46a;
+  --docmara: #f2643f;
+
+  /* type */
+  --font: "Mona Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Martian Mono", ui-monospace, monospace;
+  --step--1: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --step-2: clamp(1.6rem, 1.35rem + 1.1vw, 2.25rem);
+  --step-3: clamp(2.2rem, 1.6rem + 2.6vw, 3.75rem);
+  --step-4: clamp(3rem, 1.8rem + 5.6vw, 6.5rem);
+  --step-5: clamp(3.4rem, 1.2rem + 10vw, 11rem);
+
+  /* space */
+  --s-1: 0.5rem;
+  --s-2: 1rem;
+  --s-3: 1.5rem;
+  --s-4: 2.5rem;
+  --s-5: 4rem;
+  --s-6: 6.5rem;
+  --s-7: 10rem;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --max: 1320px;
+
+  /* motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 140ms;
+  --t-state: 240ms;
+  --t-layout: 420ms;
+  --t-focal: 700ms;
+
+  --radius: 14px;
+}

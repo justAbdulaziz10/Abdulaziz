@@ -160,17 +160,16 @@ const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: content.person.name.en,
-  jobTitle: 'Founder & CEO',
+  jobTitle: 'AI Product & Systems',
   url: 'https://justabdulaziz10.github.io/Abdulaziz/',
   email: content.person.email,
-  worksFor: { '@type': 'Organization', name: 'Mara', legalName: content.mara.legal.en, url: content.mara.url },
   sameAs,
   alumniOf: { '@type': 'CollegeOrUniversity', name: 'King Saud University' },
   affiliation: { '@type': 'CollegeOrUniversity', name: 'King Saud University' }
 };
 
 const values = {
-  title: escapeHtml(content.person.name.en + ' — Founder & CEO of Mara'),
+  title: escapeHtml(content.person.name.en + ' — ' + content.person.role.en),
   description: escapeHtml(content.person.tagline.en),
   canonical: 'https://justabdulaziz10.github.io/Abdulaziz/',
   personName: escapeHtml(content.person.name.en),
@@ -224,7 +223,6 @@ const values = {
   contactLinks,
   photoCredits: escapeHtml(english(content.ui.credits)),
   creditsList: credits,
-  legalName: escapeHtml(content.mara.legal.en),
   copyrightName: escapeHtml(english(content.ui.copyright)),
   currentYear: String(new Date().getFullYear()),
   jsonld: JSON.stringify(structuredData).replaceAll('<', '\\u003c'),

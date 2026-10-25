@@ -10,19 +10,17 @@
     },
     "monogram": "AA",
     "role": {
-      "en": "Founder & CEO of Mara",
-      "ar": "المؤسس والرئيس التنفيذي لشركة مرا"
+      "en": "AI Product & Systems"
     },
     "tagline": {
-      "en": "I build Arabic-first apps from Riyadh, and the systems that ship them.",
-      "ar": "أبني تطبيقات عربية أولًا من الرياض، والأنظمة التي توصلها إلى الناس."
+      "en": "I turn user and business problems into requirements, system workflows, API integrations and shipped products."
     },
     "location": {
       "en": "Riyadh, Saudi Arabia",
       "ar": "الرياض، المملكة العربية السعودية"
     },
     "timezone": "Asia/Riyadh",
-    "email": "abdulaziz.alkhlaiwe@iammara.com",
+    "email": "abdulazizalkhlaiwe@gmail.com",
     "links": [
       {
         "id": "github",
@@ -58,14 +56,14 @@
   },
   "about": {
     "heading": {
-      "en": "Founder, engineer, student.",
+      "en": "AI products, from requirements to release.",
       "ar": "مؤسس، ومهندس، وطالب."
     },
     "body": {
       "en": [
-        "I founded Mara, a Saudi technology company that builds thoughtful consumer apps. I lead the company and write a large share of its product code myself: I am the top contributor to both the Mara app and Echo.",
-        "Alongside the company I study Information Systems at King Saud University and follow a self-directed path into machine learning, from Harvard's CS50 to Stanford's CS230.",
-        "I care about software that respects people: Arabic and English treated as equals, privacy by default, and products that are finished before they ship."
+        "Computer Information Systems graduate from King Saud University, focused on AI-powered products, technical product development and digital systems.",
+        "I translate user and business problems into product requirements, system workflows, API integrations, prototypes and production releases.",
+        "I have built and shipped products across AI workflows, analytics, UX, monetization, QA and system integration: Mara reached 38 private beta users and completed Misk Launchpad Cohort 9, and Echo now has 1,200 weekly users."
       ],
       "ar": [
         "أسست مرا، شركة تقنية سعودية تبني تطبيقات استهلاكية مدروسة. أقود الشركة وأكتب جزءًا كبيرًا من شيفرة منتجاتها بنفسي، فأنا أكبر المساهمين في تطبيق مرا وتطبيق Echo.",
@@ -76,42 +74,34 @@
     "facts": [
       {
         "k": {
-          "en": "Company",
-          "ar": "الشركة"
+          "en": "Focus"
         },
         "v": {
-          "en": "Mara, Ad Diriyah",
-          "ar": "مرا، الدرعية"
+          "en": "AI Product & Systems"
         }
       },
       {
         "k": {
-          "en": "Role",
-          "ar": "الدور"
+          "en": "Degree"
         },
         "v": {
-          "en": "Founder & CEO, app engineering",
-          "ar": "المؤسس والرئيس التنفيذي، وهندسة التطبيقات"
+          "en": "B.Sc. Computer Information Systems, King Saud University"
         }
       },
       {
         "k": {
-          "en": "Study",
-          "ar": "الدراسة"
+          "en": "Recent"
         },
         "v": {
-          "en": "Information Systems, King Saud University",
-          "ar": "نظم المعلومات، جامعة الملك سعود"
+          "en": "Digital Systems & Business Analysis Co-op, Air Connectivity Program"
         }
       },
       {
         "k": {
-          "en": "Based in",
-          "ar": "المدينة"
+          "en": "Based in"
         },
         "v": {
-          "en": "Riyadh",
-          "ar": "الرياض"
+          "en": "Riyadh"
         }
       }
     ]
@@ -122,8 +112,7 @@
       "ar": "مرا"
     },
     "intro": {
-      "en": "A Saudi technology company building thoughtful apps and open-source tools. I founded it in October 2025. Today it ships three apps, a developer portal and a set of open-source tools.",
-      "ar": "شركة تقنية سعودية تبني تطبيقات مدروسة وأدوات مفتوحة المصدر. أسستها في أكتوبر 2025، واليوم تقدّم أربعة تطبيقات وبوابة للمطورين ومجموعة من الأدوات المفتوحة المصدر."
+      "en": "An AI-powered health & wellness platform. I built it across product requirements, AI workflows, APIs, QA, analytics and system integrations; it reached 38 private beta users and completed Misk Launchpad Cohort 9. Echo and DocMara ship from the same team."
     },
     "legal": {
       "en": "Mara liltaqniyat alhadithah alraqimiah Company, Ad Diriyah",
@@ -487,8 +476,7 @@
       },
       {
         "date": "2025-10",
-        "en": "Founded Mara and started the Mara app. Began a public roadmap into AI and machine learning.",
-        "ar": "أسست مرا وبدأت تطبيقها، وبدأت خارطة طريق علنية نحو الذكاء الاصطناعي وتعلّم الآلة."
+        "en": "Started building Mara, an AI-powered health & wellness platform, and a public roadmap into AI and machine learning."
       },
       {
         "date": "2026-02",
@@ -682,11 +670,11 @@
       "ar": "لنتحدث"
     },
     "body": {
-      "en": "For partnerships, investment or work with Mara, email me directly.",
+      "en": "Open to AI product, technical product and systems roles.",
       "ar": "للشراكات أو الاستثمار أو العمل مع مرا، راسلني مباشرة."
     },
     "cta": {
-      "en": "Email Abdulaziz",
+      "en": "Email me",
       "ar": "راسل عبدالعزيز"
     }
   },

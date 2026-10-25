@@ -128,9 +128,10 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .hero__statement { font-size: var(--step-2); line-height: 1.22; font-weight: 520; letter-spacing: -.015em; max-width: 24ch; }
 .hero__meta { display: grid; gap: var(--s-2); justify-items: start; color: var(--fg-2); font-size: var(--step--1); }
 .hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; }
-.js .hero__role, .js .hero__foot { opacity: 0; transform: translateY(14px); transition: opacity var(--t-focal) var(--ease), transform var(--t-focal) var(--ease); }
+/* the statement stays visible from the first paint: it is the largest text on load */
+.js .hero__role, .js .hero__meta { opacity: 0; transform: translateY(14px); transition: opacity var(--t-focal) var(--ease), transform var(--t-focal) var(--ease); }
 .js .hero.is-in .hero__role { opacity: 1; transform: none; transition-delay: 50ms; }
-.js .hero.is-in .hero__foot { opacity: 1; transform: none; transition-delay: 650ms; }
+.js .hero.is-in .hero__meta { opacity: 1; transform: none; transition-delay: 650ms; }
 @media (max-width: 760px) {
   .hero { padding-top: 6.5rem; }
   .hero__name { letter-spacing: -.03em; }
@@ -207,6 +208,7 @@ main > *, .foot > * { position: relative; z-index: 1; }
 }
 .track__no, .track__year { font-family: var(--mono); font-size: .7rem; letter-spacing: .02em; color: var(--fg-3); transition: color var(--t-state) var(--ease); }
 .track__name { font-size: 1.12rem; line-height: 1.25; font-weight: 700; font-stretch: 106%; letter-spacing: -.012em; text-decoration: underline; text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, var(--fg) 35%, transparent); text-underline-offset: .2em; transition: font-stretch var(--t-layout) var(--ease), text-decoration-color var(--t-state) var(--ease); }
+.track__icon { display: inline-block; width: 1.3em; height: 1.3em; margin-right: .45em; vertical-align: -.27em; border-radius: 23%; box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent); }
 .track__desc { grid-column: 2 / -1; margin-top: .25rem; font-size: var(--step--1); line-height: 1.45; color: var(--fg-2); max-width: 46ch; }
 .track:hover .track__name, .track:focus-visible .track__name { font-stretch: 122%; text-decoration-color: var(--accent); }
 .track:hover .track__no, .track:focus-visible .track__no { color: var(--fg); }

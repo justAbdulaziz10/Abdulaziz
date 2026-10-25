@@ -76,7 +76,6 @@ export function mount(root, { reduced }) {
       const hop = el('g', { class: 'flow__hop' }, g);
       el('rect', { x, y: y + 6, width: I.size, height: I.size, rx: I.size * .225, class: 'flow__icon-shadow' }, hop);
       const img = el('image', { href: ic.src, x, y, width: I.size, height: I.size, 'clip-path': `url(#${id})`, preserveAspectRatio: 'xMidYMid slice' }, hop);
-      img.setAttribute('aria-label', ic.label);
       icons.push(g);
       hops.push(hop);
     });

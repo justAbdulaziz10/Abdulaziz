@@ -62,14 +62,14 @@ function cardHTML(c, i) {
   const [x0, y0, x1] = c.crop;
   const wPct = (924 / (x1 - x0)) * 100;
   const tx = (x0 / 924) * 100, ty = (y0 / 2000) * 100;
-  return `<figure class="echo__card${c.k === 0 ? ' echo__card--hero' : ''}" style="--k:${c.k}" role="button" tabindex="${c.k === 0 ? 0 : -1}" aria-describedby="echo-keys">
+  return `<div class="echo__card${c.k === 0 ? ' echo__card--hero' : ''}" style="--k:${c.k}" role="button" tabindex="${c.k === 0 ? 0 : -1}" aria-describedby="echo-keys">
     <div class="echo__photo">
       <img src="${IMG}${c.file}.webp" alt="${c.alt}" width="1284" height="2778" decoding="async" ${c.k === 0 ? '' : 'loading="lazy"'}
         style="width:${wPct.toFixed(3)}%;transform:translate(-${tx.toFixed(3)}%,-${ty.toFixed(3)}%)">
       <span class="echo__light" aria-hidden="true"></span>
     </div>
-    <figcaption class="echo__cap" aria-hidden="true"><span class="echo__play"></span>${bars(11 + i * 7)}</figcaption>
-  </figure>`;
+    <div class="echo__cap" aria-hidden="true"><span class="echo__play"></span>${bars(11 + i * 7)}</div>
+  </div>`;
 }
 
 function el(tag, attrs = {}, parent) {

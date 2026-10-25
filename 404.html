@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found · Abdulaziz Alkhlaiwe</title>
+<meta name="robots" content="noindex">
+<base href="/Abdulaziz/">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/site.css">
+<style>
+  .lost { min-height: 100svh; display: grid; align-content: center; gap: var(--s-3); padding: var(--s-5) var(--gutter, 6vw); }
+  .lost__sign { width: min(520px, 80vw); height: auto; overflow: visible; }
+  .lost__sign path { fill: none; stroke: var(--line, currentColor); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; animation: lost-draw 2.4s var(--ease, ease) .2s forwards; }
+  .lost__sign circle { fill: var(--line, currentColor); opacity: 0; animation: lost-dot .2s linear 2.6s forwards; }
+  .lost h1 { font-size: var(--step-3); line-height: 1.05; letter-spacing: -.02em; max-width: 18ch; }
+  @keyframes lost-draw { to { stroke-dashoffset: 0; } }
+  @keyframes lost-dot { to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .lost__sign path { animation: none; stroke-dashoffset: 0; }
+    .lost__sign circle { animation: none; opacity: 1; }
+  }
+</style>
+</head>
+<body data-world="paper">
+<main class="lost">
+  <svg class="lost__sign" aria-hidden="true" focusable="false"><path pathLength="1"></path><circle r="2.6"></circle></svg>
+  <h1>This page is not on the line.</h1>
+  <p><a class="link" href="./">Back to the start</a></p>
+</main>
+<script type="module">
+  import { signature, toD } from './scenes/sign.js';
+  const s = signature(), svg = document.querySelector('.lost__sign');
+  const m = p => ({ x: p.x - s.box.x0, y: p.y - s.box.y0 });
+  svg.setAttribute('viewBox', `0 0 ${s.box.x1 - s.box.x0} ${s.box.y1 - s.box.y0}`);
+  svg.querySelector('path').setAttribute('d', toD(s.segs, m));
+  const c = svg.querySelector('circle'), d = m(s.dot);
+  c.setAttribute('cx', d.x.toFixed(2)); c.setAttribute('cy', d.y.toFixed(2));
+</script>
+</body>
+</html>

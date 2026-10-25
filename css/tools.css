@@ -1,0 +1,88 @@
+/* The record sleeve's liner notes. */
+.notes { margin-top: var(--s-5); }
+.notes__title { margin-bottom: var(--s-3); }
+.notes__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--s-4) var(--s-3);
+}
+.notes__group h3 {
+  margin-bottom: .45rem;
+  color: var(--fg-3);
+  font-size: var(--step-0);
+  font-weight: 650;
+  line-height: 1.3;
+}
+.tool {
+  display: grid;
+  grid-template-columns: 1em minmax(0, 1fr);
+  column-gap: .55rem;
+  align-items: start;
+  padding: .75rem 0 1rem;
+  border-bottom: 1px solid var(--rule-c);
+  transition: opacity var(--t-state) var(--ease);
+}
+.tool__glyph {
+  grid-column: 1;
+  grid-row: 1;
+  inline-size: 1em;
+  block-size: 1em;
+  margin-top: .16em;
+  fill: currentColor;
+}
+.tool__name {
+  grid-column: 2;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: var(--step-0);
+  font-weight: 620;
+  line-height: 1.3;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tool__name:disabled {
+  opacity: 1;
+  color: var(--fg);
+  cursor: text;
+}
+.tool__name:focus-visible {
+  outline: 2px solid var(--line);
+  outline-offset: 3px;
+  border-radius: 0;
+}
+.tool__projects {
+  grid-column: 2;
+  color: var(--fg-2);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+.tool__projects a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+}
+.tool__projects a:hover,
+.tool__projects a:focus-visible { color: var(--fg); }
+.tool.is-lit,
+.more__list.tracks .track.is-lit { opacity: 1; }
+.notes__groups.is-dim .tool:not(.is-lit),
+.more__list.tracks.is-dim .track:not(.is-lit) { opacity: .35; }
+.more__list.tracks .track { transition: opacity var(--t-state) var(--ease); }
+
+@media (max-width: 560px) {
+  .notes__groups { grid-template-columns: 1fr; }
+  .tool { padding: .55rem 0 .65rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notes *,
+  .more__list.tracks .track,
+  .more__list.tracks .track * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

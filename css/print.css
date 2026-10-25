@@ -315,6 +315,10 @@
     break-inside: avoid;
   }
 
+  .notes {
+    display: none !important;
+  }
+
   /* Keep only the back-of-record list. */
   .more__grid {
     display: block;
@@ -371,7 +375,8 @@
     page-break-inside: avoid;
   }
 
-  .track__no {
+  .track__no,
+  .track__icon {
     display: none;
   }
 

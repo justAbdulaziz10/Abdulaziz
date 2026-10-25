@@ -94,3 +94,67 @@
   --sh: color-mix(in oklab, var(--carton-dark) 45%, var(--ink)); --shf: var(--ink);
   --hr: color-mix(in oklab, var(--carton-dark) 30%, var(--ink));
 }
+
+/* ---- walk again */
+.scene--abbey .ab-figs { transition: opacity var(--t-layout) var(--ease); }
+.scene--abbey .ab-figs.is-out { opacity: 0; transition-duration: var(--t-fast); }
+.scene--abbey .ab-beetle { transition: opacity var(--t-layout) var(--ease); }
+.scene--abbey .is-instant { transition: none; }
+
+.scene--abbey .ab-play {
+  position: absolute;
+  inset: var(--ab-top, 0) 0 var(--ab-bot, 0);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.scene--abbey .ab-play:focus { outline: none; }
+.scene--abbey .ab-play:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.scene--abbey .ab-play-label {
+  position: absolute;
+  right: 2.2%;
+  top: 3.2%;
+  padding: 0.45em 0.95em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--zebra);
+  font: 600 var(--step--1) / 1 var(--font);
+  font-stretch: 108%;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--t-state) var(--ease), transform var(--t-state) var(--ease);
+  pointer-events: none;
+}
+.scene--abbey .ab-play:focus-visible .ab-play-label { opacity: 1; transform: none; }
+.scene--abbey .ab-hint {
+  position: absolute;
+  left: 2.2%;
+  top: calc(var(--ab-top, 5%) + 2.2%);
+  margin: 0;
+  color: var(--ink-2);
+  font: 600 var(--step--1) / 1 var(--font);
+  font-stretch: 104%;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transition: opacity var(--t-layout) var(--ease), transform var(--t-layout) var(--ease);
+}
+.scene--abbey .ab-hint::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.6em;
+  border-radius: 50%;
+  background: var(--echo);
+  vertical-align: 0.08em;
+}
+.scene--abbey .ab-hint.is-gone { opacity: 0; transform: translateY(-4px); }
+.scene--abbey.ab-reduced .ab-figs,
+.scene--abbey.ab-reduced .ab-beetle,
+.scene--abbey.ab-reduced .ab-hint,
+.scene--abbey.ab-reduced .ab-play-label { transition: none; }

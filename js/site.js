@@ -45,11 +45,11 @@ document.querySelectorAll('.shot, .progress, .contact').forEach(el => revealIO.o
 /* count-up for the year number */
 const counter = document.querySelector('[data-count]');
 if (counter && !reduced) {
-  const target = +counter.dataset.count;
   const fmt = new Intl.NumberFormat('en-US');
   const io = new IntersectionObserver(([e]) => {
     if (!e.isIntersecting) return;
     io.disconnect();
+    const target = +counter.dataset.count; // read late: js/live.js may have refreshed it
     const t0 = performance.now(), dur = 1400;
     const tick = (t) => {
       const k = clamp((t - t0) / dur);
@@ -129,7 +129,7 @@ thread.setAttribute('aria-hidden', 'true');
 document.querySelector('main').prepend(thread);
 let connectors = []; // { path, y0, y1 }
 
-const obstacleSel = '.project__text, .section-title, .year__title, .year__sub, .off__caption, .exp__lead, .timeline, .more__list, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .shot';
+const obstacleSel = '.project__text, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .shot';
 
 function anchorsOf(rec) {
   const r = rec.el.getBoundingClientRect();
@@ -149,9 +149,13 @@ function blocked(x, y0, y1, rects) {
 }
 
 function route(E, N, rects, laneX) {
+  const hHit = (y, xa, xb) => rects.find(q => y > q.t - 12 && y < q.b + 12 && Math.max(xa, xb) > q.l - 12 && Math.min(xa, xb) < q.r + 12);
   // ending in the lane itself: run down the lane and turn into the target from the side
   if (Math.abs(N.x - laneX) < 1 && N.tail) {
-    const t = 14, y1 = E.y + Math.min(56, (N.y - E.y) / 5), d1 = Math.sign(laneX - E.x) || -1, r1 = Math.max(4, Math.min(40, Math.abs(laneX - E.x) / 2));
+    const t = 14, d1 = Math.sign(laneX - E.x) || -1;
+    let r1 = Math.max(4, Math.min(40, Math.abs(laneX - E.x) / 2)), y1 = E.y + Math.min(56, (N.y - E.y) / 5), q;
+    // text right under the exit: turn early, halfway into the gap, with a tighter bend
+    if ((q = hHit(y1, E.x, laneX))) { y1 = (E.y + q.t) / 2; r1 = Math.max(4, Math.min(r1, y1 - E.y)); }
     const head = Math.abs(laneX - E.x) < 1 ? `M${E.x} ${E.y}` : `M${E.x} ${E.y}V${y1 - r1}Q${E.x} ${y1} ${E.x + d1 * r1} ${y1}H${laneX - d1 * r1}Q${laneX} ${y1} ${laneX} ${y1 + r1}`;
     return `${head}V${N.y - t}Q${laneX} ${N.y} ${laneX + t} ${N.y}H${N.tail}`;
   }
@@ -166,7 +170,6 @@ function route(E, N, rects, laneX) {
   }
   // route through the margin lane, clear of text; the two horizontal legs slide until they miss every block
   const rr = Math.max(4, Math.min(40, (N.y - E.y) / 6, Math.abs(N.x - laneX) / 2 || 40, Math.abs(laneX - E.x) / 2 || 40));
-  const hHit = (y, xa, xb) => rects.find(q => y > q.t - 12 && y < q.b + 12 && Math.max(xa, xb) > q.l - 12 && Math.min(xa, xb) < q.r + 12);
   let y1 = E.y + Math.min(56, (N.y - E.y) / 5), y2 = N.y - Math.min(56, (N.y - E.y) / 5), q;
   for (let i = 0; i < 6 && (q = hHit(y1, E.x, laneX)); i++) y1 = Math.max(E.y + rr, q.t - 16);
   for (let i = 0; i < 6 && (q = hHit(y2, laneX, N.x)); i++) y2 = Math.min(N.y - rr, q.b + 16);

@@ -40,6 +40,7 @@
 
   <!-- HERO -->
   <section class="hero" id="hero" data-world="paper" aria-labelledby="hero-name">
+    <svg class="hero__sign" aria-hidden="true" focusable="false"></svg>
     <div class="wrap hero__inner">
       <p class="hero__role">AI Product &amp; Systems</p>
       <h1 class="hero__name" id="hero-name" aria-label="Abdulaziz Alkhlaiwe">
@@ -47,6 +48,7 @@
         <span class="hero__line" aria-hidden="true">Alkhlaiwe</span>
       </h1>
       <div class="hero__foot">
+        <div class="hero__seat" aria-hidden="true"></div>
         <p class="hero__statement">I turn user and business problems into requirements, system workflows, API integrations and shipped products.</p>
         <div class="hero__meta">
           <p>Computer Information Systems, King Saud University. Riyadh.</p>
@@ -67,8 +69,8 @@
   <!-- THE YEAR -->
   <section class="year" id="year" data-world="paper" aria-labelledby="year-title">
     <div class="wrap">
-      <h2 class="year__title" id="year-title"><span class="num" data-count="6339">6,339</span> contributions in the last year</h2>
-      <p class="year__sub">Every point is a week on GitHub, from 26 October 2025 to 25 October 2026. 298 active days, and a run of 76 days in a row that is still going.</p>
+      <h2 class="year__title" id="year-title"><span class="num" data-count="6341" data-live="github.total">6,341</span> contributions in the last year</h2>
+      <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">25 October 2026</span>. <span data-live="github.activeDays">298</span> active days, and a run of <span data-live="github.streak">76</span> days in a row that is still going.</p>
       <div class="scene-slot" data-scene="year"></div>
     </div>
   </section>
@@ -100,7 +102,7 @@
           <p class="project__kind">A 0-to-1, privacy-first photo-memory app for iPhone.</p>
           <dl class="project__facts">
             <div><dt>What I did</dt><dd>Product development, UX, monetization, analytics and release management.</dd></div>
-            <div><dt>Outcome</dt><dd><strong>1,200</strong> weekly users. Rated <strong>4.8</strong> on the App Store, in <strong>37</strong> languages, now on version 1.44.</dd></div>
+            <div><dt>Outcome</dt><dd><strong>1,200</strong> weekly users. Rated <strong data-live="apps.echo.rating">4.8</strong> on the App Store, in <strong data-live="apps.echo.languages">37</strong> languages, now on version <span data-live="apps.echo.version">1.44</span>.</dd></div>
           </dl>
           <p class="project__links"><a class="link" href="https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634" target="_blank" rel="noopener noreferrer">Echo on the App Store</a></p>
         </div>
@@ -151,6 +153,7 @@
             <div><dt>Inside</dt><dd>Live timing, standings, driver comparisons, track maps and every season from 2023 to 2026.</dd></div>
             <div><dt>Why</dt><dd>I follow Formula 1 closely enough to build my own timing screen.</dd></div>
           </dl>
+          <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name"></span> <time class="race__clock"></time></p>
           <p class="project__links"><a class="link" href="https://f1-xi-weld.vercel.app" target="_blank" rel="noopener noreferrer">Open Pit Lane Hub</a><a class="link" href="https://github.com/justAbdulaziz10/Pit-Lane-Hub" target="_blank" rel="noopener noreferrer">Source</a></p>
         </div>
         <div class="project__scene project__scene--wide"><div class="scene-slot" data-scene="circuit"></div></div>
@@ -164,32 +167,54 @@
 
   </div>
 
-  <!-- MORE WORK -->
+  <!-- MORE WORK: a record and the back of its sleeve -->
   <section class="more" id="more" data-world="paper" aria-labelledby="more-title">
-    <div class="wrap">
-      <h2 class="section-title" id="more-title">More work</h2>
-      <ul class="more__list">
-        <li><a href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer"><span class="more__name">DocMara</span><span class="more__desc">Scan, compress, convert, organise and sign files on device, in Arabic and English. iPhone, iPad and Mac. Rated 4.2.</span><span class="more__year">2026</span></a></li>
-        <li><a href="https://github.com/justAbdulaziz10/Halo" target="_blank" rel="noopener noreferrer"><span class="more__name">Halo</span><span class="more__desc">An open-source AI inbox agent: a morning briefing, replies drafted in your tone and rules that act on their own.</span><span class="more__year">2026</span></a></li>
-        <li><a href="https://github.com/justAbdulaziz10/ObsessionSystem" target="_blank" rel="noopener noreferrer"><span class="more__name">ObsessionSystem</span><span class="more__desc">Rules, skills and a delivery gate that make an AI coding agent prove its work before anything ships.</span><span class="more__year">2026</span></a></li>
-        <li><a href="https://github.com/justAbdulaziz10/Deadware-Risk-Scanner" target="_blank" rel="noopener noreferrer"><span class="more__name">Deadware Risk Scanner</span><span class="more__desc">Finds abandoned and unmaintained open-source packages in dependency files before they break a build.</span><span class="more__year">2026</span></a></li>
-        <li><a href="https://github.com/justAbdulaziz10/photo-manager" target="_blank" rel="noopener noreferrer"><span class="more__name">Photo Manager</span><span class="more__desc">Tag-based photo albums on hand-written data structures, for CSC 212 at King Saud University.</span><span class="more__year">2025</span></a></li>
-      </ul>
+    <div class="wrap more__grid">
+      <div class="more__record"><div class="scene-slot" data-scene="tracklist"></div></div>
+      <div class="sleeve">
+        <p class="sleeve__artist">Abdulaziz Alkhlaiwe</p>
+        <h2 class="section-title sleeve__title" id="more-title">The full record</h2>
+        <div class="sleeve__sides">
+          <div class="side">
+            <h3 class="side__name" id="side-a">Side A</h3>
+            <ol class="more__list tracks" aria-labelledby="side-a">
+              <li><a class="track" href="#mara" data-track="A1" data-tone="mara"><span class="track__no" aria-hidden="true">A1</span><span class="track__name">Mara</span><span class="track__year">2025</span><span class="track__desc">An AI-powered health and wellness platform.</span></a></li>
+              <li><a class="track" href="#echo" data-track="A2" data-tone="echo"><span class="track__no" aria-hidden="true">A2</span><span class="track__name">Echo</span><span class="track__year">2026</span><span class="track__desc">A 0-to-1, privacy-first photo-memory app for iPhone.</span></a></li>
+              <li><a class="track" href="#daleelk" data-track="A3" data-tone="daleelk"><span class="track__no" aria-hidden="true">A3</span><span class="track__name">Daleelk</span><span class="track__desc">An AI-powered travel platform for the Gulf.</span></a></li>
+              <li><a class="track" href="#rassah" data-track="A4" data-tone="rassah"><span class="track__no" aria-hidden="true">A4</span><span class="track__name">Rassah</span><span class="track__year">2026</span><span class="track__desc">An AI packing assistant for Saudi online stores.</span></a></li>
+              <li><a class="track" href="#pitlane" data-track="A5" data-tone="pitlane"><span class="track__no" aria-hidden="true">A5</span><span class="track__name">Pit Lane Hub</span><span class="track__desc">Live Formula 1, F2 and F3 data. Free and open source.</span></a></li>
+            </ol>
+          </div>
+          <div class="side">
+            <h3 class="side__name" id="side-b">Side B</h3>
+            <ol class="more__list tracks" aria-labelledby="side-b">
+              <li><a class="track" href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer" data-track="B1"><span class="track__no" aria-hidden="true">B1</span><span class="track__name">DocMara</span><span class="track__year">2026</span><span class="track__desc">Scan, compress, convert, organise and sign files on device, in Arabic and English. iPhone, iPad and Mac. Rated 4.2.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/Halo" target="_blank" rel="noopener noreferrer" data-track="B2"><span class="track__no" aria-hidden="true">B2</span><span class="track__name">Halo</span><span class="track__year">2026</span><span class="track__desc">An open-source AI inbox agent: a morning briefing, replies drafted in your tone and rules that act on their own.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/ObsessionSystem" target="_blank" rel="noopener noreferrer" data-track="B3"><span class="track__no" aria-hidden="true">B3</span><span class="track__name">ObsessionSystem</span><span class="track__year">2026</span><span class="track__desc">Rules, skills and a delivery gate that make an AI coding agent prove its work before anything ships.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/Deadware-Risk-Scanner" target="_blank" rel="noopener noreferrer" data-track="B4"><span class="track__no" aria-hidden="true">B4</span><span class="track__name">Deadware Risk Scanner</span><span class="track__year">2026</span><span class="track__desc">Finds abandoned and unmaintained open-source packages in dependency files before they break a build.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/photo-manager" target="_blank" rel="noopener noreferrer" data-track="B5"><span class="track__no" aria-hidden="true">B5</span><span class="track__name">Photo Manager</span><span class="track__year">2025</span><span class="track__desc">Tag-based photo albums on hand-written data structures, for CSC 212 at King Saud University.</span></a></li>
+            </ol>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- EXPERIENCE -->
+  <!-- EXPERIENCE: a line map -->
   <section class="experience" id="experience" data-world="paper" aria-labelledby="exp-title">
-    <div class="wrap exp__grid">
+    <div class="wrap">
       <div class="exp__lead">
         <h2 class="section-title" id="exp-title">Experience and education</h2>
         <p class="exp__summary">Computer Information Systems graduate focused on AI-powered products, technical product development and digital systems. I have built and shipped products across AI workflows, analytics, UX, monetization, QA and system integration.</p>
       </div>
-      <ol class="timeline">
-        <li><time>Jun – Sep 2026</time><h3>Digital Systems &amp; Business Analysis Co-op Trainee</h3><p class="timeline__org">Air Connectivity Program</p><p>QA testing, system reviews, issue analysis and technical documentation. Analyzed operational data and IT processes, reviewed system requirements, and worked across governance, cybersecurity, networking and digital systems.</p></li>
-        <li><time>2026</time><h3>Shipped Echo, DocMara and Rassah</h3><p>Echo reached the App Store in June, DocMara in July, and Rassah was built in two days in October.</p></li>
-        <li><time>2025</time><h3>Started building Mara</h3><p>Took it through Misk Launchpad Cohort 9 and a private beta of 38 users.</p></li>
-        <li><time>2022 – 2026</time><h3>B.Sc. in Computer Information Systems</h3><p class="timeline__org">King Saud University</p></li>
+      <div class="scene-slot" data-scene="tube"></div>
+      <ol class="tube__list">
+        <li data-key="edu" data-line="edu" data-name="King Saud University" data-when="2022" data-end-name="B.Sc. Computer Information Systems" data-end-when="2026"><time>2022 – 2026</time> <h3>King Saud University</h3> <p>B.Sc. Computer Information Systems</p></li>
+        <li data-key="mara" data-line="prod" data-name="Mara" data-when="2025"><time>2025</time> <h3>Started building Mara</h3> <p>Misk Launchpad Cohort 9; private beta of 38 users.</p></li>
+        <li data-key="echo" data-line="prod" data-name="Echo" data-when="Jun 2026"><time datetime="2026-06">June 2026</time> <h3>Echo on the App Store</h3></li>
+        <li data-key="coop" data-line="work" data-name="Air Connectivity Program" data-when="Jun – Sep 2026"><time>Jun – Sep 2026</time> <h3>Digital Systems &amp; Business Analysis Co-op Trainee</h3> <p class="tube__org">Air Connectivity Program</p> <p>QA testing, system reviews, issue analysis and technical documentation.</p></li>
+        <li data-key="docmara" data-line="prod" data-name="DocMara" data-when="Jul 2026"><time datetime="2026-07">July 2026</time> <h3>DocMara on the App Store</h3></li>
+        <li data-key="rassah" data-line="prod" data-name="Rassah" data-when="Oct 2026"><time datetime="2026-10">October 2026</time> <h3>Rassah</h3> <p>Built in two days in Tuwaiq Academy's AI product programme.</p></li>
       </ol>
     </div>
   </section>
@@ -248,7 +273,10 @@
       <div class="off__item">
         <p class="off__caption">And most evenings end with a film. These are the four I keep coming back to.</p>
         <div class="scene-slot" data-scene="window"></div>
-        <p class="off__link"><a class="link" href="https://letterboxd.com/notabdulaziz/" target="_blank" rel="noopener noreferrer">Letterboxd</a></p>
+        <div class="off__meta">
+          <p class="off__latest" data-latest hidden>Last watched: <a class="link" href="https://letterboxd.com/notabdulaziz/" target="_blank" rel="noopener noreferrer"></a><span class="off__stars"></span></p>
+          <p class="off__link"><a class="link" href="https://letterboxd.com/notabdulaziz/" target="_blank" rel="noopener noreferrer">Letterboxd</a></p>
+        </div>
       </div>
     </div>
   </section>
@@ -281,5 +309,7 @@
 </footer>
 
 <script type="module" src="js/site.js"></script>
+<script type="module" src="js/live.js"></script>
+<script type="module" src="js/eggs.js"></script>
 </body>
 </html>

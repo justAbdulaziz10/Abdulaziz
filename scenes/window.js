@@ -10,10 +10,10 @@ const seg = (p, a, b) => clamp((p - a) / (b - a));
 const f1 = (n) => Math.round(n * 10) / 10;
 
 const FILMS = [
-  { title: ['Rear Window'], year: '1954', icon: 'lens' },
-  { title: ['The Beatles:', 'Get Back'], year: '2021', icon: 'roof' },
-  { title: ['Begin Again'], year: '2013', icon: 'guitar' },
-  { title: ['La La Land'], year: '2016', icon: 'lamp' },
+  { title: ['Rear Window'], year: '1954', icon: 'lens', dir: 'Alfred Hitchcock' },
+  { title: ['The Beatles:', 'Get Back'], year: '2021', icon: 'roof', dir: 'Peter Jackson' },
+  { title: ['Begin Again'], year: '2013', icon: 'guitar', dir: 'John Carney' },
+  { title: ['La La Land'], year: '2016', icon: 'lamp', dir: 'Damien Chazelle' },
 ];
 
 const LAYOUTS = {
@@ -66,22 +66,189 @@ const LAYOUTS = {
 
 let uid = 0;
 
+const HINT_KEY = 'one:window:tapped';
+
 export function mount(root, { reduced = false } = {}) {
   let mode = null;
   let scene = null;
   let lastP = reduced ? 0.6 : 0;
+  root.classList.toggle('wn-reduced', reduced);
+  const pid = `wnp${++uid}`;
+  let films = '1,657'; // instant fallback; replaced by the live count when it arrives
+  let dead = false;
+
+  // ---- persistent overlay: hint, scrim, poster dialog
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const hint = el('p', 'wn-hint', fine ? 'Click a window' : 'Tap a window');
+  hint.setAttribute('aria-hidden', 'true');
+  let seen = false;
+  try { seen = localStorage.getItem(HINT_KEY) === '1'; } catch { /* storage blocked */ }
+  if (seen) hint.hidden = true;
+  const scrim = el('div', 'wn-scrim');
+  scrim.hidden = true;
+  const pop = el('div', 'wn-pop');
+  pop.hidden = true;
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-labelledby', `${pid}-t`);
+  pop.innerHTML = `
+    <figure class="wn-poster">
+      <svg class="wn-art" viewBox="0 0 240 210" aria-hidden="true"></svg>
+      <figcaption class="wn-cap">
+        <h3 class="wn-pt" id="${pid}-t"></h3>
+        <p class="wn-py"></p>
+        <p class="wn-pd"><span>Directed by</span> <b></b></p>
+      </figcaption>
+    </figure>
+    <button type="button" class="wn-close" aria-label="Close">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5,5 L15,15 M15,5 L5,15"/></svg>
+    </button>`;
+  const art = pop.querySelector('.wn-art');
+  const closeBtn = pop.querySelector('.wn-close');
+  let layer = null; // per-layout buttons
+  let open = null; // { film, btn, key }
+  let hideTimer = 0, suppress = null;
+
   const build = (m) => {
     mode = m;
+    if (open) closePoster(false, true);
     root.textContent = '';
-    scene = buildScene(root, LAYOUTS[m]);
+    scene = buildScene(root, LAYOUTS[m], films);
+    layer = buttons(scene);
+    root.append(layer, hint, scrim, pop);
+    const Lm = LAYOUTS[m];
+    root.style.setProperty('--wn-hint-y', `${(((Lm.ground + 28 + Lm.plate[3]) / 2 / Lm.Ht) * 100).toFixed(2)}%`);
     scene.update(lastP);
   };
+
+  function buttons(sc) {
+    const box = el('div', 'wn-hits');
+    const pct = (v, of) => `${((v / of) * 100).toFixed(3)}%`;
+    const place = (b, x, y, w, h) => Object.assign(b.style, { left: pct(x, sc.W), top: pct(y, sc.Ht), width: pct(w, sc.W), height: pct(h, sc.Ht) });
+    for (const f of sc.films) {
+      const F = FILMS[f.film];
+      const b = el('button', 'wn-hit');
+      b.type = 'button';
+      b.dataset.film = f.film;
+      b.dataset.key = f.key;
+      b.setAttribute('aria-label', `${F.title.join(' ')} (${F.year}), open poster`);
+      b.setAttribute('aria-haspopup', 'dialog');
+      place(b, f.x - 3, f.y - 3, f.w + 6, f.h + 6);
+      box.append(b);
+    }
+    const S = sc.sign;
+    const nb = el('button', 'wn-hit wn-hit--sign');
+    nb.type = 'button';
+    nb.dataset.sign = '1';
+    nb.setAttribute('aria-label', `${films} films logged on Letterboxd. Flicker the sign`);
+    place(nb, S.x0, S.y0, S.x1 - S.x0, S.y1 - S.y0);
+    box.append(nb);
+    return box;
+  }
+
+  const used = () => {
+    if (hint.hidden || hint.classList.contains('is-gone')) return;
+    hint.classList.add('is-gone');
+    try { localStorage.setItem(HINT_KEY, '1'); } catch { /* storage blocked */ }
+  };
+
+  function openPoster(filmIdx, btn) {
+    used();
+    const f = scene.films.find((q) => q.film === filmIdx);
+    const F = FILMS[filmIdx];
+    clearTimeout(hideTimer);
+    pop.dataset.kind = F.icon;
+    art.innerHTML = posterArt(F.icon);
+    pop.querySelector('.wn-pt').textContent = F.title.join(' ');
+    pop.querySelector('.wn-py').textContent = F.year;
+    pop.querySelector('.wn-pd b').textContent = F.dir;
+    // geometry (event time): the card grows out of its window and settles, tilted a touch, in the scene
+    pop.classList.remove('is-open');
+    scrim.classList.remove('is-open');
+    pop.hidden = false; scrim.hidden = false;
+    const r = root.getBoundingClientRect();
+    const k = r.width / scene.W;
+    const wx = (f.x + f.w / 2) * k, wy = (f.y + f.h / 2) * k;
+    const cw = pop.offsetWidth, ch = pop.offsetHeight, m = 12;
+    const cx = clamp(wx, cw / 2 + m, r.width - cw / 2 - m);
+    // keep the card inside the part of the scene that is actually on screen
+    const top = Math.max(0, -r.top), bot = Math.min(r.height, innerHeight - r.top);
+    const aim = (wy + (top + bot) / 2) / 2; // between the window and the middle of what's visible
+    const cy = bot - top > ch + 2 * m ? clamp(aim, top + ch / 2 + m, bot - ch / 2 - m) : clamp(wy, ch / 2 + m, r.height - ch / 2 - m);
+    pop.style.left = `${cx - cw / 2}px`;
+    pop.style.top = `${cy - ch / 2}px`;
+    pop.style.setProperty('--fx', `${(wx - cx).toFixed(1)}px`);
+    pop.style.setProperty('--fy', `${(wy - cy).toFixed(1)}px`);
+    pop.style.setProperty('--fs', ((f.w * k) / cw).toFixed(3));
+    pop.style.setProperty('--tilt', `${filmIdx % 2 ? 1.6 : -1.6}deg`);
+    void pop.offsetWidth; // commit the start state before transitioning
+    pop.classList.add('is-open');
+    scrim.classList.add('is-open');
+    scene.zoom(f.key, true);
+    open = { film: filmIdx, btn, key: f.key };
+    closeBtn.focus({ preventScroll: true });
+  }
+  function closePoster(refocus = true, instant = false) {
+    if (!open) return;
+    const { btn, key } = open;
+    open = null;
+    pop.classList.remove('is-open');
+    scrim.classList.remove('is-open');
+    scene.zoom(key, false);
+    clearTimeout(hideTimer);
+    const done = () => { pop.hidden = true; scrim.hidden = true; };
+    if (instant || reduced) done(); else hideTimer = setTimeout(done, 260);
+    if (refocus && btn && btn.isConnected) btn.focus({ preventScroll: true });
+  }
+
+  // ---- input: one delegated click handler; pointer, touch and keyboard (Enter/Space on buttons) all land here
+  function onClick(e) {
+    const t = e.target;
+    if (t.closest('.wn-close')) return closePoster();
+    if (t.closest('.wn-pop')) return;
+    const fb = t.closest('[data-film]');
+    if (fb) {
+      if (suppress === fb && performance.now() - suppress.at < 450) { suppress = null; return; }
+      return openPoster(+fb.dataset.film, fb);
+    }
+    if (t.closest('[data-sign]')) { used(); return scene.flicker(); }
+    const win = t.closest('.wn-win');
+    if (win && scene.svg.contains(win)) { used(); scene.toggle(win.dataset.win); }
+  }
+  function onDown(e) { // tap outside closes (anywhere outside the card, scene or page)
+    if (!open || pop.contains(e.target)) return;
+    const fb = e.target.closest && e.target.closest('[data-film]');
+    if (fb && fb === open.btn) { suppress = fb; suppress.at = performance.now(); }
+    closePoster(!fb);
+  }
+  function onKey(e) {
+    if (!open) return;
+    if (e.key === 'Escape') { e.preventDefault(); closePoster(); }
+    else if (e.key === 'Tab') { e.preventDefault(); closeBtn.focus(); } // the card holds one control
+  }
+  root.addEventListener('click', onClick);
+  document.addEventListener('pointerdown', onDown, true);
+
+  // live Letterboxd count (once per mount); the fallback stays if anything fails
+  fetch(new URL('../assets/data/live.json', import.meta.url))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      const n = data && data.letterboxd && Number(data.letterboxd.films);
+      if (dead || !Number.isFinite(n) || n <= 0) return;
+      films = new Intl.NumberFormat('en-US').format(Math.round(n));
+      scene.setFilms(films);
+      const nb = layer && layer.querySelector('[data-sign]');
+      if (nb) nb.setAttribute('aria-label', `${films} films logged on Letterboxd. Flicker the sign`);
+    })
+    .catch(() => { /* offline or missing: keep the fallback */ });
+  document.addEventListener('keydown', onKey);
+
   const pick = (w) => (w > 0 && w < 640 ? 'tall' : 'wide');
   build(pick(root.clientWidth || 1200));
   const ro = new ResizeObserver((entries) => {
     const w = entries[0].contentRect.width;
     const m = pick(w);
     if (m !== mode) build(m);
+    else if (open) closePoster(false, true);
     scene.scaleTo(w);
   });
   ro.observe(root);
@@ -92,10 +259,22 @@ export function mount(root, { reduced = false } = {}) {
       scene.update(p);
     },
     destroy() {
+      dead = true;
       ro.disconnect();
+      clearTimeout(hideTimer);
+      root.removeEventListener('click', onClick);
+      document.removeEventListener('pointerdown', onDown, true);
+      document.removeEventListener('keydown', onKey);
       root.textContent = '';
     },
   };
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  e.className = cls;
+  if (text) e.textContent = text;
+  return e;
 }
 
 function icon(kind) {
@@ -130,12 +309,73 @@ function icon(kind) {
   }
   return '';
 }
+// Poster art for the pop-out card: same flat language as the window icons, drawn bigger (viewBox 240 x 210).
+function posterArt(kind) {
+  const grid = (x0, y0, cols, rows, w, h, gx, gy, litAt = -1) => {
+    let r = '';
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const lit = j * cols + i === litAt;
+      r += `<rect class="${lit ? 'wp-lit' : 'wp-faint'}" x="${x0 + i * (w + gx)}" y="${y0 + j * (h + gy)}" width="${w}" height="${h}" rx="1"/>`;
+    }
+    return r;
+  };
+  switch (kind) {
+    case 'lens': // the facade across the courtyard, and the long lens watching it
+      return `${grid(26, 18, 5, 3, 26, 30, 12, 12, 8)}
+        <rect class="wp-faint" x="0" y="148" width="240" height="62"/>
+        <g class="wp-ink">
+          <path d="M36,118 h16 l7,-12 h24 l7,12 h8 v54 h-62 Z"/>
+          <rect x="98" y="126" width="74" height="38" rx="4"/>
+          <rect x="170" y="117" width="16" height="56" rx="3"/>
+          <path d="M186,121 L222,111 V179 L186,169 Z"/>
+          <rect x="42" y="110" width="12" height="6" rx="2"/>
+        </g>
+        <circle class="wp-warm" cx="61" cy="144" r="12"/><circle class="wp-ink" cx="61" cy="144" r="5"/>
+        <path class="wp-hi" d="M212,122 L212,138"/>`;
+    case 'roof': // a rooftop at lunchtime: parapet, chimney pots, a mic stand, an amp, the wind
+      return `<path class="wp-faint" d="M0,150 V122 h22 v-14 h16 v14 h30 v-24 h12 v24 h40 v-10 h26 v10 h44 v-18 h14 v18 h36 V150 Z"/>
+        <path class="wp-wind" d="M18,40 C60,30 92,48 140,36 M60,64 C96,56 128,70 176,58 M118,24 C150,18 178,28 214,20"/>
+        <g class="wp-ink">
+          <rect x="0" y="166" width="240" height="44"/>
+          <rect x="0" y="158" width="240" height="10" rx="2"/>
+          <rect x="22" y="100" width="34" height="58"/>
+          <rect x="24" y="86" width="10" height="16" rx="2"/><rect x="42" y="86" width="10" height="16" rx="2"/>
+          <rect x="114" y="74" width="10" height="20" rx="5"/>
+          <rect x="162" y="112" width="48" height="46" rx="4"/>
+        </g>
+        <path class="wp-stroke" d="M119,94 V158 M108,158 L119,146 L130,158"/>
+        <rect class="wp-warm" x="169" y="120" width="34" height="24" rx="3"/>
+        <path class="wp-grille" d="M169,126 H203 M169,132 H203 M169,138 H203"/>`;
+    case 'guitar': // a guitar leaning into the city at night
+      return `<path class="wp-faint" d="M0,210 V150 h18 v-26 h20 v26 h12 v-48 h24 v48 h18 v-20 h16 v20 h22 v-62 h26 v62 h14 v-30 h20 v30 h20 v-14 h30 V210 Z"/>
+        <circle class="wp-warm-soft" cx="196" cy="42" r="16"/>
+        <g transform="translate(112,112) rotate(-38)">
+          <g class="wp-ink">
+            <circle cx="0" cy="30" r="34"/><circle cx="0" cy="-12" r="25"/>
+            <rect x="-6.5" y="-88" width="13" height="70" rx="2"/>
+            <rect x="-10.5" y="-110" width="21" height="26" rx="4"/>
+          </g>
+          <circle class="wp-warm" cx="0" cy="12" r="10"/>
+          <rect class="wp-warm" x="-11" y="40" width="22" height="4" rx="1.5"/>
+          <path class="wp-strings" d="M-3,-86 V42 M0,-86 V42 M3,-86 V42"/>
+        </g>`;
+    case 'lamp': // a lamp post on the hill above the city, under a sky full of stars
+      return `<g class="wp-star">${star(30, 34, 9)}${star(178, 22, 7)}${star(212, 64, 5)}${star(70, 74, 5)}${star(128, 46, 4)}${star(22, 110, 4)}</g>
+        <circle class="wp-glow" cx="150" cy="74" r="34"/><circle class="wp-glow" cx="150" cy="76" r="22"/><circle class="wp-glow wp-glow--core" cx="150" cy="78" r="12"/>
+        <path class="wp-ink" d="M0,210 V164 C40,150 80,140 126,142 C170,144 206,154 240,166 V210 Z"/>
+        <g class="wp-dots">${Array.from({ length: 14 }, (_, i) => `<circle cx="${10 + i * 17}" cy="${196 + (i % 3) * 4}" r="1.6"/>`).join('')}</g>
+        <path class="wp-stroke" d="M150,142 V80 M140,92 H160"/>
+        <g class="wp-ink"><path d="M142,62 H158 L155,80 H145 Z"/><rect x="144" y="56" width="12" height="7" rx="2"/></g>
+        <path class="wp-warm" d="M145,80 H155 L157,86 H143 Z"/>`;
+  }
+  return '';
+}
 function star(x, y, r) {
   const k = r * 0.32;
   return `<path d="M${x},${y - r} L${f1(x + k)},${f1(y - k)} L${x + r},${y} L${f1(x + k)},${f1(y + k)} L${x},${y + r} L${f1(x - k)},${f1(y + k)} L${x - r},${y} L${f1(x - k)},${f1(y - k)} Z"/>`;
 }
 
-function buildScene(root, L) {
+function buildScene(root, L, count = '1,657') {
   const id = `wn${++uid}`;
   const { W, Ht, cx, B } = L;
   const G = L.ground;
@@ -201,28 +441,50 @@ function buildScene(root, L) {
   };
 
   const winSvg = wins
-    .map((w) => {
+    .map((w, wi) => {
       const spec = L.lights[w.key] || null;
       const ry = f1(w.h * L.rail);
+      const film = spec && spec.film !== undefined;
       const lit = spec
-        ? `<g class="wn-lit" data-lit="${w.key}" style="opacity:0">
+        ? `<g class="wn-off"><g class="wn-lit" data-lit="${w.key}" style="opacity:0">
             <rect class="wn-glow" x="-6" y="-6" width="${w.w + 12}" height="${w.h + 12}" rx="6" filter="url(#${id}-glow)"/>
             <rect class="wn-warmfill" width="${w.w}" height="${w.h}" fill="url(#${id}-warm)"/>
             ${spec.blind ? blind(w, spec.blind) : ''}
-          </g>`
+          </g></g>`
         : '';
-      const card = spec && spec.film !== undefined ? filmCard(FILMS[spec.film], w, ry, w.key) : '';
-      return `<g class="wn-win" data-win="${w.key}" transform="translate(${w.x},${w.y})">
+      // a light someone switches on when you tap: a lamp, a neighbour, a blind — a little life
+      const user = film ? '' : `<g class="wn-user">
+            <rect class="wn-glow" x="-6" y="-6" width="${w.w + 12}" height="${w.h + 12}" rx="6" filter="url(#${id}-glow)"/>
+            <rect class="wn-warmfill" width="${w.w}" height="${w.h}" fill="url(#${id}-warm)"/>
+            ${life(w, wi % 3)}
+          </g>`;
+      const card = film ? filmCard(FILMS[spec.film], w, ry, w.key) : '';
+      return `<g class="wn-win${film ? ' wn-win--film' : ''}" data-win="${w.key}" transform="translate(${w.x},${w.y})"><g class="wn-zoom">
           <rect class="wn-pane" width="${w.w}" height="${w.h}"/>
           <path class="wn-reflect" d="M${f1(w.w * 0.62)},4 L${f1(w.w - 4)},4 L${f1(w.w - 4)},${f1(w.h * 0.3)} Z"/>
-          ${lit}${card}
+          ${lit}${user}${card}
           <path class="wn-sash" d="M0,${ry} H${w.w} ${w.w > 80 ? `M${w.w / 2},0 V${ry}` : ''}"/>
           <rect class="wn-frame" width="${w.w}" height="${w.h}"/>
           <rect class="wn-sill" x="-5" y="${w.h}" width="${w.w + 10}" height="4"/>
           <rect class="wn-lintel" x="-3" y="-7" width="${w.w + 6}" height="4"/>
-        </g>`;
+        </g></g>`;
     })
     .join('');
+
+  function life(w, kind) {
+    const W2 = w.w, H2 = w.h;
+    if (kind === 0) return blind(w, 0.36);
+    if (kind === 1) { // a neighbour at the window, in silhouette
+      const x = f1(W2 * (W2 > 80 ? 0.64 : 0.5)), r = f1(Math.min(W2, 90) * 0.085);
+      const y = f1(H2 * 0.66), sw = Math.min(W2, 90) * 0.24;
+      return `<g class="wn-sil"><circle cx="${x}" cy="${y}" r="${r}"/>
+        <path d="M${f1(x - sw)},${H2} C${f1(x - sw)},${f1(y + r * 2.4)} ${f1(x - sw * 0.55)},${f1(y + r * 1.5)} ${x},${f1(y + r * 1.5)} C${f1(x + sw * 0.55)},${f1(y + r * 1.5)} ${f1(x + sw)},${f1(y + r * 2.4)} ${f1(x + sw)},${H2} Z"/></g>`;
+    }
+    // a table lamp on the sill
+    const x = f1(W2 * 0.28), b = H2 - 2;
+    return `<g class="wn-sil"><path d="M${f1(x - 9)},${f1(b - 30)} H${f1(x + 9)} L${f1(x + 13)},${f1(b - 17)} H${f1(x - 13)} Z" class="wn-shade"/>
+      <rect x="${f1(x - 1.2)}" y="${f1(b - 17)}" width="2.4" height="14"/><rect x="${f1(x - 7)}" y="${f1(b - 3.5)}" width="14" height="3.5" rx="1"/></g>`;
+  }
 
   function blind(w, frac) {
     const bh = f1(w.h * frac);
@@ -274,19 +536,19 @@ function buildScene(root, L) {
   const numY = S.y0 + sh * 0.5 + S.num * 0.2 - (S.label.length - 1) * labelLH * 0.4;
   const labY = S.y1 - 18 - (S.label.length - 1) * labelLH;
   const signText = `
-    <text class="wn-num" x="${smid}" y="${f1(numY)}" text-anchor="middle" style="font-size:${S.num}px">1,657</text>
+    <text class="wn-num" x="${smid}" y="${f1(numY)}" text-anchor="middle" style="font-size:${S.num}px">${count}</text>
     <text class="wn-label" text-anchor="middle" style="font-size:${S.ls}px">${S.label.map((t, i) => `<tspan x="${smid}" y="${f1(labY + i * labelLH)}">${t}</tspan>`).join('')}</text>`;
   const sign = `<g aria-hidden="true">
     <path class="wn-truss" d="${posts}"/>
     <rect class="wn-panel" x="${S.x0}" y="${S.y0}" width="${sw}" height="${sh}" rx="4"/>
-    <g class="wn-neon" style="opacity:0">
+    <g class="wn-flick"><g class="wn-neon" style="opacity:0">
       <g filter="url(#${id}-neon)" class="wn-neon-glow">
         <rect class="wn-tube" x="${S.x0 + 7}" y="${S.y0 + 7}" width="${sw - 14}" height="${sh - 14}" rx="3"/>
         ${signText}
       </g>
       <rect class="wn-tube" x="${S.x0 + 7}" y="${S.y0 + 7}" width="${sw - 14}" height="${sh - 14}" rx="3"/>
       ${signText}
-    </g>
+    </g></g>
   </g>`;
 
   // ---- moon, stars, courtyard
@@ -305,7 +567,8 @@ function buildScene(root, L) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'A Rear Window–style courtyard at night: an apartment facade with a fire escape, windows lighting up one by one. Four lit windows show favourite films — Rear Window (1954), The Beatles: Get Back (2021), Begin Again (2013), La La Land (2016) — and a rooftop neon sign reads 1,657 films logged on Letterboxd.');
+  const label = (n) => `A Rear Window–style courtyard at night: an apartment facade with a fire escape, windows lighting up one by one. Four lit windows show favourite films — Rear Window (1954), The Beatles: Get Back (2021), Begin Again (2013), La La Land (2016) — and a rooftop neon sign reads ${n} films logged on Letterboxd.`;
+  svg.setAttribute('aria-label', label(count));
   svg.innerHTML = `
   <defs>
     <linearGradient id="${id}-warm" x1="0" y1="0" x2="0" y2="1">
@@ -349,7 +612,9 @@ function buildScene(root, L) {
   const cards = [...svg.querySelectorAll('[data-card]')].map((el) => ({ el, t: L.lights[el.dataset.card].t + 0.03 }));
   const neon = svg.querySelector('.wn-neon');
 
+  let pNow = 0;
   function update(p) {
+    pNow = p;
     const lt = seg(p, LINE_A, LINE_B);
     line.style.strokeDashoffset = 1 - lt;
     line.style.opacity = lt > 0.002 ? 1 : 0;
@@ -368,5 +633,41 @@ function buildScene(root, L) {
   const scaleTo = (px) => { if (px > 0) svg.style.setProperty('--wn-u', (W / px).toFixed(4)); };
   scaleTo(root.clientWidth);
 
-  return { update, scaleTo };
+  // ---- interaction surface (geometry for the HTML buttons + light switching)
+  const films = wins
+    .filter((w) => L.lights[w.key] && L.lights[w.key].film !== undefined)
+    .map((w) => ({ key: w.key, film: L.lights[w.key].film, x: w.x, y: w.y, w: w.w, h: w.h }))
+    .sort((a, b) => a.film - b.film);
+  const winEl = (key) => svg.querySelector(`[data-win="${key}"]`);
+  function isLit(key) {
+    const el = winEl(key);
+    const user = el.querySelector('.wn-user'), off = el.querySelector('.wn-off');
+    if (user && user.classList.contains('is-on')) return true;
+    const spec = L.lights[key];
+    return !!(spec && off && !off.classList.contains('is-off') && seg(pNow, spec.t, spec.t + 0.025) > 0.5);
+  }
+  function toggle(key) {
+    const el = winEl(key);
+    if (!el || el.classList.contains('wn-win--film')) return;
+    const on = !isLit(key);
+    const user = el.querySelector('.wn-user'), off = el.querySelector('.wn-off');
+    if (user) user.classList.toggle('is-on', on);
+    if (off) off.classList.toggle('is-off', !on);
+  }
+  const zoom = (key, on) => { const el = winEl(key); if (el) el.querySelector('.wn-zoom').classList.toggle('is-zoom', on); };
+  const flick = svg.querySelector('.wn-flick');
+  function flicker() {
+    flick.classList.remove('is-flicker');
+    void flick.getBoundingClientRect(); // restart the keyframes (event time, not update)
+    flick.classList.add('is-flicker');
+  }
+  const onFlickEnd = () => flick.classList.remove('is-flicker');
+  flick.addEventListener('animationend', onFlickEnd);
+
+  function setFilms(t) {
+    for (const n of svg.querySelectorAll('.wn-num')) n.textContent = t;
+    svg.setAttribute('aria-label', label(t));
+  }
+
+  return { update, scaleTo, svg, films, sign: L.sign, W, Ht, toggle, zoom, flicker, setFilms };
 }

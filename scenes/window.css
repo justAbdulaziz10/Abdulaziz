@@ -133,3 +133,194 @@
   stroke-dasharray: 1 2;
   stroke-dashoffset: 1;
 }
+
+/* ---- playable: tap a window */
+.scene--window .wn-win { cursor: pointer; }
+.scene--window .wn-escape,
+.scene--window .wn-line { pointer-events: none; }
+.scene--window .wn-zoom {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: transform var(--t-layout) var(--ease);
+}
+.scene--window .wn-zoom.is-zoom { transform: scale(1.1); }
+
+/* lights you switch: a fade, never a pop */
+.scene--window .wn-off,
+.scene--window .wn-user { transition: opacity var(--t-state) var(--ease); }
+.scene--window .wn-off.is-off { opacity: 0; }
+.scene--window .wn-user { opacity: 0; }
+.scene--window .wn-user.is-on { opacity: 1; }
+.scene--window .wn-sil { fill: var(--echo-deep); }
+.scene--window .wn-sil .wn-shade { fill: var(--carton-dark); }
+
+/* neon: tapped → it stutters, then holds */
+.scene--window .wn-flick.is-flicker { animation: wn-flicker 640ms steps(1, end); }
+@keyframes wn-flicker {
+  0% { opacity: 0.15; } 12% { opacity: 1; } 22% { opacity: 0.25; } 30% { opacity: 0.9; }
+  42% { opacity: 0.1; } 58% { opacity: 0.75; } 66% { opacity: 0.3; } 78%, 100% { opacity: 1; }
+}
+.scene--window.wn-reduced .wn-flick.is-flicker { animation: wn-blink 360ms steps(1, end); }
+@keyframes wn-blink { 0% { opacity: 0.2; } 50%, 100% { opacity: 1; } }
+
+/* HTML hit targets over the drawing: real buttons, visible focus */
+.scene--window .wn-hits { position: absolute; inset: 0; pointer-events: none; }
+.scene--window .wn-hit {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.scene--window .wn-hit:focus { outline: none; }
+.scene--window .wn-hit:focus-visible { outline: 2px solid var(--window-warm); outline-offset: 3px; }
+
+.scene--window .wn-hint {
+  position: absolute;
+  left: 2.4%;
+  top: var(--wn-hint-y, 96%);
+  margin: 0;
+  transform: translateY(-50%);
+  color: var(--window-warm);
+  font: 560 var(--step--1) / 1 var(--font);
+  font-stretch: 104%;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--window .wn-hint::before {
+  content: "";
+  display: inline-block;
+  width: 0.62em;
+  height: 0.8em;
+  margin-right: 0.6em;
+  border-radius: 1px;
+  background: var(--window-warm);
+  box-shadow: 0 0 0.7em color-mix(in oklab, var(--window-warm) 70%, transparent);
+  vertical-align: -0.04em;
+}
+.scene--window .wn-hint.is-gone { opacity: 0; }
+
+/* scrim + poster card */
+.scene--window .wn-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--night) 62%, transparent);
+  opacity: 0;
+  transition: opacity var(--t-state) var(--ease);
+}
+.scene--window .wn-scrim.is-open { opacity: 1; }
+.scene--window .wn-pop {
+  --wp-bg0: var(--window-warm);
+  --wp-bg1: var(--carton);
+  --wp-ink: var(--night);
+  --wp-text: var(--night);
+  position: absolute;
+  z-index: 2;
+  width: min(300px, 72%);
+  opacity: 0;
+  transform: translate(var(--fx, 0), var(--fy, 0)) scale(var(--fs, 0.3));
+  transition: transform var(--t-layout) var(--ease), opacity var(--t-state) var(--ease);
+}
+.scene--window .wn-pop.is-open { opacity: 1; transform: rotate(var(--tilt, 0deg)); }
+.scene--window .wn-pop[data-kind="lamp"] {
+  --wp-bg0: color-mix(in oklab, var(--night-2) 74%, var(--mara));
+  --wp-bg1: var(--night-2);
+  --wp-text: var(--zebra);
+}
+.scene--window .wn-poster {
+  margin: 0;
+  padding: 10px 10px 18px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--wp-bg0), var(--wp-bg1));
+  color: var(--wp-text);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--night) 30%, transparent),
+    0 24px 60px -18px color-mix(in oklab, var(--window-warm) 45%, transparent),
+    0 18px 40px -10px color-mix(in oklab, var(--night) 80%, transparent);
+}
+.scene--window .wn-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.scene--window .wn-cap { padding: 14px 6px 0; }
+.scene--window .wn-pt {
+  margin: 0;
+  font: 720 clamp(1.35rem, 1.1rem + 1vw, 1.75rem) / 1 var(--font);
+  font-stretch: 86%;
+  letter-spacing: -0.015em;
+}
+.scene--window .wn-py {
+  margin: 8px 0 0;
+  font: 500 var(--step--1) / 1 var(--font);
+  font-stretch: 112%;
+  letter-spacing: 0.22em;
+  font-variant-numeric: tabular-nums;
+}
+.scene--window .wn-pd {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in oklab, currentColor 35%, transparent);
+  font: 600 var(--step--1) / 1.25 var(--font);
+}
+.scene--window .wn-pd span {
+  display: block;
+  margin-bottom: 3px;
+  font-weight: 450;
+  font-size: 0.78em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.scene--window .wn-pd b { font-weight: 640; }
+.scene--window .wn-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--night);
+  box-shadow: 0 0 0 1.5px var(--window-warm);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.scene--window .wn-close svg { width: 14px; height: 14px; }
+.scene--window .wn-close path { fill: none; stroke: var(--window-warm); stroke-width: 2.2; stroke-linecap: round; }
+.scene--window .wn-close:focus { outline: none; }
+.scene--window .wn-close:focus-visible { outline: 2px solid var(--zebra); outline-offset: 3px; }
+
+/* poster art language (mirrors the window icons) */
+.scene--window .wp-ink { fill: var(--wp-ink); }
+.scene--window .wp-faint { fill: var(--wp-ink); opacity: 0.16; }
+.scene--window .wp-lit { fill: var(--zebra); opacity: 0.85; }
+.scene--window .wp-warm { fill: var(--window-warm); }
+.scene--window .wp-warm-soft { fill: var(--zebra); opacity: 0.55; }
+.scene--window .wp-hi { fill: none; stroke: var(--window-warm); stroke-width: 3; stroke-linecap: round; opacity: 0.8; }
+.scene--window .wp-stroke { fill: none; stroke: var(--wp-ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.scene--window .wp-wind { fill: none; stroke: var(--wp-ink); stroke-width: 2; stroke-linecap: round; opacity: 0.28; }
+.scene--window .wp-grille { fill: none; stroke: var(--wp-ink); stroke-width: 1.5; opacity: 0.5; }
+.scene--window .wp-strings { fill: none; stroke: var(--window-warm); stroke-width: 0.8; opacity: 0.7; }
+.scene--window .wp-star { fill: var(--window-warm); }
+.scene--window .wp-glow { fill: var(--window-warm); opacity: 0.13; }
+.scene--window .wp-glow--core { opacity: 0.4; }
+.scene--window .wp-dots { fill: var(--window-warm); opacity: 0.75; }
+.scene--window [data-kind="lamp"] .wp-ink { fill: var(--night); }
+.scene--window [data-kind="lamp"] .wp-stroke { stroke: var(--night); }
+
+.scene--window.wn-reduced .wn-zoom,
+.scene--window.wn-reduced .wn-off,
+.scene--window.wn-reduced .wn-user,
+.scene--window.wn-reduced .wn-scrim,
+.scene--window.wn-reduced .wn-pop,
+.scene--window.wn-reduced .wn-hint { transition: none; }

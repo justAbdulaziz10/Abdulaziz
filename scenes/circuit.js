@@ -182,6 +182,18 @@ function segIntersect(p, p2, q, q2) {
 const CORNERS = {
   sCurves: 27, degner: 63, hairpin: 81, spoon: 114, r130: 147, casio: 156, t1: 6,
 };
+// Stretches that light up when a corner name is chosen, with official turn numbers as shown on
+// Wikipedia's Suzuka Circuit layout diagram (File:Suzuka circuit map--2005.svg; article text: 130R is turn 15).
+const STRETCHES = {
+  sCurves: { range: [17, 40], turns: 'T3–6', spoken: 'turns 3 to 6' },
+  degner: { range: [58, 69], turns: 'T8–9', spoken: 'turns 8 and 9' },
+  hairpin: { range: [75, 87], turns: 'T11', spoken: 'turn 11' },
+  spoon: { range: [105, 124], turns: 'T13–14', spoken: 'turns 13 and 14' },
+  r130: { range: [141, 151], turns: 'T15', spoken: 'turn 15' },
+  casio: { range: [151, 161], turns: 'T16–17', spoken: 'turns 16 and 17' },
+};
+// DRS: Suzuka's single zone, on the main straight (Casio Triangle exit to Turn 1).
+const DRS_ZONES = [[166, 2]];
 const KERBS = [
   [21, 25], [27, 30], [33, 37],          // S Curves
   [108, 112], [116, 121],                 // Spoon
@@ -324,9 +336,13 @@ export function buildGeometry(key) {
   // start / finish chequer
   const sf = { p: P0, ang: Math.atan2(u[1], u[0]) / DEG };
 
-  // corner anchors
+  // corner anchors + highlight stretches
   const corners = {};
   for (const [k, i] of Object.entries(CORNERS)) corners[k] = { p: orig[i], s: S(i) };
+  const stretches = {};
+  for (const [k, st] of Object.entries(STRETCHES)) stretches[k] = polyD(rangePts(lap, S(st.range[0]), S(st.range[1])));
+  // DRS zones as s-ranges (b may exceed 1 when a zone wraps past the line)
+  const drs = DRS_ZONES.map(([i, j]) => { const a = S(i); let b = S(j); if (b < a) b += 1; return { a, b, d: polyD(rangePts(lap, a, b)) }; });
 
   // speed profile for the ambient cars (curvature-limited, accel/brake passes)
   const N = lap.S.length, ds = lap.L / (N - 1);
@@ -351,10 +367,11 @@ export function buildGeometry(key) {
   const lapTime = T[N - 1];
   for (let i = 0; i < N; i++) T[i] /= lapTime;
   lap.T = T;
+  lap.V = v; // m/s, for the simulated telemetry readout
 
   return {
     key, rot, vw, vh, cx, L, lap, lapD: segsToD(lapSegs), entry, entryD: segsToD(entrySegs),
-    exit, exitD: segsToD(exitSegs), exitOverlap, sectors, cross, kerbs, sf, corners, orig, lapTime,
+    exit, exitD: segsToD(exitSegs), exitOverlap, sectors, cross, kerbs, sf, corners, stretches, drs, orig, lapTime,
   };
 }
 
@@ -384,15 +401,27 @@ const P_EXIT = [0.475, 0.6];
 const P_CARS = 0.55;
 const CAR_LAP_S = 15; // seconds per animated lap for the quickest car
 const CARS = [
-  { cls: 'a', pace: 1, start: 0.0 },
-  { cls: 'b', pace: 1.028, start: 0.035 },
-  { cls: 'c', pace: 1.061, start: 0.075 },
+  { cls: 'a', name: 'Red car', pace: 1, start: 0.0 },
+  { cls: 'b', name: 'Papaya car', pace: 1.028, start: 0.035 },
+  { cls: 'c', name: 'Blue car', pace: 1.061, start: 0.075 },
 ];
+const DRS_BOOST = 0.12; // ~12% quicker through the DRS zone
+const GEARS = [0, 95, 130, 165, 200, 235, 268, 298]; // km/h at which each of 8 gears starts (simulation only)
+const TELEMETRY_HZ = 12;
 
 export function mount(root, { reduced = false } = {}) {
   let g = null, refs = null, layout = '';
   let lastP = reduced ? 0.6 : 0;
   let visible = false, raf = 0, clock = 0, prevTs = 0, carsWanted = false, carsAlpha = 0;
+  let scale = 1, stageW = 0; // CSS px per SVG unit, stage width in px
+  // interaction state
+  let sel = null; // { i: car index, pinned }
+  let hl = null; // { k: corner key, pinned }
+  let drsOpen = false, drsFlashUntil = 0, telAt = 0;
+  const used = { car: false, corner: false };
+  const phases = CARS.map((c) => c.start); // unbounded lap-time phase per car
+  const drsEnd = CARS.map(() => -1);
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const cache = new Map();
   const set = (node, prop, value) => { // write-only, skips unchanged values
     const key = node.__cid || (node.__cid = Math.random().toString(36).slice(2));
@@ -400,6 +429,7 @@ export function mount(root, { reduced = false } = {}) {
     if (cache.get(k) === value) return;
     cache.set(k, value);
     if (prop === 'transform') node.setAttribute('transform', value);
+    else if (prop === 'hidden') node.hidden = value;
     else node.style.setProperty(prop, value);
   };
 
@@ -409,6 +439,7 @@ export function mount(root, { reduced = false } = {}) {
     cache.clear();
     root.textContent = '';
     root.dataset.layout = key;
+    root.classList.toggle('is-reduced', reduced);
     const L = g.L, vb = `0 0 ${f1(g.vw)} ${f1(g.vh)}`;
     const stage = html('div', 'c-stage', root);
     stage.style.aspectRatio = `${f1(g.vw)} / ${f1(g.vh)}`;
@@ -448,6 +479,14 @@ export function mount(root, { reduced = false } = {}) {
       el('path', { d, class: 'c-sector-band' }, grp);
       return grp;
     });
+    // corner highlights (soft glow on a stretch of track)
+    const glows = {};
+    for (const [k, d] of Object.entries(g.stretches)) {
+      const grp = el('g', { class: 'c-glow' }, live);
+      el('path', { d, class: 'c-glow-wide', 'stroke-width': L.ribbon + 30 }, grp);
+      el('path', { d, class: 'c-glow-core', 'stroke-width': L.ribbon + 5 }, grp);
+      glows[k] = grp;
+    }
     const leaders = el('g', { class: 'c-leaders' }, live);
     const lineEntry = el('path', { d: g.entryD, class: 'c-line', pathLength: 1 }, live);
     const lineLap = el('path', { d: g.lapD, class: 'c-line', pathLength: 1 }, live);
@@ -464,6 +503,12 @@ export function mount(root, { reduced = false } = {}) {
     el('path', { d: g.cross.d, class: 'c-sector-halo', 'stroke-width': L.ribbon - 3 }, deckSector);
     el('path', { d: g.cross.d, class: 'c-sector-band' }, deckSector);
     const lineDeck = el('path', { d: g.cross.d, class: 'c-line', pathLength: 1 }, deck);
+    // DRS zone highlight sits above the deck
+    const drsG = el('g', { class: 'c-drs' }, live);
+    for (const z of g.drs) {
+      el('path', { d: z.d, class: 'c-drs-wide', 'stroke-width': L.ribbon + 16 }, drsG);
+      el('path', { d: z.d, class: 'c-drs-core', 'stroke-width': L.ribbon - 6 }, drsG);
+    }
     const carsOver = el('g', { class: 'c-cars', opacity: 0 }, live);
 
     const cars = CARS.map((c) => {
@@ -477,7 +522,7 @@ export function mount(root, { reduced = false } = {}) {
         el('path', { d: 'M0 0h0.01', class: 'c-car-dot' }, h);
         return h;
       };
-      return { ...c, trails, under: mk(carsUnder), over: mk(carsOver) };
+      return { ...c, trails, under: mk(carsUnder), over: mk(carsOver), x: -1e4, y: -1e4, s: 0, boost: 1 };
     });
 
     const pen = el('g', { class: 'c-pen', opacity: 0 }, live);
@@ -486,18 +531,24 @@ export function mount(root, { reduced = false } = {}) {
 
     /* labels */
     const labels = html('div', 'c-labels', stage);
-    labels.setAttribute('aria-hidden', 'true');
     const pct = (p) => [`${((p[0] / g.vw) * 100).toFixed(3)}%`, `${((p[1] / g.vh) * 100).toFixed(3)}%`];
     const corners = L.labels.filter((lb) => !lb.small).map((lb) => {
-      const c = g.corners[lb.k];
+      const c = g.corners[lb.k], st = STRETCHES[lb.k];
       const dir = norm(lb.d);
       const anchor = add(c.p, lb.d);
       const lead = el('path', { d: polyD([add(c.p, mul(dir, L.ribbon / 2 + 9)), sub(anchor, mul(dir, 4))]), class: 'c-leader', opacity: 0 }, leaders);
-      const n = html('span', `c-corner c-corner--${lb.a}${lb.v ? ` c-corner--${lb.v}` : ''}${lb.small ? ' c-corner--minor' : ''}`, labels, lb.text);
+      const n = html('button', `c-corner c-corner--${lb.a}${lb.v ? ` c-corner--${lb.v}` : ''}`, labels);
+      n.type = 'button';
+      n.dataset.k = lb.k;
+      n.setAttribute('aria-label', `${lb.text}, ${st.spoken}. Highlight on the track`);
+      n.setAttribute('aria-pressed', 'false');
+      html('span', 'c-corner-name', n, lb.text);
+      html('span', 'c-turns', n, st.turns).setAttribute('aria-hidden', 'true');
       const [x, y] = pct(anchor);
       n.style.left = x; n.style.top = y;
       n.style.opacity = 0;
-      return { n, lead, s: c.s };
+      n.style.visibility = 'hidden';
+      return { n, lead, s: c.s, k: lb.k };
     });
     const title = html('div', 'c-title', labels);
     const [tx, ty] = pct([L.title[0], L.title[1] * g.vh]);
@@ -507,14 +558,56 @@ export function mount(root, { reduced = false } = {}) {
     html('span', '', facts, '5.807 km');
     html('span', '', facts, '18 turns');
     const strip = html('div', 'c-strip', title);
+    strip.setAttribute('aria-hidden', 'true');
     const chips = [1, 2, 3].map((k) => {
       const w = html('span', `c-chip c-chip--${k}`, strip);
       const bar = html('i', '', w);
       html('b', '', w, `S${k}`);
       return bar;
     });
+    const ctl = html('div', 'c-ctl', title);
+    const drsBtn = html('button', 'c-drs-btn', ctl);
+    drsBtn.type = 'button';
+    drsBtn.setAttribute('aria-pressed', 'false');
+    drsBtn.setAttribute('aria-label', 'DRS: the simulated cars run about 12% faster on the main straight for one lap');
+    html('span', 'c-drs-led', drsBtn).setAttribute('aria-hidden', 'true');
+    const drsTxt = html('span', '', drsBtn, 'DRS');
+    drsBtn.hidden = reduced;
+    const hint = html('div', 'c-hint', ctl);
+    hint.setAttribute('aria-hidden', 'true');
+    const hintCar = html('span', 'c-hint-car', hint, canHover ? 'Hover a car' : 'Tap a car');
+    const hintCorner = html('span', 'c-hint-corner', hint, canHover ? 'Click a corner' : 'Tap a corner');
 
-    refs = { base, lineEntry, lineLap, lineExit, lineDeck, sectors, deckSector, cars, carsUnder, carsOver, pen, corners, title, chips };
+    /* interactive overlay: car buttons + telemetry chip */
+    const ui = html('div', 'c-ui', stage);
+    const carBtns = cars.map((c, i) => {
+      const b = html('button', `c-car-btn c-car--${c.cls}`, ui);
+      b.type = 'button';
+      b.dataset.i = i;
+      b.setAttribute('aria-label', `${c.name}: show simulated telemetry`);
+      b.setAttribute('aria-pressed', 'false');
+      b.hidden = true;
+      return b;
+    });
+    const tel = html('div', 'c-tel', ui);
+    tel.setAttribute('aria-hidden', 'true');
+    const telIn = html('div', 'c-tel-in', tel);
+    html('div', 'c-tel-tag', telIn, 'Simulated');
+    const telRow = html('div', 'c-tel-row', telIn);
+    const telSpd = html('b', 'c-tel-spd', telRow, '0');
+    html('span', 'c-tel-unit', telRow, 'km/h');
+    const telGear = html('span', 'c-tel-gear', telRow, 'G1');
+    const telRow2 = html('div', 'c-tel-row c-tel-row--2', telIn);
+    const telLap = html('span', 'c-tel-lap', telRow2, 'Lap 1');
+    const telDrs = html('span', 'c-tel-drs', telRow2, 'DRS open');
+    telDrs.hidden = true;
+
+    refs = { stage, base, lineEntry, lineLap, lineExit, lineDeck, sectors, deckSector, cars, carsUnder, carsOver, pen, corners, title, chips,
+      glows, drsG, drsBtn, drsTxt, hint, hintCar, hintCorner, ui, carBtns, tel, telIn, telSpd, telGear, telLap, telDrs, live };
+    bindUI();
+    applySel();
+    applyHl();
+    applyDrs();
   }
 
   /* ---------- per-frame state ---------- */
@@ -540,10 +633,15 @@ export function mount(root, { reduced = false } = {}) {
     set(r.deckSector, 'opacity', sec[c.sector].toFixed(3));
     r.chips.forEach((n, k) => set(n, 'opacity', (0.2 + 0.8 * sec[k]).toFixed(3)));
 
-    // labels appear as the line reaches each corner
+    // labels appear as the line reaches each corner; they only become focusable once visible
+    let anyCorner = false;
     for (const cn of r.corners) {
-      const a = smooth(cn.s - 0.01, cn.s + 0.035, tRaw).toFixed(3);
+      const av = smooth(cn.s - 0.01, cn.s + 0.035, tRaw);
+      const a = av.toFixed(3);
       set(cn.n, 'opacity', a); set(cn.lead, 'opacity', a);
+      set(cn.n, 'visibility', av > 0.05 ? 'visible' : 'hidden');
+      if (av > 0.5) anyCorner = true;
+      if (av <= 0.05 && hl && hl.k === cn.k) { hl = null; applyHl(); }
     }
     set(r.title, 'opacity', (reduced ? 1 : smooth(0.04, 0.14, p)).toFixed(3));
 
@@ -558,15 +656,31 @@ export function mount(root, { reduced = false } = {}) {
     set(r.pen, 'opacity', pt ? '1' : '0');
 
     carsWanted = !reduced && p >= P_CARS;
+    for (const b of r.carBtns) set(b, 'hidden', !carsWanted);
+    r.drsBtn.disabled = !carsWanted;
+    set(r.hintCar, 'opacity', carsWanted && !used.car ? '1' : '0');
+    set(r.hintCorner, 'opacity', anyCorner && !used.corner ? '1' : '0');
+    if (!carsWanted) {
+      if (sel) { sel = null; applySel(); }
+      if (drsOpen) closeDrs();
+    }
     tick();
   }
 
   /* ---------- ambient cars ---------- */
-  function drawCars() {
+  const inDrs = (s) => g.drs.some((z) => (s >= z.a && s <= z.b) || (s + 1 >= z.a && s + 1 <= z.b));
+  function drawCars(dt = 0) {
     const r = refs, c = g.cross;
-    for (const car of r.cars) {
-      const tau = (clock / (CAR_LAP_S * car.pace) + car.start) % 1;
-      const [x, y, s] = at(g.lap, tau, g.lap.T);
+    let drsLeft = false;
+    r.cars.forEach((car, i) => {
+      const base = phases[i] % 1;
+      const s0 = at(g.lap, base, g.lap.T)[2];
+      const boosted = drsOpen && phases[i] < drsEnd[i] && inDrs(s0);
+      if (drsOpen && phases[i] < drsEnd[i]) drsLeft = true;
+      car.boost += ((boosted ? 1 + DRS_BOOST : 1) - car.boost) * Math.min(1, dt * 4);
+      phases[i] += (dt / (CAR_LAP_S * car.pace)) * car.boost;
+      const [x, y, s] = at(g.lap, phases[i] % 1, g.lap.T);
+      car.x = x; car.y = y; car.s = s;
       const tr = `translate(${f1(x)} ${f1(y)})`;
       const over = s > c.a && s < c.b;
       car.under.setAttribute('transform', tr);
@@ -574,9 +688,30 @@ export function mount(root, { reduced = false } = {}) {
       car.under.style.opacity = over ? 0 : 1;
       car.over.style.opacity = over ? 1 : 0;
       for (const tl of car.trails) tl.node.style.strokeDashoffset = (((tl.l - s) % 1) + 1) % 1;
-    }
+      r.carBtns[i].style.transform = `translate3d(${(x * scale).toFixed(1)}px, ${(y * scale).toFixed(1)}px, 0)`;
+    });
+    if (drsOpen && !drsLeft && dt > 0) closeDrs();
     r.carsUnder.setAttribute('opacity', carsAlpha.toFixed(3));
     r.carsOver.setAttribute('opacity', carsAlpha.toFixed(3));
+    if (sel) drawTelemetry();
+  }
+  function drawTelemetry(force) {
+    const r = refs, i = sel.i, car = r.cars[i];
+    const px = car.x * scale, py = car.y * scale;
+    r.tel.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+    r.tel.classList.toggle('is-flip', px > stageW - 150);
+    r.tel.classList.toggle('is-below', py < 70);
+    const now = performance.now();
+    if (!force && now - telAt < 1000 / TELEMETRY_HZ) return;
+    telAt = now;
+    const k = search(g.lap.S, car.s);
+    const kmh = Math.round(g.lap.V[k] * 3.6 * car.boost);
+    let gear = 1;
+    for (let n = 0; n < GEARS.length; n++) if (kmh >= GEARS[n]) gear = n + 1;
+    r.telSpd.textContent = String(kmh);
+    r.telGear.textContent = `G${gear}`;
+    r.telLap.textContent = `Lap ${Math.floor(phases[i] - CARS[i].start) + 1}`;
+    r.telDrs.hidden = !(drsOpen && phases[i] < drsEnd[i]);
   }
   function frame(ts) {
     raf = 0;
@@ -585,7 +720,7 @@ export function mount(root, { reduced = false } = {}) {
     clock += dt;
     carsAlpha += ((carsWanted ? 1 : 0) - carsAlpha) * Math.min(1, dt * 3.2);
     if (!carsWanted && carsAlpha < 0.01) carsAlpha = 0;
-    drawCars();
+    drawCars(dt);
     tick();
   }
   function tick() {
@@ -593,6 +728,135 @@ export function mount(root, { reduced = false } = {}) {
     if (run && !raf) raf = requestAnimationFrame(frame);
     if (!run) { if (raf) cancelAnimationFrame(raf); raf = 0; prevTs = 0; }
   }
+
+  /* ---------- interaction ---------- */
+  function applySel() {
+    const r = refs;
+    r.cars.forEach((car, i) => {
+      const on = sel && sel.i === i, dim = sel && !on;
+      for (const n of [car.under, car.over]) { n.classList.toggle('is-sel', !!on); n.classList.toggle('is-dim', !!dim); }
+      for (const tl of car.trails) tl.node.classList.toggle('is-dim', !!dim);
+      r.carBtns[i].setAttribute('aria-pressed', on && sel.pinned ? 'true' : 'false');
+    });
+    r.tel.classList.toggle('is-on', !!sel);
+    if (sel) {
+      r.tel.className = r.tel.className.replace(/ ?c-car--\w/g, '') + ` c-car--${CARS[sel.i].cls}`;
+      drawTelemetry(true);
+    }
+  }
+  function select(i, pinned) {
+    if (!carsWanted) return;
+    if (i == null) sel = null;
+    else if (pinned && sel && sel.i === i && sel.pinned) sel = null; // tap again releases
+    else sel = { i, pinned: pinned || !!(sel && sel.i === i && sel.pinned) };
+    if (sel) used.car = true;
+    applySel();
+    set(refs.hintCar, 'opacity', carsWanted && !used.car ? '1' : '0');
+  }
+  function applyHl() {
+    const r = refs;
+    for (const [k, n] of Object.entries(r.glows)) n.classList.toggle('is-on', !!hl && hl.k === k);
+    for (const cn of r.corners) {
+      const on = !!hl && hl.k === cn.k;
+      cn.n.classList.toggle('is-active', on);
+      cn.n.setAttribute('aria-pressed', on && hl.pinned ? 'true' : 'false');
+    }
+  }
+  function highlight(k, pinned) {
+    if (k == null) hl = null;
+    else if (pinned && hl && hl.k === k && hl.pinned) hl = null;
+    else hl = { k, pinned: pinned || !!(hl && hl.k === k && hl.pinned) };
+    if (hl) used.corner = true;
+    applyHl();
+    set(refs.hintCorner, 'opacity', '0');
+  }
+  function applyDrs() {
+    const r = refs;
+    r.drsBtn.classList.toggle('is-open', drsOpen);
+    r.drsBtn.setAttribute('aria-pressed', drsOpen ? 'true' : 'false');
+    r.drsTxt.textContent = drsOpen ? 'DRS open' : 'DRS';
+    r.drsG.classList.toggle('is-on', drsOpen);
+    r.drsG.classList.toggle('is-flash', drsOpen && performance.now() < drsFlashUntil);
+    if (sel) drawTelemetry(true);
+  }
+  function openDrs() {
+    if (!carsWanted || reduced) return;
+    drsOpen = true;
+    phases.forEach((ph, i) => { drsEnd[i] = ph + 1; });
+    drsFlashUntil = performance.now() + 1400;
+    applyDrs();
+    clearTimeout(openDrs.t);
+    openDrs.t = setTimeout(() => { if (refs) refs.drsG.classList.remove('is-flash'); }, 1400);
+  }
+  function closeDrs() {
+    drsOpen = false;
+    drsEnd.fill(-1);
+    applyDrs();
+  }
+
+  // pointer helpers: nearest visible car to a client point, in CSS px
+  function nearestCar(cx, cy, radius) {
+    if (!carsWanted || carsAlpha < 0.2) return -1;
+    const rect = refs.stage.getBoundingClientRect();
+    const ux = (cx - rect.left) / rect.width * g.vw, uy = (cy - rect.top) / rect.height * g.vh;
+    let best = -1, bd = radius / (rect.width / g.vw);
+    refs.cars.forEach((car, i) => { const d = Math.hypot(car.x - ux, car.y - uy); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  let down = null;
+  const ac = new AbortController();
+  const on = (t, ev, fn, opts = {}) => t.addEventListener(ev, fn, { ...opts, signal: ac.signal });
+  function bindUI() {
+    const r = refs;
+    // scoped to this build; the AbortController below covers document-level listeners
+    const local = new AbortController();
+    bindUI.local?.abort();
+    bindUI.local = local;
+    const lon = (t, ev, fn) => t.addEventListener(ev, fn, { signal: local.signal });
+
+    r.carBtns.forEach((b, i) => {
+      lon(b, 'click', () => select(i, true));
+      lon(b, 'focus', () => { if (!sel || !sel.pinned) select(i, false); });
+      lon(b, 'blur', () => { if (sel && sel.i === i && !sel.pinned) select(null); });
+      lon(b, 'pointerenter', (e) => { if (e.pointerType === 'mouse' && (!sel || !sel.pinned)) select(i, false); });
+    });
+    for (const cn of r.corners) {
+      lon(cn.n, 'click', () => highlight(cn.k, true));
+      lon(cn.n, 'focus', () => { if (!hl || !hl.pinned) highlight(cn.k, false); });
+      lon(cn.n, 'blur', () => { if (hl && hl.k === cn.k && !hl.pinned) highlight(null); });
+      lon(cn.n, 'pointerenter', (e) => { if (e.pointerType === 'mouse' && (!hl || !hl.pinned)) highlight(cn.k, false); });
+      lon(cn.n, 'pointerleave', (e) => { if (e.pointerType === 'mouse' && hl && hl.k === cn.k && !hl.pinned) highlight(null); });
+    }
+    lon(r.drsBtn, 'click', () => (drsOpen ? closeDrs() : openDrs()));
+
+    // forgiving hit-testing on the track itself (cars move fast): hover with a mouse, tap anywhere near a car
+    lon(r.stage, 'pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || (sel && sel.pinned)) return;
+      const i = nearestCar(e.clientX, e.clientY, 26);
+      if (i >= 0 && (!sel || sel.i !== i)) select(i, false);
+    });
+    lon(r.stage, 'pointerleave', (e) => { if (e.pointerType === 'mouse' && sel && !sel.pinned) select(null); });
+    lon(r.stage, 'pointerdown', (e) => {
+      if (e.target.closest('button')) { down = null; return; }
+      down = { x: e.clientX, y: e.clientY, t: performance.now(), car: nearestCar(e.clientX, e.clientY, e.pointerType === 'mouse' ? 26 : 38) };
+    });
+    lon(r.stage, 'pointerup', (e) => {
+      if (!down) return;
+      const tap = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 8 && performance.now() - down.t < 600;
+      const d = down; down = null;
+      if (!tap) return;
+      if (d.car >= 0) select(d.car, true);
+      else { if (sel) select(null); if (hl) highlight(null); }
+    });
+    lon(r.stage, 'pointercancel', () => { down = null; });
+  }
+  on(document, 'keydown', (e) => {
+    if (e.key !== 'Escape' || (!sel && !hl)) return;
+    const had = sel || hl;
+    if (sel) select(null);
+    if (hl) highlight(null);
+    if (had && root.contains(document.activeElement)) document.activeElement.blur();
+  });
 
   const io = new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; tick(); });
   io.observe(root);
@@ -602,7 +866,11 @@ export function mount(root, { reduced = false } = {}) {
   const pick = (w) => (w > 0 && w < 640 ? 'tall' : 'wide');
   // dashed strokes can't use non-scaling-stroke (Chrome measures dashes in screen space),
   // so their widths are expressed through --c-u = SVG units per CSS pixel
-  const scaleVar = (w) => { if (w > 0) root.style.setProperty('--c-u', (g.vw / w).toFixed(4)); };
+  const scaleVar = (w) => {
+    if (w <= 0) return;
+    root.style.setProperty('--c-u', (g.vw / w).toFixed(4));
+    scale = w / g.vw; stageW = w;
+  };
   const w0 = root.clientWidth || window.innerWidth;
   build(pick(w0));
   scaleVar(w0);
@@ -610,8 +878,9 @@ export function mount(root, { reduced = false } = {}) {
   const ro = new ResizeObserver((es) => {
     const w = es[0].contentRect.width;
     const k = pick(w);
-    if (k !== layout) { build(k); render(lastP); if (carsAlpha > 0) drawCars(); }
+    if (k !== layout) { build(k); render(lastP); }
     scaleVar(w);
+    if (carsAlpha > 0) drawCars();
   });
   ro.observe(root);
 
@@ -623,9 +892,13 @@ export function mount(root, { reduced = false } = {}) {
     destroy() {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
+      clearTimeout(openDrs.t);
       io.disconnect(); ro.disconnect();
+      ac.abort();
+      bindUI.local?.abort();
       document.removeEventListener('visibilitychange', onVis);
       root.textContent = '';
+      refs = null;
     },
   };
 }

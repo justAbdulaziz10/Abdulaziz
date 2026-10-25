@@ -1,8 +1,8 @@
 // Scene: abbey — the zebra crossing, an homage.
 // The line drops in as the road's centre line, turns white on the asphalt and becomes the crossing:
 // the centre stripe grows out of it, the others are laid outwards pair by pair. Four figures then
-// cross left-to-right in single file, in stride. Silhouettes invert against the ground (ink on light,
-// white on asphalt) — one flat, two-tone negative-space system for the whole picture.
+// cross left-to-right in single file, in stride, each in his own flat outfit colour.
+// Tap / click / Enter ("Walk again") replays the crossing in full stride while the Beetle drives away.
 
 const NS = 'http://www.w3.org/2000/svg';
 const D = Math.PI / 180;
@@ -67,16 +67,44 @@ const BARE = 'M-4,-2.2 C-3,-4.2 0.5,-4.2 2.5,-3 C8,-1 13.5,0.2 17.5,1.6 C19.6,2.
 
 let uid = 0;
 
+const HINT_KEY = 'one:abbey:walked';
+const STRIDE_S = 0.9; // seconds per full gait cycle on a replayed walk
+
 export function mount(root, { reduced = false } = {}) {
   let mode = null;
   let scene = null;
   let lastP = reduced ? 0.55 : 0; // reduced: the cover moment, full stride
 
+  root.classList.toggle('ab-reduced', reduced);
+  // ---- "walk again": a full-cover button plus a one-time hint
+  const play = document.createElement('button');
+  play.type = 'button';
+  play.className = 'ab-play';
+  play.setAttribute('aria-label', 'Walk again');
+  play.innerHTML = '<span class="ab-play-label" aria-hidden="true">Walk again</span>';
+  const hint = document.createElement('p');
+  hint.className = 'ab-hint';
+  hint.setAttribute('aria-hidden', 'true');
+  hint.textContent = matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click to cross' : 'Tap to cross';
+  let seen = false;
+  try { seen = localStorage.getItem(HINT_KEY) === '1'; } catch { /* storage blocked */ }
+  if (seen) hint.hidden = true;
+
+  // walk state
+  let walk = null; // { lead, end, t, dur }
+  let raf = 0, last = 0, timer = 0, crossed = false, visible = true;
+
   const build = (m) => {
     mode = m;
     root.textContent = '';
     scene = buildScene(root, LAYOUTS[m]);
+    root.append(play, hint);
+    const Lm = LAYOUTS[m];
+    root.style.setProperty('--ab-top', `${((Lm.plate[1] / Lm.Ht) * 100).toFixed(2)}%`);
+    root.style.setProperty('--ab-bot', `${(((Lm.Ht - Lm.plate[3]) / Lm.Ht) * 100).toFixed(2)}%`);
+    if (walk) stopWalk();
     scene.update(lastP);
+    if (reduced && crossed) scene.crossed(true);
   };
   const pick = (w) => (w > 0 && w < 640 ? 'tall' : 'wide');
   build(pick(root.clientWidth || 1200));
@@ -89,14 +117,76 @@ export function mount(root, { reduced = false } = {}) {
   });
   ro.observe(root);
 
+  const used = () => {
+    if (hint.hidden || hint.classList.contains('is-gone')) return;
+    hint.classList.add('is-gone');
+    try { localStorage.setItem(HINT_KEY, '1'); } catch { /* storage blocked */ }
+  };
+
+  function frame(now) {
+    raf = 0;
+    if (!walk) return;
+    const dt = Math.min(0.05, (now - (last || now)) / 1000); // hidden tab / long frame: just pause
+    last = now;
+    walk.t += dt;
+    walk.lead += walk.v * dt;
+    scene.walkFrame(walk.lead, walk.t / walk.dur);
+    if (walk.lead >= walk.end) return finishWalk();
+    raf = requestAnimationFrame(frame);
+  }
+  function startWalk() {
+    used();
+    if (reduced) { // instant state change instead of movement: the four are across, the car has gone
+      crossed = !crossed;
+      scene.crossed(crossed);
+      if (!crossed) scene.update(lastP);
+      return;
+    }
+    if (walk || !visible) return;
+    const r = scene.walkRange();
+    walk = { lead: r.start, end: r.end, v: r.v, t: 0, dur: (r.end - r.start) / r.v };
+    scene.figsOut(); // the resting four fade, then the crossing starts from the left edge
+    timer = setTimeout(() => {
+      timer = 0;
+      if (!walk) return;
+      scene.walkFrame(walk.lead, 0);
+      scene.figsShow(true);
+      last = 0;
+      raf = requestAnimationFrame(frame);
+    }, 180);
+  }
+  function finishWalk() {
+    walk = null;
+    scene.walkDone(); // blend back: figures + Beetle return to whatever the scroll says
+    scene.update(lastP);
+  }
+  function stopWalk() {
+    cancelAnimationFrame(raf); raf = 0;
+    clearTimeout(timer); timer = 0;
+    walk = null;
+  }
+
+  const onClick = () => startWalk();
+  play.addEventListener('click', onClick);
+
+  // pause off-screen: a walk that leaves the viewport simply ends
+  const io = new IntersectionObserver(([e]) => {
+    visible = e.isIntersecting;
+    if (!visible && walk) { stopWalk(); scene.walkDone(true); scene.update(lastP); }
+  });
+  io.observe(root);
+
   return {
     update(p) {
       if (reduced) return; // finished composition, no movement
       lastP = p;
-      scene.update(p);
+      scene.update(p, !!walk); // a playing walk owns the figures; scroll only drives the line + stripes
     },
     destroy() {
+      stopWalk();
+      io.disconnect();
       ro.disconnect();
+      play.removeEventListener('click', onClick);
       root.textContent = '';
     },
   };
@@ -149,7 +239,8 @@ function buildScene(root, L) {
   // ---- the Beetle (rear view), parked at the left kerb
   const bg = L.beetle.g, bsc = (m1(bg) * 1.6) / 100;
   const bx = X(L.beetle.u, bg);
-  const beetle = `<g transform="translate(${f1(bx)},${f1(bg)}) scale(${bsc.toFixed(3)})">
+  const beetleAt = (g, u) => `translate(${f1(X(u, g))},${f1(g)}) scale(${((m1(g) * 1.6) / 100).toFixed(4)})`;
+  const beetle = `<g class="ab-beetle" transform="${beetleAt(bg, L.beetle.u)}">
       <ellipse class="ab-shadow" cx="0" cy="0.5" rx="52" ry="4"/>
       <rect class="ab-tyre" x="-45" y="-13" width="14" height="13" rx="3"/>
       <rect class="ab-tyre" x="31" y="-13" width="14" height="13" rx="3"/>
@@ -285,7 +376,7 @@ function buildScene(root, L) {
   // ease-out exponent chosen so the group is exactly at x55 (centred, mid-stride) at p = 0.55
   const K = Math.log(1 - (L.x55 - L.xa) / (L.xb - L.xa)) / Math.log(1 - (0.55 - 0.18) / 0.82);
 
-  function update(p) {
+  function update(p, walking = false) {
     // line
     const t0 = ease(seg(p, 0.02, 0.15));
     const t1 = ease(seg(p, 0.14, 0.2));
@@ -309,6 +400,7 @@ function buildScene(root, L) {
       setT(reveals.get(-k), v);
     }
 
+    if (walking) return;
     // walkers: ease-out stroll, gait phase locked to distance travelled
     const u = seg(p, 0.18, 1);
     const lead = L.xa + (L.xb - L.xa) * (1 - Math.pow(1 - u, K));
@@ -324,7 +416,47 @@ function buildScene(root, L) {
   const scaleTo = (px) => { if (px > 0) svg.style.setProperty('--ab-u', (W / px).toFixed(4)); };
   scaleTo(root.clientWidth);
 
-  return { update, scaleTo };
+  // ---- replayed walk: constant full stride from beyond the left edge until the last one is gone right
+  const figsEl = svg.querySelector('.ab-figs');
+  const beetleEl = svg.querySelector('.ab-beetle');
+  const stride = CYCLE * figScale;
+  const walkRange = () => ({ start: px0 - 34, end: px1 + 3 * L.spacing + 40, v: stride / STRIDE_S });
+  function poseAll(lead, at = lead) {
+    const phase = ((at - L.x55) / stride) * Math.PI * 2 + Math.PI / 2 + 0.12;
+    figs.forEach((f, n) => poseFigure(f, CAST[n], lead - n * L.spacing, phase + CAST[n].off));
+  }
+  function walkFrame(lead, k) {
+    poseAll(lead);
+    // the Beetle pulls away up the left lane shortly after they set off, shrinking into the distance
+    const d = clamp((k - 0.08) / 0.84);
+    const e = d * d * (3 - 2 * d) * 0.55 + d * d * 0.45;
+    const g = bg - (bg - (H + 2)) * e;
+    setT(beetleEl, beetleAt(g, L.beetle.u + (-0.5 - L.beetle.u) * clamp(d * 3)));
+    beetleEl.style.opacity = 1 - seg(d, 0.7, 1);
+  }
+  const figsOut = () => { figsEl.classList.add('is-out'); };
+  const figsShow = (instant) => {
+    figsEl.classList.toggle('is-instant', !!instant);
+    figsEl.classList.remove('is-out');
+  };
+  function walkDone(instant) {
+    // blend back: hide the (off-frame) walkers, re-pose at the scroll state, fade the four and the car back in
+    figsEl.classList.add('is-instant', 'is-out');
+    beetleEl.classList.add('is-instant');
+    beetleEl.style.opacity = 0;
+    setT(beetleEl, beetleAt(bg, L.beetle.u));
+    void figsEl.getBoundingClientRect(); // commit the hidden state before fading in (event time, not update)
+    figsEl.classList.toggle('is-instant', !!instant);
+    beetleEl.classList.toggle('is-instant', !!instant);
+    figsEl.classList.remove('is-out');
+    beetleEl.style.opacity = '';
+  }
+  function crossed(on) { // reduced motion: an instant cut to "they made it across, the car has gone"
+    if (on) poseAll(Math.min(L.xb, px1 - 78 * figScale), L.x55); // across, still in the cover's full stride
+    beetleEl.style.opacity = on ? 0 : '';
+  }
+
+  return { update, scaleTo, walkRange, walkFrame, walkDone, figsOut, figsShow, crossed };
 }
 
 function figureMarkup(c, n, id) {

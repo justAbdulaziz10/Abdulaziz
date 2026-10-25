@@ -1,4 +1,7 @@
 // Hero scene: the statement drawn as one line — problem → requirements → workflows → APIs → shipped products.
+// On load the same line first signs his name across the hero (scenes/sign.js) and its tail runs into station one.
+import { mountSign } from './sign.js';
+
 const NS = 'http://www.w3.org/2000/svg';
 const STATIONS = ['User and business problems', 'Requirements', 'System workflows', 'API integrations', 'Shipped products'];
 const ICONS = [
@@ -26,12 +29,22 @@ function layout(wide) {
   const W = 360, H = 640, x = 18;
   const ys = [16, 128, 240, 352, 464];
   const d = `M${x} ${ys[0]}V556Q${x} 590 52 590H146Q180 590 180 624V${H}`;
-  return { W, H, d, stations: ys.map((y, i) => ({ x, y, lx: x + 26, ly: y + 6, anchor: 'start', t: [0, .19, .38, .57, .76][i] })), icons: { x: 44, y: 476, size: 50, gap: 12, dir: 'row' }, exit: { x: .5, y: 1 } };
+  return { W, H, d, stations: ys.map((y, i) => ({ x, y, lx: x + 26, ly: y + 6, anchor: 'start', t: [0, .19, .38, .57, .76][i] })), icons: { x: 44, y: 490, size: 50, gap: 12, dir: 'row' }, exit: { x: .5, y: 1 } };
 }
+
+// a quick squash-and-stretch hop, settling well inside 600 ms
+const hop = (a) => [
+  { transform: 'translateY(0) scale(1, 1)', easing: 'ease-out' },
+  { transform: 'translateY(0) scale(1.07, .9)', offset: .14, easing: 'cubic-bezier(.2, .7, .3, 1)' },
+  { transform: `translateY(-${a}%) scale(.95, 1.06)`, offset: .42, easing: 'cubic-bezier(.5, 0, .8, .4)' },
+  { transform: 'translateY(0) scale(1.06, .93)', offset: .66, easing: 'ease-out' },
+  { transform: `translateY(-${a / 4}%) scale(1, 1)`, offset: .82, easing: 'ease-in' },
+  { transform: 'translateY(0) scale(1, 1)' },
+];
 
 export function mount(root, { reduced }) {
   const mq = matchMedia('(min-width: 761px)');
-  let L, svg, path, dots = [], labels = [], icons = [];
+  let L, svg, path, ship, dots = [], labels = [], icons = [], hops = [];
 
   function render() {
     L = layout(mq.matches);
@@ -43,7 +56,7 @@ export function mount(root, { reduced }) {
     // where each station sits along the line, so labels appear as the stroke reaches them
     const total = path.getTotalLength(), s0 = L.stations[0];
     L.stations.forEach(s => { s.t = (Math.abs(s.x - s0.x) + Math.abs(s.y - s0.y)) / total; });
-    dots = []; labels = []; icons = [];
+    dots = []; labels = []; icons = []; hops = [];
     L.stations.forEach((s, i) => {
       const g = el('g', { class: 'flow__station', 'aria-hidden': 'true' }, svg);
       dots.push(el('circle', { cx: s.x, cy: s.y, r: i === 0 ? 6 : 5, class: i === 0 ? 'flow__dot flow__dot--start' : 'flow__dot' }, g));
@@ -60,12 +73,50 @@ export function mount(root, { reduced }) {
       const cp = el('clipPath', { id }, defs);
       el('rect', { x, y, width: I.size, height: I.size, rx: I.size * .225 }, cp);
       const g = el('g', { class: 'flow__icon', style: `--i:${i}; transform-origin: ${x + I.size / 2}px ${y + I.size}px` }, svg);
-      el('rect', { x, y: y + 6, width: I.size, height: I.size, rx: I.size * .225, class: 'flow__icon-shadow' }, g);
-      const img = el('image', { href: ic.src, x, y, width: I.size, height: I.size, 'clip-path': `url(#${id})`, preserveAspectRatio: 'xMidYMid slice' }, g);
+      const hop = el('g', { class: 'flow__hop' }, g);
+      el('rect', { x, y: y + 6, width: I.size, height: I.size, rx: I.size * .225, class: 'flow__icon-shadow' }, hop);
+      const img = el('image', { href: ic.src, x, y, width: I.size, height: I.size, 'clip-path': `url(#${id})`, preserveAspectRatio: 'xMidYMid slice' }, hop);
       img.setAttribute('aria-label', ic.label);
       icons.push(g);
+      hops.push(hop);
     });
+    // "Shipped products" is touchable: hover, focus or tap and the three apps hop
+    const last = L.stations[4];
+    ship = document.createElement('button');
+    ship.type = 'button';
+    ship.className = 'flow__ship';
+    ship.setAttribute('aria-label', 'Shipped products: Mara, Echo and DocMara');
+    root.append(ship);
+    placeShip(last);
+    ship.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') bounce(); });
+    ship.addEventListener('focus', bounce);
+    ship.addEventListener('click', bounce);
+    if (sign) sign.relayout();
     update(lastP);
+  }
+
+  function placeShip(s) {
+    // cover the dot and its label; measured from the drawn text so it fits whatever font is loaded
+    const label = labels[4].querySelector('text');
+    let w = 150;
+    try { w = label.getComputedTextLength(); } catch { /* not rendered yet */ }
+    const padX = 12, top = s.y - 16, bottom = s.ly + 10;
+    const x0 = Math.min(s.x - padX, s.lx - padX), x1 = s.lx + w + padX;
+    Object.assign(ship.style, {
+      left: `${(x0 / L.W) * 100}%`, top: `${(top / L.H) * 100}%`,
+      width: `${((x1 - x0) / L.W) * 100}%`, height: `${((bottom - top) / L.H) * 100}%`,
+    });
+  }
+
+  let hopping = false;
+  function bounce() {
+    if (hopping) return;
+    hopping = true;
+    const runs = hops.map((h, i) => reduced
+      // reduced motion: an instant blink of state instead of movement
+      ? h.animate([{ opacity: 1 }, { opacity: .45 }, { opacity: 1 }], { duration: 320, delay: i * 60, easing: 'steps(1, end)' })
+      : h.animate(hop(mq.matches ? 26 : 16), { duration: 540, delay: i * 70 }));
+    Promise.all(runs.map(a => a.finished.catch(() => {}))).then(() => { hopping = false; });
   }
 
   let lastP = reduced ? 1 : 0;
@@ -81,12 +132,42 @@ export function mount(root, { reduced }) {
     icons.forEach(g => g.classList.toggle('is-on', shipped));
   }
 
+  // station one, in viewport coordinates: where the signature's tail lands
+  function stationPoint() {
+    const r = svg.getBoundingClientRect(), s = L.stations[0];
+    return { x: r.left + (s.x / L.W) * r.width, y: r.top + (s.y / L.H) * r.height };
+  }
+
+  let sign = null, signTimer = 0, heroMO = null;
+  const hero = root.closest('.hero');
+  const signSvg = hero && hero.querySelector('.hero__sign');
+
   const onChange = () => render();
   mq.addEventListener('change', onChange);
   render();
+
+  if (signSvg) {
+    sign = mountSign({ hero, svg: signSvg, reduced, station: stationPoint });
+    // start once the giant name has begun to stretch in, so the pen signs over a name already on the page
+    const go = () => { signTimer = setTimeout(() => sign.play(), 160); };
+    if (hero.classList.contains('is-in')) go();
+    else {
+      heroMO = new MutationObserver(() => { if (hero.classList.contains('is-in')) { heroMO.disconnect(); heroMO = null; go(); } });
+      heroMO.observe(hero, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+  const onFonts = () => { if (ship) placeShip(L.stations[4]); };
+  if (document.fonts) document.fonts.ready.then(onFonts);
+
   return {
     update,
     anchors: () => ({ entry: { x: L.stations[0].x / L.W, y: L.stations[0].y / L.H }, exit: L.exit }),
-    destroy() { mq.removeEventListener('change', onChange); root.replaceChildren(); },
+    destroy() {
+      mq.removeEventListener('change', onChange);
+      clearTimeout(signTimer);
+      heroMO?.disconnect();
+      sign?.destroy();
+      root.replaceChildren();
+    },
   };
 }

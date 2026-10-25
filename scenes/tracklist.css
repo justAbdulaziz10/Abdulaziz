@@ -1,0 +1,122 @@
+.scene--tracklist {
+  --tl-bg: var(--paper);
+  --tl-fg: var(--ink);
+  --tl-fg-2: var(--ink-2);
+  --tl-fg-3: var(--ink-3);
+  --tl-disc: var(--ink);
+  --tl-groove: var(--paper);
+  --tl-rim: var(--ink-2);
+  --tl-line: var(--line);
+  --tl-label: var(--paper);
+  --tl-label-ink: var(--ink);
+  position: relative;
+  aspect-ratio: 600 / 656;
+}
+.scene--tracklist:where(html.is-night *) {
+  --tl-bg: var(--night);
+  --tl-fg: var(--paper);
+  --tl-fg-2: var(--paper-2);
+  --tl-fg-3: var(--paper-2);
+  --tl-disc: var(--paper-2);
+  --tl-groove: var(--night);
+  --tl-rim: var(--paper);
+  --tl-line: var(--paper);
+  --tl-label: var(--night);
+  --tl-label-ink: var(--paper);
+}
+.scene--tracklist .tl-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* vinyl */
+.scene--tracklist .tl-shadow { fill: var(--ink); opacity: 0.22; }
+.scene--tracklist .tl-disc { fill: var(--tl-disc); }
+.scene--tracklist .tl-rim { fill: none; stroke: var(--tl-rim); stroke-width: 3; opacity: 0.55; }
+.scene--tracklist .tl-grooves circle { fill: none; stroke: var(--tl-groove); stroke-opacity: 0.045; stroke-width: 0.9; }
+.scene--tracklist .tl-gaps circle { fill: none; stroke: var(--tl-groove); stroke-opacity: 0.1; }
+.scene--tracklist .tl-band {
+  fill: none;
+  stroke: var(--tl-groove);
+  stroke-opacity: 0;
+  transition: stroke-opacity var(--t-layout) var(--ease);
+}
+.scene--tracklist.is-playing .tl-band { stroke-opacity: 0.075; }
+.scene--tracklist .tl-sheen path { fill: var(--tl-groove); opacity: 0.075; }
+.scene--tracklist .tl-sheen .tl-sheen-core { opacity: 0.06; }
+
+/* label */
+.scene--tracklist .tl-label { fill: var(--tl-label); transition: fill var(--t-layout) var(--ease); }
+.scene--tracklist .tl-label-ring { fill: none; stroke: var(--tl-label-ink); stroke-opacity: 0.28; stroke-width: 1; transition: stroke var(--t-layout) var(--ease); }
+.scene--tracklist .tl-label-line {
+  fill: none;
+  stroke: var(--tl-label-ink);
+  stroke-width: calc(var(--line-w) * var(--tl-u, 1));
+  stroke-linecap: round;
+  opacity: 0.85;
+  transition: stroke var(--t-layout) var(--ease);
+}
+.scene--tracklist .tl-label-dot { fill: var(--tl-label-ink); opacity: 0.8; transition: fill var(--t-layout) var(--ease); }
+.scene--tracklist .tl-side {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--tl-label-ink);
+  opacity: 0.7;
+}
+.scene--tracklist .tl-name {
+  font-family: var(--font);
+  font-weight: 720;
+  font-stretch: 92%;
+  letter-spacing: -0.01em;
+  fill: var(--tl-label-ink);
+  transition: fill var(--t-layout) var(--ease);
+}
+.scene--tracklist .tl-meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 450;
+  letter-spacing: 0.02em;
+  fill: var(--tl-label-ink);
+  opacity: 0.78;
+}
+.scene--tracklist .tl-hole { fill: var(--tl-bg); stroke: var(--tl-fg); stroke-opacity: 0.25; stroke-width: 1; }
+
+/* the line */
+.scene--tracklist .tl-line,
+.scene--tracklist .tl-groove-line {
+  fill: none;
+  stroke-width: calc(var(--line-w) * var(--tl-u, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scene--tracklist .tl-line { stroke: var(--tl-line); }
+.scene--tracklist .tl-groove-line { stroke: var(--tl-groove); opacity: 0.86; stroke-width: calc(var(--line-w) * 0.72 * var(--tl-u, 1)); }
+
+/* label colours: the world of the hovered track */
+.scene--tracklist[data-tone="mara"] { --tl-label: var(--mara); --tl-label-ink: var(--ink); }
+.scene--tracklist[data-tone="echo"] { --tl-label: var(--echo); --tl-label-ink: var(--ink); }
+.scene--tracklist[data-tone="daleelk"] { --tl-label: var(--daleelk); --tl-label-ink: var(--ink); }
+.scene--tracklist[data-tone="rassah"] { --tl-label: var(--rassah); --tl-label-ink: var(--rassah-ink); }
+.scene--tracklist[data-tone="pitlane"] { --tl-label: var(--kerb-red); --tl-label-ink: var(--kerb-white); }
+.scene--tracklist[data-tone="b"] { --tl-label: var(--ink-2); --tl-label-ink: var(--paper); }
+
+.scene--tracklist .tl-hint {
+  position: absolute;
+  left: 5%;
+  top: 91%;
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--step--1);
+  font-weight: 540;
+  color: var(--tl-fg-3);
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--tracklist .tl-hint.is-used { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene--tracklist .tl-label,
+  .scene--tracklist .tl-label-ring,
+  .scene--tracklist .tl-label-line,
+  .scene--tracklist .tl-label-dot,
+  .scene--tracklist .tl-name,
+  .scene--tracklist .tl-band,
+  .scene--tracklist .tl-hint { transition: none; }
+}

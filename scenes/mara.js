@@ -10,7 +10,7 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 // Two compositions. Units are viewBox units; the phone is placed with the same numbers as %.
 const LAYOUTS = {
   wide: { w: 1200, h: 800, cx: 600, ecg: [12, 128], amp: 0.95, curlTo: 172, r: 296, phoneW: 250, ringW: 12 },
-  narrow: { w: 390, h: 720, cx: 195, ecg: [10, 108], amp: 0.72, curlTo: 0, r: 180, phoneW: 236, ringW: 8 },
+  narrow: { w: 390, h: 760, cx: 195, ecg: [10, 108], amp: 0.72, curlTo: 0, r: 180, phoneW: 236, ringW: 8 },
 };
 const PHONE_RATIO = 2.129; // frame height / width for a 773x1680 screen inside a 1.9% bezel
 
@@ -52,9 +52,22 @@ function ecgPath(L, cy) {
   // one and a half turns, clockwise, ending at the bottom heading left
   d += ` A${r} ${r} 0 0 1 ${cx} ${bot} A${r} ${r} 0 0 1 ${cx} ${top} A${r} ${r} 0 0 1 ${cx} ${bot}`;
   // mirrored curl out, exiting at bottom centre
-  const k2 = L.h - bot;
+  const k2 = Math.min(L.h - bot, 60);
   d += ` C${(cx - k2 * 1.15).toFixed(1)} ${bot} ${cx} ${(L.h - k2 * 0.7).toFixed(1)} ${cx} ${L.h}`;
   return d;
+}
+
+// Readout strip: a continuous ECG with one spike every BEAT_W units, newest beat at the cursor (x=96).
+const BEAT_W = 36;
+function stripPath(n) {
+  const xs = [];
+  for (let k = n + 1; k >= 0; k--) xs.push(132 - k * BEAT_W);
+  const f = (v) => v.toFixed(1);
+  let d = `M${f(xs[0] - BEAT_W)} 14`;
+  for (const x of xs) {
+    d += ` L${f(x - 24)} 14 Q${f(x - 21)} 10.5 ${f(x - 18)} 14 L${f(x - 4)} 14 L${f(x - 2)} 16 L${f(x)} 3 L${f(x + 2)} 20 L${f(x + 4)} 14 L${f(x + 9)} 14 Q${f(x + 13)} 8.5 ${f(x + 17)} 14`;
+  }
+  return d + ` L${f(xs[xs.length - 1] + BEAT_W)} 14`;
 }
 
 function el(tag, attrs = {}, parent) {
@@ -98,6 +111,7 @@ export function mount(root, { reduced = false } = {}) {
             sizes="(max-width: 640px) 60vw, 300px" width="773" height="1680" decoding="async" loading="lazy">
           <div class="mara__island" aria-hidden="true"></div>
           <div class="mara__glass" aria-hidden="true"></div>
+          <button class="mara__tap" type="button" aria-label="Show the Mara chat screen"></button>
         </div>
       </div>
       <div class="mara__btn mara__btn--a" aria-hidden="true"></div>
@@ -109,7 +123,29 @@ export function mount(root, { reduced = false } = {}) {
   ring.setAttribute('aria-hidden', 'true');
   ring.innerHTML = '<div class="mara__sweep"><i class="mara__head"></i></div>';
   const sweep = ring.firstChild;
-  stage.append(glow, ring, svg, device);
+  const head = sweep.firstChild;
+  const pulse = document.createElement('div');
+  pulse.className = 'mara__pulse';
+  pulse.setAttribute('aria-hidden', 'true');
+
+  const hud = document.createElement('div');
+  hud.className = 'mara__hud';
+  hud.innerHTML = `
+    <div class="mara__hr">
+      <svg class="mara__strip" viewBox="0 0 100 24" aria-hidden="true">
+        <g class="mara__strip-run"><path d="${stripPath(4)}"/></g>
+        <circle class="mara__strip-dot" cx="96" cy="14" r="2.2"/>
+      </svg>
+      <span class="mara__bpm"><span class="mara__bpm-n">64</span> bpm</span>
+      <span class="mara__hr-label">Heart rate: your scroll speed</span>
+    </div>
+    <p class="mara__hint">Tap the phone</p>`;
+  stage.append(glow, pulse, ring, svg, device, hud);
+  const run = hud.querySelector('.mara__strip-run');
+  const dot = hud.querySelector('.mara__strip-dot');
+  const bpmN = hud.querySelector('.mara__bpm-n');
+  const hint = hud.querySelector('.mara__hint');
+  const tap = device.querySelector('.mara__tap');
 
   const phone = device.querySelector('.mara__phone');
   const shadow = device.querySelector('.mara__shadow');
@@ -138,6 +174,12 @@ export function mount(root, { reduced = false } = {}) {
       left: pct(L.cx - L.r - bw / 2, L.w), width: pct(L.r * 2 + bw, L.w),
       top: pct(G.cy - L.r - bw / 2, L.h), height: pct(L.r * 2 + bw, L.h),
     });
+    Object.assign(pulse.style, {
+      left: pct(L.cx - L.r, L.w), width: pct(L.r * 2, L.w),
+      top: pct(G.cy - L.r, L.h), height: pct(L.r * 2, L.h),
+    });
+    if (name === 'wide') Object.assign(hud.style, { left: pct(L.cx + 78, L.w), top: pct(L.ecg[0] + 8, L.h), bottom: '' });
+    else Object.assign(hud.style, { left: '50%', top: pct(G.phoneTop + G.phoneH + 20, L.h), bottom: '' });
     Object.assign(glow.style, {
       left: pct(L.cx - L.r * 1.25, L.w), width: pct(L.r * 2.5, L.w),
       top: pct(G.cy - L.r * 1.25, L.h), height: pct(L.r * 2.5, L.h),
@@ -149,12 +191,17 @@ export function mount(root, { reduced = false } = {}) {
     build(w < 640 ? 'narrow' : 'wide');
     const L = LAYOUTS[layout];
     root.style.setProperty('--mara-bw', (L.ringW * w / L.w).toFixed(2) + 'px');
+    rootH = entries[0].contentRect.height;
   });
   ro.observe(root);
   build((root.clientWidth || 1200) < 640 ? 'narrow' : 'wide');
 
   // state
   let P = 0.6;
+  let rootH = root.clientHeight || 800;
+  let manual = null;          // null = scroll decides; 'home' | 'chat' = tapped
+  let scrollChat = false;     // which screen the scroll alone would show
+  let pulseAmt = 0;           // 0..1, decays after each beat
   const tilt = { x: 0, y: 0, tx: 0, ty: 0 };
   let raf = 0;
 
@@ -177,8 +224,23 @@ export function mount(root, { reduced = false } = {}) {
     device.style.opacity = e.toFixed(3);
     shadow.style.transform = `translate3d(${(-ry * 0.9).toFixed(1)}%, ${(lift * 0.4).toFixed(1)}px, 0) scaleX(${(1 - Math.abs(ry) / 140).toFixed(3)})`;
     glass.style.transform = `translate3d(${(-ry * 2.2).toFixed(1)}%, 0, 0)`;
-    chat.style.opacity = smooth(0.74, 0.8, p).toFixed(3);
+    const sc = smooth(0.74, 0.8, p);
+    const nowChat = sc > 0.5;
+    if (nowChat !== scrollChat) { scrollChat = nowChat; manual = null; root.classList.remove('is-manual'); }
+    const showChat = manual ? manual === 'chat' : nowChat;
+    chat.style.opacity = (manual ? (showChat ? 1 : 0) : sc).toFixed(3);
+    tap.setAttribute('aria-label', showChat ? 'Show the Mara home screen' : 'Show the Mara chat screen');
+    hud.style.opacity = smooth(0.28, 0.44, p).toFixed(3);
   }
+
+  function onTap() {
+    const showingChat = manual ? manual === 'chat' : scrollChat;
+    manual = showingChat ? 'home' : 'chat';
+    root.classList.add('is-manual');
+    hint.classList.add('is-used');
+    render();
+  }
+  tap.addEventListener('click', onTap);
 
   function loop() {
     tilt.x += (tilt.tx - tilt.x) * 0.12;
@@ -206,17 +268,66 @@ export function mount(root, { reduced = false } = {}) {
     addEventListener('scroll', onEnter, { passive: true });
   }
 
+  // ---- heart rate: follows how fast you scroll ----
+  const REST = 64, MAX = 170;
+  let bpm = REST, shownBpm = REST, phase = 0, lastT = 0, lastY = scrollY, pDelta = 0, hrRaf = 0, visible = false;
+  const writePulse = () => {
+    const k = pulseAmt;
+    pulse.style.transform = `scale(${(1 + 0.085 * (1 - k)).toFixed(4)})`;
+    pulse.style.opacity = (0.55 * k).toFixed(3);
+    head.style.transform = `scale(${(1 + 0.7 * k).toFixed(3)})`;
+    glow.style.transform = `scale(${(1 + 0.035 * k).toFixed(4)})`;
+    dot.style.transform = `scale(${(1 + 0.8 * k).toFixed(3)})`;
+  };
+  function heart(t) {
+    hrRaf = 0;
+    if (!visible || document.hidden) { lastT = 0; return; }
+    const dt = lastT ? Math.min(64, t - lastT) : 16;
+    lastT = t;
+    const y = scrollY;
+    const vScroll = Math.abs(y - lastY) / dt * 1000;           // px/s
+    const vP = pDelta * (innerHeight + rootH * 1.6) / dt * 1000; // px/s, from update(p)
+    lastY = y; pDelta = 0;
+    const v = Math.max(vScroll, vP);
+    const target = REST + (MAX - REST) * Math.pow(clamp((v - 60) / 2600), 0.75);
+    const tau = target > bpm ? 140 : 650;
+    bpm += (target - bpm) * (1 - Math.exp(-dt / tau));
+    const n = Math.round(bpm);
+    if (n !== shownBpm) { shownBpm = n; bpmN.textContent = n; }
+    if (!reduced) {
+      phase += (bpm / 60) * (dt / 1000);
+      if (phase >= 1) { phase %= 1; pulseAmt = 1; }
+      pulseAmt *= Math.exp(-dt / 220);
+      run.style.transform = `translateX(${(-phase * BEAT_W).toFixed(2)}px)`;
+      writePulse();
+    }
+    hrRaf = requestAnimationFrame(heart);
+  }
+  const startHeart = () => { if (!hrRaf && visible && !document.hidden) { lastY = scrollY; hrRaf = requestAnimationFrame(heart); } };
+  const io = new IntersectionObserver((es) => { visible = es[0].isIntersecting; if (visible) startHeart(); }, { rootMargin: '10% 0px' });
+  io.observe(root);
+  const onVis = () => startHeart();
+  document.addEventListener('visibilitychange', onVis);
+
   if (reduced) { root.classList.add('is-reduced'); P = 0.6; render(); }
 
+  let lastP = null;
   return {
     update(p) {
+      const np = clamp(+p || 0);
+      if (lastP !== null) pDelta += Math.abs(np - lastP);
+      lastP = np;
       if (reduced) return;
-      P = clamp(+p || 0);
+      P = np;
       render();
     },
     destroy() {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(hrRaf);
       ro.disconnect();
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVis);
+      tap.removeEventListener('click', onTap);
       if (fine) {
         root.removeEventListener('pointerenter', onEnter);
         root.removeEventListener('pointermove', onMove);

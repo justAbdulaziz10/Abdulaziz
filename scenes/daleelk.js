@@ -1,5 +1,7 @@
 // Daleelk — the line becomes a travel route over the Arabian Gulf coastline,
 // then resolves into the system: question → OpenAI API + local knowledge base → trip plan + traveler safety.
+// Round 2: the question pill is a button. Pressing it types an example question and sends a pulse
+// through the diagram; tapping a coastal stop traces the route from that stop into the question.
 // Coastline and land: Natural Earth (public domain), 1:10m, clipped to 46–60°E, 22–30.5°N,
 // equirectangular at 26.25°N, simplified (Douglas–Peucker). Map space is 1000 × 677.
 const NS = 'http://www.w3.org/2000/svg';
@@ -47,7 +49,7 @@ function el(tag, attrs = {}, parent) {
 
 const LAYOUTS = {
   wide: {
-    w: 1320, h: 1040, vx: 250, vw: 820, // crop the empty sides so the diagram reads at column width
+    w: 1320, h: 1040,
     map: { x: 270, y: 34, s: 0.78 },
     font: 15.5, nodeH: 50, r: 13,
     q: { x: 660, y: 628, w: 296 },
@@ -55,6 +57,7 @@ const LAYOUTS = {
     jY: 846,
     out: [{ x: 460, y: 930, w: 232, label: 'Trip plan' }, { x: 860, y: 930, w: 232, label: 'Traveler safety' }],
     credit: { x: 318, y: 548 },
+    hint: { x: 488, y: 628, anchor: 'end' },
   },
   narrow: {
     w: 350, h: 640,
@@ -65,6 +68,7 @@ const LAYOUTS = {
     jY: 478,
     out: [{ x: 89, y: 542, w: 162, label: 'Trip plan' }, { x: 261, y: 542, w: 162, label: 'Traveler safety' }],
     credit: { x: 14, y: 252 },
+    hint: { x: 59, y: 284, anchor: 'start' },
   },
 };
 
@@ -75,6 +79,16 @@ const T = {
   join: [0.435, 0.46], dot: [0.452, 0.47],
   fan: [0.46, 0.485], out: [0.485, 0.515], outText: [0.5, 0.53],
   merge: [0.515, 0.545], exit: [0.545, 0.6],
+};
+const READY = 0.53;   // diagram composed: the question becomes pressable
+// Examples of the kind of thing a traveller asks (labelled "Example" on screen; not user quotes).
+const EXAMPLES = ['Plan two days on the coast', 'Is this area safe at night?', 'Find a quiet beach for Friday'];
+// ask choreography (ms): Q -> both middle nodes -> junction -> both outputs, then hold and restore
+const ASK = { type: 30, a: [0, 420], b: [600, 900], c: [900, 1260], hold: 2000, out: 3400 };
+const bez = (a, b, t) => { // point on sCurve(a, b)
+  const my = (a[1] + b[1]) / 2, u = 1 - t;
+  return [u * u * u * a[0] + 3 * u * u * t * a[0] + 3 * u * t * t * b[0] + t * t * t * b[0],
+    u * u * u * a[1] + 3 * u * u * t * my + 3 * u * t * t * my + t * t * t * b[1]];
 };
 
 // Rounded rect outline as two halves, from top-centre round to bottom-centre.
@@ -93,15 +107,30 @@ const sCurve = (a, b) => {
 
 export function mount(root, { reduced = false } = {}) {
   const mq = matchMedia('(max-width: 640px)');
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  root.classList.toggle('is-reduced-motion', reduced);
   let L, svg, parts, ro, io, visible = false, last = -1;
+  let ui = null, ac = null, raf = 0, ask = null, trace = null, exIdx = 0, lastP = reduced ? 1 : 0;
+  let hintUsed = false;
+  try { hintUsed = sessionStorage.getItem('dk-hint') === '1'; } catch { /* storage blocked */ }
+  const live = document.createElement('p');
+  live.className = 'dk-sr';
+  live.setAttribute('aria-live', 'polite');
+  root.appendChild(live);
 
   function build() {
     if (svg) svg.remove();
+    if (ui) ui.remove();
+    if (ac) ac.abort();
+    if (raf) cancelAnimationFrame(raf);
+    if (ask?.restore) clearTimeout(ask.restore);
+    raf = 0; ask = null; trace = null;
+    ac = new AbortController();
     L = mq.matches ? LAYOUTS.narrow : LAYOUTS.wide;
     root.dataset.layout = mq.matches ? 'narrow' : 'wide';
-    root.style.setProperty('--dk-ratio', `${L.vw ?? L.w} / ${L.h}`);
+    root.style.setProperty('--dk-ratio', `${L.w} / ${L.h}`);
     svg = el('svg', {
-      viewBox: `${L.vx ?? 0} 0 ${L.vw ?? L.w} ${L.h}`,
+      viewBox: `0 0 ${L.w} ${L.h}`,
       role: 'img',
       'aria-label': 'A single line traces a travel route between unnamed waypoints over a minimal outline of the Arabian Gulf coastline, then draws the system: a question in plain language goes to the OpenAI API and a local knowledge base, which produce a trip plan and traveler safety guidance.',
     });
@@ -162,11 +191,16 @@ export function mount(root, { reduced = false } = {}) {
       const g = el('g', { class: 'dk-wp', transform: `translate(${r2(x)} ${r2(y)})` }, gRoute);
       el('circle', { r: 5, class: 'dk-wp-pulse', style: `animation-delay:${-i * 0.43}s` }, g);
       el('circle', { r: 11, class: 'dk-wp-halo' }, g);
+      const burst = el('circle', { r: 6, class: 'dk-wp-burst' }, g);
       const inner = el('g', { class: 'dk-wp-dot' }, g);
-      el('circle', { r: 5.5, class: 'dk-wp-ring' }, inner);
-      el('circle', { r: 2.2, class: 'dk-wp-core' }, inner);
-      return { g, inner, t: T.route[0] + (best / N) * (T.route[1] - T.route[0]) };
+      const pop = el('g', {}, inner);
+      el('circle', { r: 5.5, class: 'dk-wp-ring' }, pop);
+      el('circle', { r: 2.2, class: 'dk-wp-core' }, pop);
+      return { g, inner, pop, burst, x, y, f: best / N, t: T.route[0] + (best / N) * (T.route[1] - T.route[0]) };
     });
+
+    const tracePath = el('path', { d: rd, class: 'dk-trace', pathLength: 1 }, gRoute);
+    wpEls.forEach((w) => gRoute.appendChild(w.g)); // stops sit above the trace
 
     // ---- diagram ----
     const gDia = el('g', {}, svg);
@@ -174,11 +208,12 @@ export function mount(root, { reduced = false } = {}) {
     const mkNode = (n, label, cls, tLine, tText) => {
       const h = L.nodeH, r = n.r ?? L.r;
       const bg = fade(el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: n.w, height: h, rx: r, class: 'dk-node ' + cls }, gDia), ...tText);
+      const glow = el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: n.w, height: h, rx: r, class: 'dk-glow' }, gDia);
       halves(n.x, n.y, n.w, h, r, n.tail || 0).forEach((d) => mkLine(d, gDia, ...tLine));
       const t = fade(el('text', { x: n.x, y: n.y, class: 'dk-label', 'text-anchor': 'middle', 'dominant-baseline': 'central', style: `font-size:${L.font}px` }, gDia), ...tText);
       t.textContent = label;
-      nodes.push({ bg, t });
-      return { top: [n.x, n.y - h / 2], bot: [n.x, n.y + h / 2] };
+      nodes.push({ bg, t, glow });
+      return { top: [n.x, n.y - h / 2], bot: [n.x, n.y + h / 2], glow, t, n };
     };
     const Q = mkNode({ ...L.q, r: L.nodeH / 2, tail: L.nodeH * 0.24 }, 'Question in plain language', 'dk-node--q', T.q, T.qText);
     const M = L.mid.map((n) => mkNode(n, n.label, 'dk-node--mid', T.mid, T.midText));
@@ -193,8 +228,154 @@ export function mount(root, { reduced = false } = {}) {
     const dot = el('circle', { cx: J[0], cy: J[1], r: 4.5, class: 'dk-junction' }, gDia);
     const dot2 = el('circle', { cx, cy: mergeY, r: 3.5, class: 'dk-junction' }, gDia);
 
-    parts = { lines, fades, coast, land, grat, wpEls, dot, dot2, credit };
+    // ---- interaction layer ----
+    const pulses = [0, 1].map(() => {
+      const g = el('g', { class: 'dk-pulse', opacity: 0 }, gDia);
+      el('circle', { r: 15, class: 'dk-pulse-halo' }, g);
+      el('circle', { r: 6, class: 'dk-pulse-core' }, g);
+      return g;
+    });
+    const head = el('g', { class: 'dk-pulse', opacity: 0 }, gRoute);
+    el('circle', { r: 15, class: 'dk-pulse-halo' }, head);
+    el('circle', { r: 6, class: 'dk-pulse-core' }, head);
+    const qx0 = L.q.x - L.q.w / 2;
+    const exTag = el('text', { x: qx0 + L.nodeH * 0.5, y: L.q.y - L.nodeH / 2 - L.font * 0.7, class: 'dk-example', style: `font-size:${r2(L.font * 0.78)}px`, opacity: 0 }, gDia);
+    exTag.textContent = 'Example';
+    const hp = L.hint;
+    const hint = el('text', { x: hp.x, y: hp.y, class: 'dk-hint', 'text-anchor': hp.anchor, 'dominant-baseline': 'central', style: `font-size:${r2(L.font * 0.86)}px` }, svg);
+    hint.textContent = finePointer.matches ? 'Click the question' : 'Tap the question';
+    if (hintUsed) hint.classList.add('is-used');
+
+    ui = document.createElement('div');
+    ui.className = 'dk-ui';
+    const pct = (v, of) => r2((v / of) * 100) + '%';
+    const qBtn = document.createElement('button');
+    qBtn.type = 'button';
+    qBtn.className = 'dk-q-btn';
+    qBtn.setAttribute('aria-label', 'Question in plain language: play an example');
+    Object.assign(qBtn.style, { left: pct(L.q.x - L.q.w / 2, L.w), top: pct(L.q.y - L.nodeH / 2, L.h), width: pct(L.q.w, L.w), height: pct(L.nodeH, L.h) });
+    ui.appendChild(qBtn);
+    const wpBtns = wpEls.map((w, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dk-wp-btn';
+      b.setAttribute('aria-label', `Coastal stop ${i + 1} of ${wpEls.length}: trace the route from here`);
+      Object.assign(b.style, { left: pct(w.x, L.w), top: pct(w.y, L.h) });
+      ui.appendChild(b);
+      b.addEventListener('click', () => fromStop(i), { signal: ac.signal });
+      return b;
+    });
+    qBtn.addEventListener('click', () => startAsk(), { signal: ac.signal });
+    root.appendChild(ui);
+
+    parts = { lines, fades, coast, land, grat, wpEls, dot, dot2, credit, Q, M, O, J, pulses, head, exTag, hint, tracePath, samples, qBtn, wpBtns };
     last = -1;
+  }
+
+  // ---------- interactions ----------
+  const useHint = () => {
+    if (hintUsed) return;
+    hintUsed = true;
+    parts.hint.classList.add('is-used');
+    try { sessionStorage.setItem('dk-hint', '1'); } catch { /* storage blocked */ }
+  };
+  const lit = (node, on) => node.glow.classList.toggle('is-lit', on);
+  const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+  function startAsk() {
+    if (lastP < READY && !reduced) return;
+    useHint();
+    if (ask) endAsk();
+    if (trace) {
+      trace = null;
+      parts.head.style.opacity = 0;
+      parts.tracePath.style.opacity = 0;
+    }
+    const text = EXAMPLES[exIdx++ % EXAMPLES.length];
+    const { Q, M, O } = parts;
+    [Q, ...M, ...O].forEach((n) => lit(n, false));
+    ask = { t0: performance.now(), text, typed: -1, stage: 0 };
+    lit(Q, true);
+    parts.exTag.style.opacity = 1;
+    live.textContent = `Example question: ${text}`;
+    if (reduced) {
+      Q.t.textContent = text;
+      [...M, ...O].forEach((n) => lit(n, true));
+      ask.stage = 9;
+      ask.restore = setTimeout(endAsk, ASK.out);
+      return;
+    }
+    kick();
+  }
+  function endAsk() {
+    if (!parts) return;
+    const { Q, M, O } = parts;
+    [Q, ...M, ...O].forEach((n) => lit(n, false));
+    Q.t.textContent = 'Question in plain language';
+    parts.exTag.style.opacity = 0;
+    parts.pulses.forEach((g) => { g.style.opacity = 0; });
+    parts.tracePath.style.opacity = 0;
+    if (ask && ask.restore) clearTimeout(ask.restore);
+    ask = null;
+  }
+  function fromStop(i) {
+    const w = parts.wpEls[i];
+    if (!reduced) {
+      w.burst.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(5.5)', opacity: 0 }], { duration: 560, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      w.pop.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.7)' }, { transform: 'scale(1)' }], { duration: 520, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+    }
+    if (ask) endAsk();
+    const tp = parts.tracePath;
+    tp.style.opacity = 1;
+    tp.style.strokeDasharray = reduced ? `0 ${w.f} ${1 - w.f} 2` : '0 1';
+    parts.head.style.opacity = reduced ? 0 : 1;
+    const start = parts.samples[Math.round(w.f * (parts.samples.length - 1))];
+    parts.head.setAttribute('transform', `translate(${r2(start[0])} ${r2(start[1])})`);
+    if (reduced) {
+      return;
+    }
+    trace = { t0: performance.now(), f: w.f, dur: Math.max(450, (1 - w.f) * 600) };
+    kick();
+  }
+  function loop() {
+    raf = 0;
+    if (!parts) return;
+    const now = performance.now();
+    const { Q, M, O, J, pulses, head, tracePath, samples } = parts;
+    if (trace) {
+      const t = clamp((now - trace.t0) / trace.dur);
+      const e = eio(t);
+      const g = trace.f + (1 - trace.f) * e;
+      tracePath.style.strokeDasharray = `0 ${r2(trace.f * 1e4) / 1e4} ${r2((g - trace.f) * 1e4) / 1e4} 2`;
+      const q = samples[Math.round(g * (samples.length - 1))];
+      head.setAttribute('transform', `translate(${r2(q[0])} ${r2(q[1])})`);
+      head.style.opacity = t < 1 ? 1 : 0;
+      if (t >= 1) {
+        trace = null;
+      }
+    }
+    if (ask) {
+      const ms = now - ask.t0;
+      const n = Math.min(ask.text.length, Math.floor(ms / ASK.type));
+      if (n !== ask.typed) { ask.typed = n; Q.t.textContent = n ? ask.text.slice(0, n) : '\u00a0'; }
+      const ta = seg(ms, ...ASK.a), tb = seg(ms, ...ASK.b), tc = seg(ms, ...ASK.c);
+      pulses.forEach((g, i) => {
+        let q, op = 1;
+        if (ms < ASK.a[1]) q = bez(Q.bot, M[i].top, eio(ta));
+        else if (ms < ASK.b[0]) { q = M[i].top; op = 0; }
+        else if (ms < ASK.b[1]) q = bez(M[i].bot, J, eio(tb));
+        else { q = bez(J, O[i].top, eio(tc)); op = 1 - seg(ms, ASK.c[1] - 60, ASK.c[1] + 120); }
+        g.setAttribute('transform', `translate(${r2(q[0])} ${r2(q[1])})`);
+        g.style.opacity = r2(op);
+      });
+      if (ask.stage < 1 && ms >= ASK.a[1]) { ask.stage = 1; M.forEach((m) => lit(m, true)); }
+      if (ask.stage < 2 && ms >= ASK.b[1]) {
+        ask.stage = 2;
+        parts.dot.animate([{ transform: 'scale(1)' }, { transform: 'scale(2.2)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+      }
+      if (ask.stage < 3 && ms >= ASK.c[1]) { ask.stage = 3; O.forEach((o) => lit(o, true)); }
+      if (ms >= ASK.c[1] + ASK.hold) endAsk();
+    }
+    if (trace || ask) raf = requestAnimationFrame(loop);
   }
 
   function render(p) {
@@ -221,6 +402,11 @@ export function mount(root, { reduced = false } = {}) {
     const dt = eo3(seg(p, ...T.dot));
     dot.style.opacity = r2(dt);
     dot2.style.opacity = r2(eo3(seg(p, T.merge[1] - 0.01, T.merge[1] + 0.01)));
+    const ready = p >= READY;
+    root.style.setProperty('--dk-hint', r2(seg(p, READY, READY + 0.03)));
+    root.style.setProperty('--dk-q-v', ready ? 'visible' : 'hidden');
+    parts.wpBtns.forEach((b, i) => b.style.setProperty('--v', p >= parts.wpEls[i].t + 0.03 ? 'visible' : 'hidden'));
+    if (!ready && ask) endAsk();
   }
 
   function setLive() {
@@ -231,23 +417,35 @@ export function mount(root, { reduced = false } = {}) {
   render(reduced ? 1 : 0);
   ro = new ResizeObserver((entries) => {
     const w = entries[0].contentRect.width;
-    if (w) root.style.setProperty('--dk-u', r2(((L.vw ?? L.w) / w) * 1000) / 1000);
+    if (w) root.style.setProperty('--dk-u', r2((L.w / w) * 1000) / 1000);
   });
   ro.observe(root);
   io = new IntersectionObserver((es) => { visible = es[0].isIntersecting; setLive(); });
   io.observe(root);
   const onVis = () => setLive();
   document.addEventListener('visibilitychange', onVis);
-  const onMq = () => { const keep = last; build(); render(keep < 0 ? (reduced ? 1 : 0) : keep); };
+  const onFinePointer = () => {
+    if (parts) parts.hint.textContent = finePointer.matches ? 'Click the question' : 'Tap the question';
+  };
+  finePointer.addEventListener('change', onFinePointer);
+  const onMq = () => {
+    if ((mq.matches ? 'narrow' : 'wide') === root.dataset.layout) return; // only rebuild on a real layout switch
+    const keep = last; build(); render(keep < 0 ? (reduced ? 1 : 0) : keep);
+  };
   mq.addEventListener('change', onMq);
 
   return {
-    update(p) { if (!reduced) render(clamp(+p)); },
+    update(p) { if (!reduced) { lastP = clamp(+p); render(lastP); } },
     destroy() {
       ro.disconnect(); io.disconnect();
       document.removeEventListener('visibilitychange', onVis);
       mq.removeEventListener('change', onMq);
-      svg.remove();
+      finePointer.removeEventListener('change', onFinePointer);
+      if (ac) ac.abort();
+      if (raf) cancelAnimationFrame(raf);
+      if (ask && ask.restore) clearTimeout(ask.restore);
+      parts = null;
+      svg.remove(); ui.remove(); live.remove();
     },
   };
 }

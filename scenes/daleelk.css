@@ -82,3 +82,87 @@
 }
 .scene--daleelk[data-layout="narrow"] .dk-label { font-stretch: 92%; }
 .scene--daleelk .dk-junction { fill: var(--ink); }
+
+/* ---------- round 2: ask it ---------- */
+.scene--daleelk .dk-glow {
+  fill: color-mix(in oklab, var(--daleelk), var(--paper) 72%);
+  stroke: var(--daleelk);
+  stroke-opacity: 0.38;
+  stroke-width: calc(7px * var(--dk-u));
+  paint-order: stroke;
+  opacity: 0;
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--daleelk .dk-glow.is-lit { opacity: 1; transition-duration: var(--t-fast); }
+.scene--daleelk .dk-pulse-halo { fill: var(--daleelk); fill-opacity: 0.34; }
+.scene--daleelk .dk-pulse-core { fill: var(--daleelk); stroke: var(--paper); stroke-width: calc(2.5px * var(--dk-u)); }
+.scene--daleelk .dk-trace {
+  fill: none;
+  stroke: var(--daleelk);
+  stroke-width: calc(var(--line-w) * 2.2 * var(--dk-u));
+  stroke-linecap: round;
+  stroke-dasharray: 0 1;
+  opacity: 0;
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--daleelk .dk-wp-burst {
+  fill: none;
+  stroke: var(--daleelk);
+  stroke-width: calc(2px * var(--dk-u));
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.scene--daleelk .dk-wp-dot g,
+.scene--daleelk .dk-junction { transform-box: fill-box; transform-origin: center; }
+.scene--daleelk .dk-example,
+.scene--daleelk .dk-hint {
+  font-family: var(--font);
+  font-weight: 520;
+  letter-spacing: 0.01em;
+}
+.scene--daleelk .dk-example {
+  fill: var(--ink-2);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: opacity var(--t-state) var(--ease);
+}
+.scene--daleelk .dk-hint {
+  fill: var(--ink-2);
+  opacity: var(--dk-hint, 0);
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--daleelk .dk-hint.is-used { opacity: 0; }
+
+.scene--daleelk .dk-ui { position: absolute; inset: 0; pointer-events: none; }
+.scene--daleelk .dk-q-btn,
+.scene--daleelk .dk-wp-btn {
+  position: absolute;
+  margin: 0; padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+.scene--daleelk .dk-q-btn { border-radius: 999px; visibility: var(--dk-q-v, hidden); }
+.scene--daleelk .dk-wp-btn {
+  width: 40px; height: 40px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  visibility: var(--v, hidden);
+}
+.scene--daleelk .dk-q-btn:focus-visible,
+.scene--daleelk .dk-wp-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.scene--daleelk .dk-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene--daleelk .dk-glow, .scene--daleelk .dk-trace, .scene--daleelk .dk-hint, .scene--daleelk .dk-example { transition: none; }
+}
+.scene--daleelk.is-reduced-motion .dk-glow,
+.scene--daleelk.is-reduced-motion .dk-trace,
+.scene--daleelk.is-reduced-motion .dk-hint,
+.scene--daleelk.is-reduced-motion .dk-example { transition: none !important; }
+.scene--daleelk.is-reduced-motion .dk-wp-pulse { animation: none !important; }

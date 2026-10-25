@@ -23,7 +23,6 @@ jobs:
           node-version: 22
       - name: Fetch GitHub, Letterboxd, F1, App Store and RevenueCat numbers
         env:
-          GH_CONTRIB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
           REVENUECAT_ECHO_KEY: ${{ secrets.REVENUECAT_ECHO_KEY }}
           REVENUECAT_DOCMARA_KEY: ${{ secrets.REVENUECAT_DOCMARA_KEY }}

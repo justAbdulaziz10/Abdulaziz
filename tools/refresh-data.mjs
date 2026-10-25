@@ -16,38 +16,55 @@ const get = async (url, type = 'text', headers = {}) => {
 };
 const num = s => Number(String(s).replace(/[^\d.]/g, ''));
 
-async function github() {
-  // The public calendar leaves out private work, so only the owner's token gives the real year.
-  // Without GH_CONTRIB_TOKEN this source is skipped and the last good numbers stay.
-  const token = process.env.GH_CONTRIB_TOKEN;
-  if (!token) throw new Error('GH_CONTRIB_TOKEN not set');
-  const r = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: { ...UA, authorization: `bearer ${token}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ query: 'query{user(login:"justAbdulaziz10"){contributionsCollection{contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}' }),
-    signal: AbortSignal.timeout(20000),
-  });
-  const j = await r.json();
-  const cal = j.data?.user?.contributionsCollection?.contributionCalendar;
-  if (!cal) throw new Error(`graphql: ${JSON.stringify(j.errors ?? r.status)}`);
-  const days = cal.weeks.flatMap(w => w.contributionDays.map(d => [d.date, d.contributionCount]));
+async function github(prev = {}) {
+  // The public calendar already counts private contributions (the profile shows them), so the headline numbers
+  // need no token. It caps busy days at "100+", so exact daily counts (busiest day, the weekly graph) come from
+  // GraphQL, which works with the workflow's own token; if that fails those two keep their last good values.
+  const html = await get('https://github.com/users/justAbdulaziz10/contributions');
+  const stated = html.replace(/\s+/g, ' ').match(/([\d,]+) contributions? in the last year/);
+  if (!stated) throw new Error('yearly total not found');
+  const total = num(stated[1]);
+  const ids = new Map([...html.matchAll(/data-date="(\d{4}-\d{2}-\d{2})" id="([^"]+)"/g)].map(m => [m[2], m[1]]));
+  const days = [...html.matchAll(/<tool-tip[^>]*for="([^"]+)"[^>]*>([^<]*)<\/tool-tip>/g)]
+    .filter(m => ids.has(m[1]))
+    .map(m => [ids.get(m[1]), /^No contributions/.test(m[2]) ? 0 : num(m[2].split(' ')[0])]);
   if (days.length < 300) throw new Error(`only ${days.length} days`);
   days.sort((a, b) => a[0].localeCompare(b[0]));
-  const total = cal.totalContributions;
   const active = days.filter(d => d[1] > 0).length;
   let run = 0, longest = 0;
   for (const [, c] of days) { run = c ? run + 1 : 0; longest = Math.max(longest, run); }
   // a streak is still "current" if today is empty but yesterday counted (today may not have started)
   let streak = 0;
   for (let i = days.length - 1; i >= 0; i--) { if (days[i][1]) streak++; else if (i === days.length - 1) continue; else break; }
-  const busiest = days.reduce((b, d) => (d[1] > b[1] ? d : b));
-  const weeks = [];
-  for (let i = 0; i < days.length; i += 7) {
-    const chunk = days.slice(i, i + 7);
-    weeks.push([chunk[0][0], chunk.reduce((s, d) => s + d[1], 0)]);
+  const out = { total, activeDays: active, streak, longestStreak: longest, busiest: prev.busiest, from: days[0][0], to: days.at(-1)[0] };
+
+  const token = process.env.GH_CONTRIB_TOKEN || process.env.GITHUB_TOKEN;
+  try {
+    if (!token) throw new Error('no token');
+    const r = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: { ...UA, authorization: `bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ query: 'query{user(login:"justAbdulaziz10"){contributionsCollection{contributionCalendar{totalContributions weeks{contributionDays{date contributionCount}}}}}}' }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const cal = (await r.json()).data?.user?.contributionsCollection?.contributionCalendar;
+    if (!cal) throw new Error(`graphql ${r.status}`);
+    const exact = cal.weeks.flatMap(w => w.contributionDays.map(d => [d.date, d.contributionCount])).sort((a, b) => a[0].localeCompare(b[0]));
+    // GraphQL's year starts at this exact moment, the page's at midnight, so the totals differ by a few; a big gap
+    // means the token can't see private work, and then the graph would be wrong
+    if (Math.abs(cal.totalContributions - total) > total * 0.02) throw new Error(`graphql total ${cal.totalContributions} vs page ${total}`);
+    const busiest = exact.reduce((b, d) => (d[1] > b[1] ? d : b));
+    out.busiest = { date: busiest[0], count: busiest[1] };
+    const weeks = [];
+    for (let i = 0; i < exact.length; i += 7) {
+      const chunk = exact.slice(i, i + 7);
+      weeks.push([chunk[0][0], chunk.reduce((s, d) => s + d[1], 0)]);
+    }
+    await writeFile(WEEKS, JSON.stringify({ total, from: exact[0][0], to: exact.at(-1)[0], weeks }));
+  } catch (e) {
+    console.warn(`keep github.busiest and the weekly graph: ${e.message}`);
   }
-  await writeFile(WEEKS, JSON.stringify({ total, from: days[0][0], to: days.at(-1)[0], weeks }));
-  return { total, activeDays: active, streak, longestStreak: longest, busiest: { date: busiest[0], count: busiest[1] }, from: days[0][0], to: days.at(-1)[0] };
+  return out;
 }
 
 async function letterboxd() {
@@ -259,7 +276,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
-  for (const [key, fn] of Object.entries({ github, letterboxd, f1, apps, f1Result, week: () => week(next.apps), revenuecat: () => revenuecat(next.revenuecat) })) {
+  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd, f1, apps, f1Result, week: () => week(next.apps), revenuecat: () => revenuecat(next.revenuecat) })) {
     try {
       next[key] = await fn();
       changed = true;

@@ -1,14 +1,13 @@
 // Refreshes the site's live numbers: GitHub year, Letterboxd, F1, App Store and RevenueCat data.
 // Run daily by .github/workflows/refresh-data.yml. Each source is independent: if one fails, its last good
 // value is kept, so the page never shows an empty or broken number.
-import { access, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('../', import.meta.url);
 const LIVE = new URL('assets/data/live.json', ROOT);
 const WEEKS = new URL('assets/data/weeks.json', ROOT);
 const F1LAP = new URL('assets/data/f1lap.json', ROOT);
-const FILM_POSTERS = new URL('assets/img/films/', ROOT);
 const PAGE = new URL('index.html', ROOT);
 const UA = { 'user-agent': 'Mozilla/5.0 (portfolio data refresh; github.com/justAbdulaziz10/Abdulaziz)' };
 
@@ -16,7 +15,6 @@ const get = async (url, type = 'text', headers = {}) => {
   const r = await fetch(url, { headers: { ...UA, ...headers }, signal: AbortSignal.timeout(20000) });
   if (!r.ok) throw new Error(`${url} → ${r.status}`);
   if (type === 'json') return r.json();
-  if (type === 'arrayBuffer') return r.arrayBuffer();
   return r.text();
 };
 const num = s => Number(String(s).replace(/[^\d.]/g, ''));
@@ -34,52 +32,21 @@ const xmlTag = (item, tag) => {
   return value == null ? null : decodeXml(value.trim());
 };
 
-function posterSlug(url) {
-  const parts = new URL(url).pathname.split('/').filter(Boolean);
-  const filmIndex = parts.indexOf('film');
-  if (filmIndex < 0) throw new Error(`invalid Letterboxd film URL: ${url}`);
-  const filmParts = parts.slice(filmIndex + 1);
-  if (/^\d+$/.test(filmParts.at(-1))) filmParts.pop();
-  const slug = (filmParts.at(-1) ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-  if (!slug) throw new Error(`film URL has no poster slug: ${url}`);
-  return slug;
-}
-
-export function parseLetterboxdRecent(rss) {
-  const entries = [...rss.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map(([, item]) => {
+// The newest diary entry in the feed; rewatches and reviews can repeat a film, so the watched date decides.
+export function parseLetterboxdLatest(rss) {
+  const films = [...rss.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map(([, item]) => {
     const title = xmlTag(item, 'letterboxd:filmTitle');
     const year = xmlTag(item, 'letterboxd:filmYear');
-    const watchedDate = xmlTag(item, 'letterboxd:watchedDate');
+    const watched = xmlTag(item, 'letterboxd:watchedDate');
     const url = xmlTag(item, 'link');
     const ratingText = xmlTag(item, 'letterboxd:memberRating');
-    const ratingValue = ratingText == null || ratingText === '' ? null : Number(ratingText);
-    const movieId = xmlTag(item, 'tmdb:movieId');
-    const posterText = item.match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i)?.[1];
-    if (!title || !year || !/^\d{4}-\d{2}-\d{2}$/.test(watchedDate ?? '') || !url?.startsWith('https://letterboxd.com/')) {
-      return null;
-    }
-    if (ratingValue !== null && (!Number.isFinite(ratingValue) || ratingValue < 0 || ratingValue > 5)) {
-      return null;
-    }
-    const largePoster = posterText ? decodeXml(posterText) : '';
-    const smallPoster = largePoster.replace('-0-600-0-900-crop', '-0-230-0-345-crop');
-    const identity = movieId ? `tmdb:${movieId}` : `${url.replace(/\/\d+\/?$/, '').replace(/\/$/, '')}|${title}|${year}`;
-    return {
-      identity,
-      film: { title, year, rating: ratingValue, watchedDate, url, posterUrl: smallPoster && smallPoster !== largePoster ? smallPoster : null },
-    };
+    const rating = ratingText == null || ratingText === '' ? null : Number(ratingText);
+    if (!title || !year || !/^\d{4}-\d{2}-\d{2}$/.test(watched ?? '') || !url?.startsWith('https://letterboxd.com/')) return null;
+    if (rating !== null && (!Number.isFinite(rating) || rating < 0 || rating > 5)) return null;
+    return { title, year, watched, rating, url };
   }).filter(Boolean);
-  const seen = new Set();
-  const recent = entries
-    .sort((a, b) => b.film.watchedDate.localeCompare(a.film.watchedDate))
-    .filter(({ identity }) => { if (seen.has(identity)) return false; seen.add(identity); return true; })
-    .slice(0, 4)
-    .map(({ film }) => film);
-  if (recent.length !== 4) throw new Error(`only ${recent.length} distinct recent films`);
-  return recent.map(film => {
-    if (!film.posterUrl) throw new Error(`Letterboxd poster is missing for ${film.title}`);
-    return { ...film, poster: `assets/img/films/${posterSlug(film.url)}.jpg` };
-  });
+  if (!films.length) throw new Error('no diary entry in the feed');
+  return films.reduce((a, b) => (b.watched > a.watched ? b : a));
 }
 
 async function github(prev = {}) {
@@ -135,10 +102,11 @@ async function github(prev = {}) {
 
 // Letterboxd blocks GitHub's runners on the profile page some days, so the feed (latest film) and the profile
 // (film counts) are fetched separately; whichever fails keeps its last good value.
-export async function letterboxd(prev = {}, { request = get, posterDir = FILM_POSTERS, files = { access, mkdir, readdir, rm, writeFile } } = {}) {
+export async function letterboxd(prev = {}, { request = get } = {}) {
   const [profile, rss] = await Promise.allSettled([request('https://letterboxd.com/notabdulaziz/'), request('https://letterboxd.com/notabdulaziz/rss/')]);
   if (profile.status === 'rejected' && rss.status === 'rejected') throw new Error(`${profile.reason.message}; ${rss.reason.message}`);
   const out = { ...prev };
+  delete out.recent;
   if (profile.status === 'fulfilled') {
     const stat = label => {
       const m = profile.value.match(new RegExp(`<span class="value">([\\d,]+)</span><span class="definition[^"]*">${label}`, 'i'));
@@ -150,27 +118,9 @@ export async function letterboxd(prev = {}, { request = get, posterDir = FILM_PO
   } else console.warn(`keep letterboxd counts: ${profile.reason.message}`);
   if (rss.status === 'fulfilled') {
     try {
-      const recent = parseLetterboxdRecent(rss.value);
-      if (recent.length !== 4) throw new Error(`only ${recent.length} distinct recent films`);
-      await files.mkdir(posterDir, { recursive: true });
-      for (const film of recent) {
-        const file = new URL(film.poster.split('/').at(-1), posterDir);
-        try {
-          await files.access(file);
-        } catch {
-          const bytes = await request(film.posterUrl, 'arrayBuffer');
-          await files.writeFile(file, new Uint8Array(bytes));
-        }
-      }
-      const keep = new Set(recent.map(film => film.poster.split('/').at(-1)));
-      for (const name of await files.readdir(posterDir)) {
-        if (name.endsWith('.jpg') && !keep.has(name)) await files.rm(new URL(name, posterDir));
-      }
-      out.recent = recent.map(({ posterUrl, ...film }) => film);
-      const latest = recent[0];
-      out.latest = { title: latest.title, year: latest.year, watched: latest.watchedDate, rating: latest.rating, url: latest.url };
+      out.latest = parseLetterboxdLatest(rss.value);
     } catch (e) {
-      console.warn(`keep letterboxd recent and latest: ${e.message}`);
+      console.warn(`keep letterboxd latest: ${e.message}`);
     }
   } else console.warn(`keep letterboxd latest: ${rss.reason.message}`);
   return out;

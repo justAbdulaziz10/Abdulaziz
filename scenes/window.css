@@ -71,33 +71,6 @@
   font-variant-numeric: tabular-nums;
   opacity: 0.78;
 }
-.scene--window .wn-poster-image { display: block; }
-.scene--window .wn-poster-warm { fill: var(--window-warm); opacity: 0.1; }
-.scene--window .wn-poster-band { fill: var(--night); opacity: 0.86; }
-.scene--window .wn-poster-title,
-.scene--window .wn-poster-year,
-.scene--window .wn-poster-rating {
-  font-family: var(--font);
-  font-variant-numeric: tabular-nums;
-  paint-order: stroke;
-  stroke: var(--night);
-  stroke-linejoin: round;
-}
-.scene--window .wn-poster-title {
-  fill: var(--zebra);
-  stroke-width: 2px;
-  font-size: 8px;
-  font-weight: 640;
-}
-.scene--window .wn-poster-year,
-.scene--window .wn-poster-rating {
-  fill: var(--window-warm);
-  stroke-width: 1.5px;
-  font-size: 6.5px;
-  font-weight: 520;
-}
-.scene--window .wn-poster-year { letter-spacing: 0.06em; }
-.scene--window .wn-poster-rating { letter-spacing: 0.01em; }
 
 /* fire escape */
 .scene--window .wn-escape path {

@@ -16,22 +16,6 @@ const FILMS = [
   { title: ['La La Land'], year: '2016', icon: 'lamp', dir: 'Damien Chazelle' },
 ];
 
-const filmTitle = film => Array.isArray(film.title) ? film.title.join(' ') : String(film.title ?? '');
-const escapeSvg = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-
-export function normalizeRecentFilms(recent) {
-  if (!Array.isArray(recent) || recent.length !== 4) return null;
-  const films = recent.map(film => {
-    const rating = film?.rating == null ? null : Number(film.rating);
-    if (!film?.title || !film?.year || !/^\d{4}-\d{2}-\d{2}$/.test(film?.watchedDate ?? '')
-      || !film.poster?.startsWith('assets/img/films/')
-      || !film.url?.startsWith('https://letterboxd.com/')
-      || (rating !== null && (!Number.isFinite(rating) || rating < 0 || rating > 5))) return null;
-    return { ...film, rating };
-  });
-  return films.every(Boolean) ? films : null;
-}
-
 const LAYOUTS = {
   wide: {
     W: 1200, Ht: 780, plate: [0, 40, 1200, 740], cx: 600, B: 158, ground: 680, rail: 0.46,
@@ -91,7 +75,6 @@ export function mount(root, { reduced = false } = {}) {
   root.classList.toggle('wn-reduced', reduced);
   const pid = `wnp${++uid}`;
   let films = '1,657'; // instant fallback; replaced by the live count when it arrives
-  let filmItems = FILMS;
   let dead = false;
 
   // ---- persistent overlay: hint, scrim, poster dialog
@@ -129,7 +112,7 @@ export function mount(root, { reduced = false } = {}) {
     mode = m;
     if (open) closePoster(false, true);
     root.textContent = '';
-    scene = buildScene(root, LAYOUTS[m], films, filmItems);
+    scene = buildScene(root, LAYOUTS[m], films);
     layer = buttons(scene);
     root.append(layer, hint, scrim, pop);
     const Lm = LAYOUTS[m];
@@ -142,21 +125,13 @@ export function mount(root, { reduced = false } = {}) {
     const pct = (v, of) => `${((v / of) * 100).toFixed(3)}%`;
     const place = (b, x, y, w, h) => Object.assign(b.style, { left: pct(x, sc.W), top: pct(y, sc.Ht), width: pct(w, sc.W), height: pct(h, sc.Ht) });
     for (const f of sc.films) {
-      const F = filmItems[f.film];
-      const linked = F.url?.startsWith('https://letterboxd.com/') && F.poster?.startsWith('assets/img/films/');
-      const b = el(linked ? 'a' : 'button', `wn-hit${linked ? ' wn-hit--film' : ''}`);
-      if (linked) {
-        b.href = F.url;
-        b.target = '_blank';
-        b.rel = 'noopener noreferrer';
-        b.setAttribute('aria-label', `Open ${filmTitle(F)} (${F.year}) on Letterboxd`);
-      } else {
-        b.type = 'button';
-        b.dataset.film = f.film;
-        b.dataset.key = f.key;
-        b.setAttribute('aria-label', `${filmTitle(F)} (${F.year}), open poster`);
-        b.setAttribute('aria-haspopup', 'dialog');
-      }
+      const F = FILMS[f.film];
+      const b = el('button', 'wn-hit');
+      b.type = 'button';
+      b.dataset.film = f.film;
+      b.dataset.key = f.key;
+      b.setAttribute('aria-label', `${F.title.join(' ')} (${F.year}), open poster`);
+      b.setAttribute('aria-haspopup', 'dialog');
       place(b, f.x - 3, f.y - 3, f.w + 6, f.h + 6);
       box.append(b);
     }
@@ -183,7 +158,7 @@ export function mount(root, { reduced = false } = {}) {
     clearTimeout(hideTimer);
     pop.dataset.kind = F.icon;
     art.innerHTML = posterArt(F.icon);
-    pop.querySelector('.wn-pt').textContent = filmTitle(F);
+    pop.querySelector('.wn-pt').textContent = F.title.join(' ');
     pop.querySelector('.wn-py').textContent = F.year;
     pop.querySelector('.wn-pd b').textContent = F.dir;
     // geometry (event time): the card grows out of its window and settles, tilted a touch, in the scene
@@ -257,19 +232,12 @@ export function mount(root, { reduced = false } = {}) {
   fetch(new URL('../assets/data/live.json', import.meta.url))
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      if (dead) return;
       const n = data && data.letterboxd && Number(data.letterboxd.films);
-      if (Number.isFinite(n) && n > 0) {
-        films = new Intl.NumberFormat('en-US').format(Math.round(n));
-        scene.setFilms(films, filmItems);
-        const nb = layer && layer.querySelector('[data-sign]');
-        if (nb) nb.setAttribute('aria-label', `${films} films logged on Letterboxd. Flicker the sign`);
-      }
-      const recent = normalizeRecentFilms(data?.letterboxd?.recent);
-      if (recent) {
-        filmItems = recent;
-        build(pick(root.clientWidth || 1200));
-      }
+      if (dead || !Number.isFinite(n) || n <= 0) return;
+      films = new Intl.NumberFormat('en-US').format(Math.round(n));
+      scene.setFilms(films);
+      const nb = layer && layer.querySelector('[data-sign]');
+      if (nb) nb.setAttribute('aria-label', `${films} films logged on Letterboxd. Flicker the sign`);
     })
     .catch(() => { /* offline or missing: keep the fallback */ });
   document.addEventListener('keydown', onKey);
@@ -407,7 +375,7 @@ function star(x, y, r) {
   return `<path d="M${x},${y - r} L${f1(x + k)},${f1(y - k)} L${x + r},${y} L${f1(x + k)},${f1(y + k)} L${x},${y + r} L${f1(x - k)},${f1(y + k)} L${x - r},${y} L${f1(x - k)},${f1(y - k)} Z"/>`;
 }
 
-function buildScene(root, L, count = '1,657', filmItems = FILMS) {
+function buildScene(root, L, count = '1,657') {
   const id = `wn${++uid}`;
   const { W, Ht, cx, B } = L;
   const G = L.ground;
@@ -490,7 +458,7 @@ function buildScene(root, L, count = '1,657', filmItems = FILMS) {
             <rect class="wn-warmfill" width="${w.w}" height="${w.h}" fill="url(#${id}-warm)"/>
             ${life(w, wi % 3)}
           </g>`;
-      const card = film ? filmCard(filmItems[spec.film], w, ry, w.key) : '';
+      const card = film ? filmCard(FILMS[spec.film], w, ry, w.key) : '';
       return `<g class="wn-win${film ? ' wn-win--film' : ''}" data-win="${w.key}" transform="translate(${w.x},${w.y})"><g class="wn-zoom">
           <rect class="wn-pane" width="${w.w}" height="${w.h}"/>
           <path class="wn-reflect" d="M${f1(w.w * 0.62)},4 L${f1(w.w - 4)},4 L${f1(w.w - 4)},${f1(w.h * 0.3)} Z"/>
@@ -528,27 +496,11 @@ function buildScene(root, L, count = '1,657', filmItems = FILMS) {
   }
 
   function filmCard(f, w, ry, key) {
-    if (f.poster?.startsWith('assets/img/films/')) {
-      const title = escapeSvg(filmTitle(f));
-      const year = escapeSvg(f.year);
-      const stars = Number.isFinite(Number(f.rating)) && Number(f.rating) > 0
-        ? '★'.repeat(Math.floor(Number(f.rating))) + (Number(f.rating) % 1 ? '½' : '')
-        : '';
-      const rating = stars ? `<text class="wn-poster-rating" x="${w.w - 6}" y="${w.h - 4}" text-anchor="end">${stars}</text>` : '';
-      return `<g class="wn-card wn-card--poster" data-card="${key}" style="opacity:0">
-        <image class="wn-poster-image" href="${escapeSvg(f.poster)}" x="0" y="0" width="${w.w}" height="${w.h}" preserveAspectRatio="xMidYMid slice"/>
-        <rect class="wn-poster-warm" width="${w.w}" height="${w.h}"/>
-        <rect class="wn-poster-band" x="0" y="${w.h - 25}" width="${w.w}" height="25"/>
-        <text class="wn-poster-title" x="${w.w / 2}" y="${w.h - 13}" text-anchor="middle" textLength="${w.w - 10}" lengthAdjust="spacingAndGlyphs">${title}</text>
-        <text class="wn-poster-year" x="6" y="${w.h - 4}">${year}</text>
-        ${rating}
-      </g>`;
-    }
     const mid = w.w / 2;
     const two = f.title.length > 1;
     const ts = w.w >= 100 ? 12.5 : 12;
     const tY = two ? ry + 19 : ry + 23;
-    const title = f.title.map((t, i) => `<tspan x="${mid}" y="${f1(tY + i * (ts + 1.5))}">${escapeSvg(t)}</tspan>`).join('');
+    const title = f.title.map((t, i) => `<tspan x="${mid}" y="${f1(tY + i * (ts + 1.5))}">${t}</tspan>`).join('');
     const yY = two ? w.h - 9 : w.h - 13;
     return `<g class="wn-card" data-card="${key}" style="opacity:0">
       <g transform="translate(${mid},${f1(ry / 2 + 1)}) scale(${w.w >= 100 ? 1.05 : 1})">${icon(f.icon)}</g>
@@ -615,7 +567,7 @@ function buildScene(root, L, count = '1,657', filmItems = FILMS) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
   svg.setAttribute('role', 'img');
-  const label = (n, items = filmItems) => `A Rear Window–style courtyard at night: an apartment facade with a fire escape, windows lighting up one by one. Four lit windows show ${items === FILMS ? 'favourite films' : 'the last four films watched'}: ${items.map(f => `${filmTitle(f)} (${f.year})`).join(', ')}. Each film window links to its Letterboxd page when available. A rooftop neon sign reads ${n} films logged on Letterboxd.`;
+  const label = (n) => `A Rear Window–style courtyard at night: an apartment facade with a fire escape, windows lighting up one by one. Four lit windows show favourite films — Rear Window (1954), The Beatles: Get Back (2021), Begin Again (2013), La La Land (2016) — and a rooftop neon sign reads ${n} films logged on Letterboxd.`;
   svg.setAttribute('aria-label', label(count));
   svg.innerHTML = `
   <defs>
@@ -712,9 +664,9 @@ function buildScene(root, L, count = '1,657', filmItems = FILMS) {
   const onFlickEnd = () => flick.classList.remove('is-flicker');
   flick.addEventListener('animationend', onFlickEnd);
 
-  function setFilms(t, items = filmItems) {
+  function setFilms(t) {
     for (const n of svg.querySelectorAll('.wn-num')) n.textContent = t;
-    svg.setAttribute('aria-label', label(t, items));
+    svg.setAttribute('aria-label', label(t));
   }
 
   return { update, scaleTo, svg, films, sign: L.sign, W, Ht, toggle, zoom, flicker, setFilms };

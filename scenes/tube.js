@@ -13,9 +13,9 @@ const LINES = { edu: 'Education', prod: 'Products', work: 'Work' };
 const FALLBACK = {
   edu: { key: 'edu', line: 'edu', name: 'King Saud University', when: '2022', endName: 'B.Sc. Computer Information Systems', endWhen: '2026', time: '2022 – 2026', title: 'King Saud University', paras: [{ text: 'B.Sc. Computer Information Systems' }] },
   mara: { key: 'mara', line: 'prod', name: 'Mara', when: '2025', time: '2025', title: 'Started building Mara', paras: [{ text: 'Founded in January 2026. Completed Misk Launchpad Cohort 9.' }] },
-  echo: { key: 'echo', line: 'prod', name: 'Echo', when: 'Jun 2026', time: 'June 2026', title: 'Echo on the App Store', paras: [] },
+  echo: { key: 'echo', line: 'prod', name: 'Echo', when: 'Jun 2026', time: 'June 2026', title: 'Echo on the App Store', paras: [], href: 'https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634' },
   coop: { key: 'coop', line: 'work', name: 'Air Connectivity Program', when: 'Jun – Sep 2026', time: 'Jun – Sep 2026', title: 'Digital Systems & Business Analysis Co-op Trainee', paras: [{ text: 'Air Connectivity Program', org: true }, { text: 'QA testing, system reviews, issue analysis and technical documentation.' }] },
-  docmara: { key: 'docmara', line: 'prod', name: 'DocMara', when: 'Jul 2026', time: 'July 2026', title: 'DocMara on the App Store', paras: [] },
+  docmara: { key: 'docmara', line: 'prod', name: 'DocMara', when: 'Jul 2026', time: 'July 2026', title: 'DocMara on the App Store', paras: [], href: 'https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627' },
   rassah: { key: 'rassah', line: 'prod', name: 'Rassah', when: 'Oct 2026', time: 'October 2026', title: 'Rassah', paras: [{ text: "An MVP, built in two days by a team of three." }] },
 };
 
@@ -49,6 +49,7 @@ function readItems(section) {
       time: li.querySelector('time')?.textContent.trim() || '',
       title: li.querySelector('h3')?.textContent.trim() || d.name,
       paras: [...li.querySelectorAll('p')].map((p) => ({ text: p.textContent.trim(), org: p.classList.contains('tube__org') })),
+      href: li.querySelector('h3 a[href^="https://"]')?.href,
     };
   }
   return out;
@@ -346,6 +347,10 @@ export function mount(root, { reduced = false } = {}) {
     h('span', 'tb-panel__when', when, top);
     h('p', 'tb-panel__title', title, panel);
     for (const p of paras) h('p', p.org ? 'tb-panel__org' : 'tb-panel__detail', p.text, panel);
+    if (it.href && !st.alt) {
+      const a = h('a', 'link', 'View on the App Store', h('p', 'tb-panel__detail', null, panel));
+      a.href = it.href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    }
     panel.classList.add('is-on');
   }
 

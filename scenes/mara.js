@@ -106,7 +106,7 @@ export function mount(root, { reduced = false } = {}) {
           <img class="mara__img mara__img--home" alt="Mara home screen: body map with recovery score and health cards"
             src="${IMG}screen-mara-home.webp" srcset="${IMG}screen-mara-home-m.webp 552w, ${IMG}screen-mara-home.webp 773w"
             sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async">
-          <img class="mara__img mara__img--chat" alt="Mara chat screen: How can I help?"
+          <img class="mara__img mara__img--chat" alt="Mara chat screen: a 30-minute workout plan based on recovery and sleep"
             src="${IMG}screen-mara-chat.webp" srcset="${IMG}screen-mara-chat-m.webp 552w, ${IMG}screen-mara-chat.webp 773w"
             sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async" loading="lazy">
           <div class="mara__island" aria-hidden="true"></div>

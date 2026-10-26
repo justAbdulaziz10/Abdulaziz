@@ -1,0 +1,74 @@
+[
+ {
+  "sha": "1d45460",
+  "date": "2026-10-25T22:13:16+03:00",
+  "subject": "Ship the single One Line portfolio",
+  "height": 15552
+ },
+ {
+  "sha": "2797bf3",
+  "date": "2026-10-26T00:32:17+03:00",
+  "subject": "Make the site playable: signature hero, interactive scenes, tracklist and tube map, live data",
+  "height": 15585
+ },
+ {
+  "sha": "9e16759",
+  "date": "2026-10-26T01:18:52+03:00",
+  "subject": "Product work switch, last race result, this week, RevenueCat users, print CV",
+  "height": 15950
+ },
+ {
+  "sha": "6b77f21",
+  "date": "2026-10-26T02:08:36+03:00",
+  "subject": "Line through product flows, colour follows the line, moving titles, footer signature",
+  "height": 15971
+ },
+ {
+  "sha": "84fda8a",
+  "date": "2026-10-26T02:36:07+03:00",
+  "subject": "Liner notes, project icons, Monsha'at, faster hero, 404 page",
+  "height": 16859
+ },
+ {
+  "sha": "498771c",
+  "date": "2026-10-26T02:41:03+03:00",
+  "subject": "Liner notes: 24px tap targets",
+  "height": 16864
+ },
+ {
+  "sha": "d2fbd04",
+  "date": "2026-10-26T03:10:56+03:00",
+  "subject": "Now line, Rassah and Pit Lane Hub icons, smoother motion",
+  "height": 16924
+ },
+ {
+  "sha": "1afae94",
+  "date": "2026-10-26T03:14:36+03:00",
+  "subject": "Letterboxd: feed and profile fail independently",
+  "height": 16924
+ },
+ {
+  "sha": "51ae268",
+  "date": "2026-10-26T03:38:17+03:00",
+  "subject": "Abbey Road among terraced houses, header follows the section under it, live learning list, Pit Lane race column, thread clearance, tool glyphs",
+  "height": 16616
+ },
+ {
+  "sha": "981927d",
+  "date": "2026-10-26T03:57:35+03:00",
+  "subject": "Audit fixes: keyboard and screen-reader access, header, contrast, live fallbacks, phone screenshots, sharing tags",
+  "height": 16616
+ },
+ {
+  "sha": "bc86254",
+  "date": "2026-10-26T04:13:50+03:00",
+  "subject": "Phone section menu; faster first paint",
+  "height": 16616
+ },
+ {
+  "sha": "3ff304b",
+  "date": "2026-10-26T04:50:28+03:00",
+  "subject": "Proof in the hero, coloured record and map, denser experience, framed screenshots, ⌘K menu, live link preview",
+  "height": 15201
+ }
+]

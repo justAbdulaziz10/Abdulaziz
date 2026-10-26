@@ -1,4 +1,5 @@
 import { showToast, toggleNightMode } from './eggs.js';
+import { isOn, setOn } from './sound.js';
 
 const EMAIL = 'abdulazizalkhlaiwe@gmail.com';
 const trigger = document.querySelector('[data-cmdk-open]');
@@ -156,6 +157,7 @@ function buildItems() {
 
   const productWorkIsOn = document.documentElement.classList.contains('is-pm');
   const nightModeIsOn = document.documentElement.classList.contains('is-night');
+  const soundIsOn = isOn();
   const actions = [
     { id: 'cmdk-action-copy-email', kind: 'copy-email', label: 'Copy email', hint: EMAIL, keywords: 'mail contact address' },
     { id: 'cmdk-action-email', kind: 'email', label: 'Email me', hint: EMAIL, keywords: 'mailto contact message' },
@@ -173,6 +175,13 @@ function buildItems() {
       label: nightModeIsOn ? 'Turn night mode off' : 'Turn night mode on',
       hint: '',
       keywords: 'night dark theme',
+    },
+    {
+      id: 'cmdk-action-sound',
+      kind: 'sound-mode',
+      label: soundIsOn ? 'Turn sound off' : 'Turn sound on',
+      hint: '',
+      keywords: 'sound audio',
     },
   ];
 
@@ -353,6 +362,9 @@ function runItem(item) {
       break;
     case 'night-mode':
       toggleNightMode();
+      break;
+    case 'sound-mode':
+      setOn(!isOn());
       break;
   }
 }

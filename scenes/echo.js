@@ -1,4 +1,4 @@
-// Echo — a voice waveform that settles into the edge of a hand of photo memories.
+// Echo — a voice waveform that settles into a hand of photo memories beside a quiet phone flow.
 const NS = 'http://www.w3.org/2000/svg';
 const IMG = new URL('../assets/img/', import.meta.url).href;
 
@@ -9,21 +9,21 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
 // Crops are in the 924x2000 display space of the 1284x2778 App Store panels.
 const CARDS = [
-  { k: -2, name: 'Family', file: 'echo-screen-07', crop: [478, 700, 878, 1272], alt: 'Echo memory card: a garden lane in bloom, labelled Family' },
-  { k: -1, name: 'Travel', file: 'echo-screen-07', crop: [46, 700, 446, 1272], alt: 'Echo memory card: clouds seen from a plane window, labelled Travel' },
-  { k: 0, name: 'Big Ben', file: 'echo-screen-02', crop: [105, 587, 820, 1608], alt: 'Echo memory card: Big Ben at night with the story written beneath it' },
-  { k: 1, name: 'Book and voice note', file: 'echo-screen-03', crop: [105, 560, 820, 1581], alt: 'Echo memory card: an open book beside a coffee cup, with a voice note player' },
-  { k: 2, name: 'Riyadh at night', file: 'echo-screen-05', crop: [120, 440, 820, 1440], alt: 'Echo memory card: the Riyadh skyline at night' },
+  { k: -2, name: 'Family', file: 'echo-screen-07', crop: [478, 700, 878, 1272], photoCrop: [478, 700, 878, 1170], alt: 'Echo memory card: a garden lane in bloom, labelled Family' },
+  { k: -1, name: 'Travel', file: 'echo-screen-07', crop: [46, 700, 446, 1272], photoCrop: [46, 700, 446, 1170], alt: 'Echo memory card: clouds seen from a plane window, labelled Travel' },
+  { k: 0, name: 'Big Ben', file: 'echo-screen-02', crop: [105, 587, 820, 1608], photoCrop: [106, 587, 818, 1350], alt: 'Echo memory card: Big Ben at night with the story written beneath it' },
+  { k: 1, name: 'Book and voice note', file: 'echo-screen-03', crop: [105, 560, 820, 1581], photoCrop: [106, 560, 818, 1206], alt: 'Echo memory card: an open book beside a coffee cup, with a voice note player' },
 ];
-const MESS = { '-2': -5, '-1': 3.5, '0': -1.2, '1': 2.4, '2': -2.6 };
+const MESS = { '-2': -5, '-1': 3.5, '0': -1.2, '1': 2.4 };
 
 const LAYOUTS = {
-  wide: { w: 1200, h: 760, cx: 600, wave: [14, 204], amp: 50, cardW: 268, cardTop: 254,
+  wide: { w: 1360, h: 820, cx: 920, wave: [14, 204], amp: 50, cardW: 268, cardTop: 252,
     rot: [0, 10.5, 20], tx: [0, 4, 8], lift: [0, 0, 0], scale: [1, 1, 1], origin: '50% 165%' },
-  narrow: { w: 390, h: 650, cx: 195, wave: [10, 166], amp: 34, cardW: 206, cardTop: 206,
+  narrow: { w: 390, h: 930, cx: 195, wave: [10, 166], amp: 34, cardW: 206, cardTop: 126,
     rot: [0, 9, 15], tx: [0, 2, 4], lift: [0, 0, 0], scale: [1, 0.96, 0.88], origin: '50% 150%' },
 };
 const CARD_RATIO = 0.045 + 0.91 / 0.7 + 0.16; // polaroid height / width
+const CENTER = Math.floor(CARDS.length / 2);
 
 // Seeded noise so the waveform reads like speech, not a sine.
 function rand(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
@@ -113,7 +113,118 @@ export function mount(root, { reduced = false } = {}) {
     node, id: i, name: CARDS[i].name, mess: MESS[CARDS[i].k],
     s: CARDS[i].k, vs: 0, z: Math.abs(CARDS[i].k), vz: 0, dx: 0, vdx: 0, dy: 0, vdy: 0, lift: 0, vlift: 0, dip: 0, vdip: 0, liftT: 0,
   }));
-  let order = [0, 1, 2, 3, 4]; // card ids left to right; order[2] is the hero
+  let order = CARDS.map((_, i) => i); // card ids left to right; the middle card is the hero
+
+  const make = (tag, className, text, parent) => {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const phone = make('section', 'echo__phone');
+  phone.setAttribute('role', 'group');
+  phone.setAttribute('aria-label', 'Echo memory flow');
+  const speaker = make('span', 'echo__speaker');
+  speaker.setAttribute('aria-hidden', 'true');
+  const phoneScreen = make('div', 'echo__phone-screen', undefined, phone);
+  phone.appendChild(speaker);
+  const phoneTop = make('div', 'echo__phone-top', undefined, phoneScreen);
+  make('span', 'echo__phone-mark', 'echo', phoneTop);
+  make('span', 'echo__phone-dot', '', phoneTop).setAttribute('aria-hidden', 'true');
+  const todayScreen = make('div', 'echo__phone-view echo__today');
+  const todayTitle = make('h3', 'echo__phone-title', 'Today', todayScreen);
+  const todayPhoto = make('div', 'echo__phone-photo', undefined, todayScreen);
+  const todayImage = make('img', 'echo__phone-image', undefined, todayPhoto);
+  todayImage.width = 1284;
+  todayImage.height = 2778;
+  todayImage.decoding = 'async';
+  todayImage.alt = 'A photo from your past';
+  const memoryCopy = make('p', 'echo__memory-copy', 'A photo from your past', todayScreen);
+  const todayActions = make('div', 'echo__phone-actions', undefined, todayScreen);
+  const another = make('button', 'echo__phone-button echo__phone-button--quiet', 'Another', todayActions);
+  another.type = 'button';
+  const keep = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep', todayActions);
+  keep.type = 'button';
+
+  const choiceScreen = make('div', 'echo__phone-view echo__choice', undefined, phoneScreen);
+  choiceScreen.hidden = true;
+  make('h3', 'echo__phone-title', 'Keep', choiceScreen);
+  const choicePhoto = make('div', 'echo__choice-photo', undefined, choiceScreen);
+  const choiceImage = make('img', '', undefined, choicePhoto);
+  choiceImage.width = 1284;
+  choiceImage.height = 2778;
+  choiceImage.decoding = 'async';
+  choiceImage.alt = 'A photo from your past';
+  const choiceActions = make('div', 'echo__phone-options', undefined, choiceScreen);
+  const addLine = make('button', 'echo__phone-option', 'Add a line', choiceActions);
+  const voiceNote = make('button', 'echo__phone-option', 'Voice note', choiceActions);
+  voiceNote.setAttribute('aria-label', 'Voice note. Hold to animate a waveform; no audio is recorded.');
+  voiceNote.setAttribute('aria-pressed', 'false');
+  const keepAsIs = make('button', 'echo__phone-option', 'Keep as it is', choiceActions);
+  [addLine, voiceNote, keepAsIs].forEach((b) => { b.type = 'button'; });
+  const voicePanel = make('div', 'echo__voice-panel', undefined, choiceScreen);
+  voicePanel.hidden = true;
+  voicePanel.setAttribute('role', 'group');
+  voicePanel.setAttribute('aria-label', 'Visual voice-note simulation');
+  const voiceWave = make('div', 'echo__voice-wave', undefined, voicePanel);
+  voiceWave.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 17; i++) {
+    const bar = make('span', '', undefined, voiceWave);
+    bar.style.setProperty('--h', `${6 + ((i * 7) % 13)}px`);
+  }
+  const voiceReadyText = make('span', 'echo__voice-label', 'Waveform', voicePanel);
+  const keepVoice = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep voice', voicePanel);
+  keepVoice.type = 'button';
+  keepVoice.hidden = true;
+
+  const lineScreen = make('form', 'echo__phone-view echo__line-form', undefined, phoneScreen);
+  lineScreen.hidden = true;
+  make('h3', 'echo__phone-title', 'Add a line', lineScreen);
+  const linePhoto = make('div', 'echo__choice-photo', undefined, lineScreen);
+  const lineImage = make('img', '', undefined, linePhoto);
+  lineImage.width = 1284;
+  lineImage.height = 2778;
+  lineImage.decoding = 'async';
+  lineImage.alt = 'A photo from your past';
+  const lineInput = make('input', 'echo__line-input', undefined, lineScreen);
+  lineInput.type = 'text';
+  lineInput.maxLength = 80;
+  lineInput.autocomplete = 'off';
+  lineInput.setAttribute('aria-label', 'Add a line, up to 80 characters');
+  lineInput.placeholder = 'A few words';
+  const lineBottom = make('div', 'echo__line-bottom', undefined, lineScreen);
+  const lineCount = make('span', 'echo__line-count', '0/80', lineBottom);
+  const lineBack = make('button', 'echo__phone-button echo__phone-button--quiet', 'Back', lineBottom);
+  lineBack.type = 'button';
+  const lineSave = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep', lineBottom);
+  lineSave.type = 'submit';
+
+  const wallScreen = make('div', 'echo__phone-view echo__wall', undefined, phoneScreen);
+  wallScreen.hidden = true;
+  const wallHead = make('div', 'echo__wall-head', undefined, wallScreen);
+  wallHead.tabIndex = -1;
+  make('h3', 'echo__phone-title', 'Memory wall', wallHead);
+  const streak = make('span', 'echo__streak', '1 day', wallHead);
+  const wallGrid = make('div', 'echo__wall-grid', undefined, wallScreen);
+  const wallCard = make('div', 'echo__wall-card', undefined, wallGrid);
+  const wallPhoto = make('div', 'echo__wall-photo', undefined, wallCard);
+  const wallImage = make('img', '', undefined, wallPhoto);
+  wallImage.width = 1284;
+  wallImage.height = 2778;
+  wallImage.decoding = 'async';
+  wallImage.alt = 'Kept memory';
+  const wallCaption = make('span', 'echo__wall-caption', '', wallCard);
+  for (let i = 0; i < 3; i++) {
+    const blank = make('span', 'echo__wall-blank', '', wallGrid);
+    blank.setAttribute('aria-hidden', 'true');
+  }
+  const wallBack = make('button', 'echo__phone-button echo__phone-button--quiet echo__wall-back', 'Today', wallScreen);
+  wallBack.type = 'button';
+  phone.appendChild(phoneScreen);
+  phoneScreen.append(todayScreen, choiceScreen, lineScreen, wallScreen);
+  const phoneLive = make('p', 'echo__sr', '', phone);
+  phoneLive.setAttribute('aria-live', 'polite');
 
   const hint = document.createElement('p');
   hint.className = 'echo__hint';
@@ -122,12 +233,12 @@ export function mount(root, { reduced = false } = {}) {
   const keys = document.createElement('p');
   keys.className = 'echo__sr';
   keys.id = 'echo-keys';
-  keys.textContent = 'Use the left and right arrow keys to bring the previous or next card to the front. Enter, like a click on the front card, deals the next one.';
+  keys.textContent = 'Use the left and right arrows to choose another card. Enter or Space selects.';
   const live = document.createElement('p');
   live.className = 'echo__sr';
   live.setAttribute('aria-live', 'polite');
 
-  stage.append(haze, sun, svg, fanWrap, hint, keys, live);
+  stage.append(haze, sun, svg, fanWrap, phone, hint, keys, live);
 
   let layout = null, L = LAYOUTS.wide, cardPx = 268;
   function build(name) {
@@ -151,6 +262,9 @@ export function mount(root, { reduced = false } = {}) {
       left: pct(L.cx - sunD / 2, L.w), width: pct(sunD, L.w),
       top: pct(L.cardTop - sunD * 0.34, L.h), height: pct(sunD, L.h),
     });
+    Object.assign(phone.style, name === 'wide'
+      ? { left: '17%', top: '11%', width: '24%', height: '77%', transform: 'none' }
+      : { left: '50%', top: '52%', width: '62%', height: '45%', transform: 'translateX(-50%)' });
     Object.assign(hint.style, name === 'wide'
       ? { left: pct(L.cx + 72, L.w), top: pct((L.wave[0] + L.wave[1]) / 2 - 10, L.h) }
       : { left: pct(L.cx + 44, L.w), top: pct((L.wave[0] + L.wave[1]) / 2 - 10, L.h) });
@@ -190,19 +304,23 @@ export function mount(root, { reduced = false } = {}) {
     sun.style.transform = `translate3d(0, ${lerp(22, 0, smooth(0.15, 0.6, p)).toFixed(2)}%, 0)`;
     haze.style.opacity = smooth(0.1, 0.55, p).toFixed(3);
     hint.style.opacity = used ? 0 : smooth(0.4, 0.55, p).toFixed(3);
+    const phoneIn = smooth(0.45, 0.58, p);
+    phone.style.opacity = phoneIn.toFixed(3);
+    phone.style.visibility = phoneIn > 0.88 ? 'visible' : 'hidden';
+    phone.style.pointerEvents = phoneIn > 0.96 ? 'auto' : 'none';
   }
 
   // ---- physics ----
   let raf = 0, lastT = 0, drag = null, used = false;
   function settled(c) {
-    const t = order.indexOf(c.id) - 2;
+    const t = order.indexOf(c.id) - CENTER;
     return Math.abs(c.s - t) < 0.002 && Math.abs(c.vs) < 0.01 && Math.abs(c.z - Math.abs(t)) < 0.002 && Math.abs(c.vz) < 0.01
       && Math.abs(c.dx) < 0.3 && Math.abs(c.vdx) < 2 && Math.abs(c.dy) < 0.3 && Math.abs(c.vdy) < 2
       && Math.abs(c.lift - c.liftT) < 0.002 && Math.abs(c.dip) < 0.002 && Math.abs(c.vdip) < 0.02;
   }
   function snapAll() {
     for (const c of cards) {
-      const t = order.indexOf(c.id) - 2;
+      const t = order.indexOf(c.id) - CENTER;
       Object.assign(c, { s: t, vs: 0, z: Math.abs(t), vz: 0, vdx: 0, vdy: 0, lift: c.liftT, vlift: 0, dip: 0, vdip: 0 });
       if (!drag || drag.card !== c) { c.dx = 0; c.dy = 0; }
     }
@@ -214,7 +332,7 @@ export function mount(root, { reduced = false } = {}) {
     const steps = 2, h = dt / steps;
     let busy = !!drag;
     for (const c of cards) {
-      const ts = order.indexOf(c.id) - 2;
+      const ts = order.indexOf(c.id) - CENTER;
       for (let i = 0; i < steps; i++) {
         spring(c, 's', 'vs', ts, 210, 27, h);
         spring(c, 'z', 'vz', Math.abs(ts), 520, 46, h);
@@ -237,7 +355,7 @@ export function mount(root, { reduced = false } = {}) {
   }
 
   function markHero(announce) {
-    const heroId = order[2];
+    const heroId = order[CENTER];
     for (const c of cards) {
       const hero = c.id === heroId;
       c.node.classList.toggle('echo__card--hero', hero);
@@ -259,16 +377,16 @@ export function mount(root, { reduced = false } = {}) {
     kick();
   }
   const rotNext = () => setOrder(order.slice(1).concat(order[0]));
-  const rotPrev = () => setOrder([order[4], ...order.slice(0, 4)]);
+  const rotPrev = () => setOrder([order[order.length - 1], ...order.slice(0, -1)]);
   function bringToFront(id) {
-    const j = order.indexOf(id) - 2;
+    const j = order.indexOf(id) - CENTER;
     if (j === 0) return rotNext();
     let o = order;
-    for (let i = 0; i < Math.abs(j); i++) o = j > 0 ? o.slice(1).concat(o[0]) : [o[4], ...o.slice(0, 4)];
+    for (let i = 0; i < Math.abs(j); i++) o = j > 0 ? o.slice(1).concat(o[0]) : [o[o.length - 1], ...o.slice(0, -1)];
     setOrder(o);
   }
   function fling(id, dir) {
-    let o = dir < 0 ? order.slice(1).concat(order[0]) : [order[4], ...order.slice(0, 4)];
+    let o = dir < 0 ? order.slice(1).concat(order[0]) : [order[order.length - 1], ...order.slice(0, -1)];
     o = o.filter((x) => x !== id);
     o = dir < 0 ? [id, ...o] : [...o, id];
     setOrder(o, [id]);
@@ -314,7 +432,7 @@ export function mount(root, { reduced = false } = {}) {
     const c = drag.card;
     const s0 = drag.samples[0], s1 = [e.timeStamp, e.clientX];
     const vx = (s1[1] - s0[1]) / Math.max(16, s1[0] - s0[0]); // px/ms
-    const isHero = order[2] === c.id;
+    const isHero = order[CENTER] === c.id;
     const thrown = e.type === 'pointerup' && (Math.abs(vx) > 0.45 || Math.abs(c.dx) > cardPx * 0.55);
     c.liftT = 0;
     c.node.classList.remove('is-lifted');
@@ -330,8 +448,160 @@ export function mount(root, { reduced = false } = {}) {
     else if (e.key === 'ArrowLeft') { e.preventDefault(); rotPrev(); focusHero(); }
     else if ((e.key === 'Enter' || e.key === ' ') && c) { e.preventDefault(); bringToFront(c.id); focusHero(); }
   }
-  function focusHero() { cards[order[2]].node.focus({ preventScroll: true }); }
+  function focusHero() { cards[order[CENTER]].node.focus({ preventScroll: true }); }
   const onClickBlock = (e) => e.preventDefault();
+
+  let photoIndex = 0, phoneView = 'today', voiceTimer = 0, voicePointer = null, voiceKeyDown = false, ignoreVoiceClick = false, swipe = null;
+  const phoneOffs = [];
+  const listen = (target, event, fn, options) => {
+    target.addEventListener(event, fn, options);
+    phoneOffs.push(() => target.removeEventListener(event, fn, options));
+  };
+  // cover the frame with the photo part of the screenshot, so no card label or caption shows at the edges
+  function setCrop(img, card) {
+    const [x0, y0, x1, y1] = card.photoCrop || card.crop;
+    img.src = `${IMG}${card.file}.webp`;
+    const bw = img.parentElement.clientWidth, bh = img.parentElement.clientHeight;
+    if (!bw || !bh) return; // hidden view: set again when it is shown
+    const s = Math.max(bw / (x1 - x0), bh / (y1 - y0));
+    img.style.width = `${(924 * s).toFixed(1)}px`;
+    img.style.transform = `translate(${(bw / 2 - (x0 + x1) / 2 * s).toFixed(1)}px,${(bh / 2 - (y0 + y1) / 2 * s).toFixed(1)}px)`;
+  }
+  function setPhonePhoto() {
+    const card = CARDS[photoIndex];
+    setCrop(todayImage, card);
+    setCrop(choiceImage, card);
+    setCrop(lineImage, card);
+    setCrop(wallImage, card);
+  }
+  function showPhoneView(name) {
+    phoneView = name;
+    todayScreen.hidden = name !== 'today';
+    choiceScreen.hidden = name !== 'choice';
+    lineScreen.hidden = name !== 'line';
+    wallScreen.hidden = name !== 'wall';
+    setPhonePhoto();
+  }
+  function nextPhoto() {
+    if (phoneView !== 'today') return;
+    photoIndex = (photoIndex + 1) % CARDS.length;
+    setPhonePhoto();
+    phoneLive.textContent = 'Another photo';
+  }
+  function keepCurrent(kind) {
+    if (voiceTimer) clearTimeout(voiceTimer);
+    voiceTimer = 0;
+    const line = kind === 'line' ? lineInput.value.slice(0, 80) : '';
+    wallCaption.textContent = kind === 'line' ? line : kind === 'voice' ? 'Voice note' : '';
+    wallCard.setAttribute('aria-label', kind === 'voice'
+      ? 'Kept photo with a simulated voice-note waveform; no audio was recorded'
+      : 'Kept photo');
+    wallCard.classList.add('is-arriving');
+    showPhoneView('wall');
+    phoneLive.textContent = 'Kept. Memory wall. 1 day.';
+    wallHead.focus({ preventScroll: true });
+  }
+  function startVoice() {
+    if (phoneView !== 'choice') return;
+    if (voiceTimer) clearTimeout(voiceTimer);
+    voiceTimer = 0;
+    voicePanel.hidden = false;
+    voicePanel.classList.add('is-active');
+    voiceReadyText.textContent = 'Waveform';
+    keepVoice.hidden = true;
+    voiceNote.setAttribute('aria-pressed', 'true');
+  }
+  function finishVoice() {
+    if (phoneView !== 'choice') return;
+    voicePanel.classList.remove('is-active');
+    voiceNote.setAttribute('aria-pressed', 'false');
+    voiceReadyText.textContent = 'Waveform ready';
+    keepVoice.hidden = false;
+    phoneLive.textContent = 'Waveform ready';
+  }
+  function onVoicePointerDown(e) {
+    if (e.button > 0 || phoneView !== 'choice') return;
+    voicePointer = e.pointerId;
+    ignoreVoiceClick = false;
+    startVoice();
+    try { voiceNote.setPointerCapture(e.pointerId); } catch { /* element may be hidden */ }
+  }
+  function onVoicePointerUp(e) {
+    if (voicePointer !== e.pointerId) return;
+    voicePointer = null;
+    finishVoice();
+    ignoreVoiceClick = true;
+  }
+  function onVoiceKeyDown(e) {
+    if ((e.key !== 'Enter' && e.key !== ' ') || e.repeat || phoneView !== 'choice') return;
+    e.preventDefault();
+    voiceKeyDown = true;
+    ignoreVoiceClick = false;
+    startVoice();
+  }
+  function onVoiceKeyUp(e) {
+    if (!voiceKeyDown || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    voiceKeyDown = false;
+    finishVoice();
+    ignoreVoiceClick = false;
+  }
+  function onVoiceClick(e) {
+    if (ignoreVoiceClick && e.detail > 0) { ignoreVoiceClick = false; return; }
+    ignoreVoiceClick = false;
+    if (phoneView !== 'choice') return;
+    startVoice();
+    if (reduced) finishVoice();
+    else voiceTimer = setTimeout(finishVoice, 720);
+  }
+  function onPhotoDown(e) {
+    if (e.button > 0 || phoneView !== 'today') return;
+    swipe = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    try { todayPhoto.setPointerCapture(e.pointerId); } catch { /* element may be hidden */ }
+  }
+  function onPhotoUp(e) {
+    if (!swipe || swipe.id !== e.pointerId) return;
+    const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy)) nextPhoto();
+  }
+  setPhonePhoto();
+  const photoRo = new ResizeObserver(() => setPhonePhoto());
+  photoRo.observe(phoneScreen);
+  listen(another, 'click', nextPhoto);
+  listen(keep, 'click', () => {
+    showPhoneView('choice');
+    phoneLive.textContent = 'Choose how to keep it';
+    addLine.focus({ preventScroll: true });
+  });
+  listen(todayPhoto, 'pointerdown', onPhotoDown);
+  listen(todayPhoto, 'pointerup', onPhotoUp);
+  listen(todayPhoto, 'pointercancel', onPhotoUp);
+  listen(addLine, 'click', () => {
+    lineInput.value = '';
+    lineCount.textContent = '0/80';
+    showPhoneView('line');
+    lineInput.focus({ preventScroll: true });
+  });
+  listen(lineInput, 'input', () => { lineCount.textContent = `${lineInput.value.length}/80`; });
+  listen(lineScreen, 'submit', (e) => { e.preventDefault(); keepCurrent('line'); });
+  listen(lineBack, 'click', () => { showPhoneView('choice'); addLine.focus({ preventScroll: true }); });
+  listen(keepAsIs, 'click', () => keepCurrent('still'));
+  listen(voiceNote, 'pointerdown', onVoicePointerDown);
+  listen(voiceNote, 'pointerup', onVoicePointerUp);
+  listen(voiceNote, 'pointercancel', onVoicePointerUp);
+  listen(voiceNote, 'keydown', onVoiceKeyDown);
+  listen(voiceNote, 'keyup', onVoiceKeyUp);
+  listen(voiceNote, 'click', onVoiceClick);
+  listen(keepVoice, 'click', () => keepCurrent('voice'));
+  listen(wallBack, 'click', () => {
+    voicePanel.hidden = true;
+    keepVoice.hidden = true;
+    wallCard.classList.remove('is-arriving');
+    showPhoneView('today');
+    nextPhoto();
+    keep.focus({ preventScroll: true });
+  });
 
   fan.addEventListener('pointerdown', onDown);
   fan.addEventListener('pointermove', onMove);
@@ -351,7 +621,10 @@ export function mount(root, { reduced = false } = {}) {
     },
     destroy() {
       cancelAnimationFrame(raf);
+      if (voiceTimer) clearTimeout(voiceTimer);
+      phoneOffs.forEach((off) => off());
       ro.disconnect();
+      photoRo.disconnect();
       fan.removeEventListener('pointerdown', onDown);
       fan.removeEventListener('pointermove', onMove);
       fan.removeEventListener('pointerup', onUp);

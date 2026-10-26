@@ -409,7 +409,7 @@ const DRS_BOOST = 0.12; // ~12% quicker through the DRS zone
 const GEARS = [0, 95, 130, 165, 200, 235, 268, 298]; // km/h at which each of 8 gears starts (simulation only)
 const TELEMETRY_HZ = 12;
 
-export function mount(root, { reduced = false } = {}) {
+function mountSuzuka(root, { reduced = false } = {}) {
   let g = null, refs = null, layout = '';
   let lastP = reduced ? 0.6 : 0;
   let visible = false, raf = 0, clock = 0, prevTs = 0, carsWanted = false, carsAlpha = 0;
@@ -899,6 +899,306 @@ export function mount(root, { reduced = false } = {}) {
       document.removeEventListener('visibilitychange', onVis);
       root.textContent = '';
       refs = null;
+    },
+  };
+}
+
+export function normalizeLapData(data) {
+  const count = Number(data?.timeline?.count), step = Number(data?.timeline?.step);
+  if (!data?.raceName || !data?.circuit || !/^\d{4}-\d{2}-\d{2}$/.test(data?.date ?? '')
+    || !Array.isArray(data.track) || data.track.length < 4 || !Array.isArray(data.cars) || data.cars.length < 3
+    || !Number.isInteger(count) || count < 2 || !Number.isFinite(step) || step <= 0) return null;
+  if (data.track.some(point => !Array.isArray(point) || point.length !== 2 || !point.every(Number.isInteger))) return null;
+  for (const car of data.cars) {
+    if (!Number.isInteger(Number(car.number)) || !Number.isInteger(Number(car.position)) || !car.acronym
+      || !/^#[\da-f]{6}$/i.test(car.color ?? '') || !Array.isArray(car.frames) || car.frames.length !== count * 2
+      || !car.frames.every(Number.isInteger)
+      || (car.finish_frame != null && (!Number.isInteger(car.finish_frame) || car.finish_frame < 0 || car.finish_frame >= count))) return null;
+  }
+  return data;
+}
+
+function nearestOnCurve(segs, target) {
+  let best = { d: Infinity, i: 0, t: 0, p: segs[0][0] };
+  const distance = p => (p[0] - target[0]) ** 2 + (p[1] - target[1]) ** 2;
+  const consider = (i, t, p) => {
+    const d = distance(p);
+    if (d < best.d) best = { d, i, t, p };
+  };
+  for (let i = 0; i < segs.length; i++) {
+    const steps = 64, values = Array.from({ length: steps + 1 }, (_, k) => distance(bez(segs[i], k / steps)));
+    consider(i, 0, segs[i][0]);
+    consider(i, 1, segs[i][3]);
+    for (let k = 1; k < steps; k++) {
+      if (values[k] > values[k - 1] || values[k] > values[k + 1]) continue;
+      let lo = (k - 1) / steps, hi = (k + 1) / steps;
+      for (let n = 0; n < 28; n++) {
+        const a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3;
+        if (distance(bez(segs[i], a)) <= distance(bez(segs[i], b))) hi = b;
+        else lo = a;
+      }
+      const t = (lo + hi) / 2;
+      consider(i, t, bez(segs[i], t));
+    }
+  }
+  if (best.t >= 1 - 1e-9) {
+    const i = (best.i + 1) % segs.length;
+    return { ...best, i, t: 0, p: segs[i][0] };
+  }
+  return best;
+}
+
+function sampleClosedCurve(segs, step, anchors) {
+  const extra = new Map();
+  for (const [key, loc] of Object.entries(anchors)) {
+    if (!extra.has(loc.i)) extra.set(loc.i, []);
+    extra.get(loc.i).push({ key, t: loc.t });
+  }
+  const records = [], indices = {};
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    const estimate = len(sub(seg[1], seg[0])) + len(sub(seg[2], seg[1])) + len(sub(seg[3], seg[2]));
+    const count = Math.max(2, Math.ceil(estimate / step));
+    const ts = [...Array.from({ length: count }, (_, k) => k / count), ...(extra.get(i) ?? []).map(mark => mark.t)]
+      .sort((a, b) => a - b)
+      .filter((t, k, all) => !k || Math.abs(t - all[k - 1]) > 1e-9);
+    for (const t of ts) {
+      const index = records.length;
+      records.push({ i, t, p: bez(seg, t) });
+      for (const mark of extra.get(i) ?? []) if (Math.abs(mark.t - t) < 1e-9) indices[mark.key] = index;
+    }
+  }
+  return { records, indices };
+}
+
+function splitBezier(segment, t) {
+  const lerp = (a, b) => add(mul(a, 1 - t), mul(b, t));
+  const a = lerp(segment[0], segment[1]), b = lerp(segment[1], segment[2]), c = lerp(segment[2], segment[3]);
+  const d = lerp(a, b), e = lerp(b, c), p = lerp(d, e);
+  return [[segment[0], a, d, p], [p, e, c, segment[3]]];
+}
+
+function sliceBezier(segment, from, to) {
+  if (from <= 0 && to >= 1) return segment;
+  const tail = from > 0 ? splitBezier(segment, from)[1] : segment;
+  const localEnd = from >= 1 ? 1 : (to - from) / (1 - from);
+  return splitBezier(tail, localEnd)[0];
+}
+
+function forwardCurve(segs, start, end) {
+  const out = [];
+  const append = (i, from, to) => {
+    if (to - from > 1e-10) out.push(sliceBezier(segs[i], from, to));
+  };
+  if (start.i === end.i && start.t < end.t) {
+    append(start.i, start.t, end.t);
+    return out;
+  }
+  append(start.i, start.t, 1);
+  let i = (start.i + 1) % segs.length;
+  while (i !== end.i) {
+    out.push(segs[i]);
+    i = (i + 1) % segs.length;
+  }
+  append(end.i, 0, end.t);
+  return out;
+}
+
+export function buildReplayGeometry(data, width = 1120, height = 590) {
+  const points = data.track.map(([x, y]) => [x, -y]); // OpenF1's y axis grows upward; SVG's grows downward.
+  const mean = points.reduce((sum, p) => [sum[0] + p[0] / points.length, sum[1] + p[1] / points.length], [0, 0]);
+  let xx = 0, yy = 0, xy = 0;
+  for (const [x, y] of points) { xx += (x - mean[0]) ** 2; yy += (y - mean[1]) ** 2; xy += (x - mean[0]) * (y - mean[1]); }
+  const principal = 0.5 * Math.atan2(2 * xy, xx - yy);
+  const candidates = [principal, principal + Math.PI / 2];
+  const boundsFor = angle => {
+    const c = Math.cos(angle), s = Math.sin(angle);
+    const rotated = points.map(([x, y]) => [x * c - y * s, x * s + y * c]);
+    return { angle, rotated, minX: Math.min(...rotated.map(p => p[0])), maxX: Math.max(...rotated.map(p => p[0])),
+      minY: Math.min(...rotated.map(p => p[1])), maxY: Math.max(...rotated.map(p => p[1])) };
+  };
+  let bounds = candidates.map(boundsFor).sort((a, b) => (b.maxX - b.minX) / (b.maxY - b.minY) - (a.maxX - a.minX) / (a.maxY - a.minY))[0];
+  if (bounds.maxY - bounds.minY > bounds.maxX - bounds.minX) bounds = boundsFor(bounds.angle + Math.PI / 2);
+  const margin = 72;
+  const scale = Math.min((width - margin * 2) / (bounds.maxX - bounds.minX || 1), (height - margin * 2) / (bounds.maxY - bounds.minY || 1));
+  const left = (width - (bounds.maxX - bounds.minX) * scale) / 2;
+  const top = (height - (bounds.maxY - bounds.minY) * scale) / 2;
+  const c = Math.cos(bounds.angle), s = Math.sin(bounds.angle);
+  const point = ([x, y]) => {
+    const rx = x * c - y * s, ry = x * s + y * c;
+    return [left + (rx - bounds.minX) * scale, top + (ry - bounds.minY) * scale];
+  };
+  const curve = catmull(points.map(point), true);
+  const T = [width / 2, 0], B = [width / 2, height];
+  const P = nearestOnCurve(curve, T), Q = nearestOnCurve(curve, B);
+  const sampled = sampleClosedCurve(curve, 0.75, { P, Q });
+  const loopPoints = sampled.records.map(record => record.p);
+  const track = [...loopPoints, loopPoints[0]];
+  const lap = [];
+  for (let i = sampled.indices.P, n = 0; n <= sampled.records.length; n++, i = (i + 1) % sampled.records.length) {
+    lap.push(sampled.records[i].p);
+    if (i === sampled.indices.Q) break;
+  }
+  const pRadius = len(sub(P.p, T)), pDirection = norm(sub(P.p, T));
+  const qRadius = len(sub(Q.p, B)), qDirection = norm(sub(Q.p, B));
+  const entryControl = [T, add(T, mul(pDirection, pRadius * 0.34)), sub(P.p, mul(pDirection, Math.min(24, pRadius * 0.18))), P.p];
+  const exitControl = [Q.p, sub(Q.p, mul(qDirection, Math.min(24, qRadius * 0.18))), add(B, mul(qDirection, qRadius * 0.34)), B];
+  const entrySegments = [entryControl], lapSegments = forwardCurve(curve, P, Q), exitSegments = [exitControl];
+  const trackD = `${segsToD(curve)}Z`;
+  const entryD = segsToD(entrySegments);
+  const lapD = segsToD(lapSegments);
+  const exitD = segsToD(exitSegments);
+  const sampleBezier = segments => segments.flatMap((segment, i) =>
+    Array.from({ length: 65 }, (_, k) => bez(segment, k / 64)).filter((_, k) => !i || k > 0));
+  const entry = sampleBezier(entrySegments), exit = sampleBezier(exitSegments);
+  const cars = data.cars.map(car => ({ ...car, points: Array.from({ length: data.timeline.count }, (_, i) => point([car.frames[i * 2], -car.frames[i * 2 + 1]])) }));
+  return { width, height, trackD, entryD, lapD, exitD, track, lap, entry, exit, entrySegments, lapSegments, exitSegments, T, B, P: P.p, Q: Q.p, cars };
+}
+
+function mountReplay(root, { reduced = false, data }) {
+  const g = buildReplayGeometry(data);
+  const { width, height } = g;
+  const stage = html('div', 'c-stage c-stage--replay', root);
+  stage.style.aspectRatio = `${width} / ${height}`;
+  root.classList.toggle('is-reduced', reduced);
+  const vb = `0 0 ${width} ${height}`;
+  const id = `c-replay-${Math.random().toString(36).slice(2)}`;
+  const svg = el('svg', { class: 'c-replay-base', viewBox: vb, role: 'img', preserveAspectRatio: 'xMidYMid meet' }, stage);
+  const defs = el('defs', {}, svg);
+  const gradient = el('radialGradient', { id: `${id}-flood`, cx: '50%', cy: '48%', r: '62%' }, defs);
+  [[0, 0.09], [0.58, 0.03], [1, 0]].forEach(([offset, opacity]) => {
+    el('stop', { offset, class: 'c-replay-flood-stop', 'stop-opacity': opacity }, gradient);
+  });
+  el('rect', { class: 'c-replay-flood', width, height, fill: `url(#${id}-flood)` }, svg);
+  el('path', { d: g.trackD, class: 'c-replay-shadow' }, svg);
+  el('path', { d: g.trackD, class: 'c-replay-edge' }, svg);
+  el('path', { d: g.trackD, class: 'c-replay-road' }, svg);
+
+  const live = el('svg', { class: 'c-replay-live', viewBox: vb, 'aria-hidden': 'true', preserveAspectRatio: 'xMidYMid meet' }, stage);
+  const entry = el('path', { d: g.entryD, class: 'c-replay-line', pathLength: 1 }, live);
+  const lap = el('path', { d: g.lapD, class: 'c-replay-line', pathLength: 1 }, live);
+  const exit = el('path', { d: g.exitD, class: 'c-replay-line', pathLength: 1 }, live);
+  const carLayer = el('g', { class: 'c-replay-cars' }, live);
+  const carEls = g.cars.map(car => {
+    const group = el('g', { class: 'c-replay-car' }, carLayer);
+    group.style.color = car.color;
+    el('circle', { class: 'c-replay-glow', r: 13 }, group);
+    el('circle', { class: 'c-replay-dot', r: 6 }, group);
+    if (car.position <= 3) {
+      const label = el('text', { class: 'c-replay-label', x: 12, y: -11, 'text-anchor': 'start' }, group);
+      label.textContent = car.acronym;
+    }
+    return { group, car };
+  });
+  html('p', 'c-replay-caption', stage,
+    `Final lap, ${data.raceName}, ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${data.date}T00:00:00Z`))}`);
+  const labelText = `${data.raceName} at ${data.circuit}, ${data.date}. Final lap replay with team-coloured car positions; the first three finishers are labelled by acronym.`;
+  svg.setAttribute('aria-label', labelText);
+  root.style.setProperty('--c-u', (width / (root.clientWidth || width)).toFixed(4));
+
+  let lastP = reduced ? 0.6 : 0;
+  let visible = false, raf = 0, previousFrame = 0, replayClock = 0;
+  const timelineSeconds = Math.max(0.001, (data.timeline.count - 1) * data.timeline.step / 1000);
+  let finishHold = 0;
+  const finishes = data.cars.map(car => car.finish_frame).filter(Number.isInteger);
+  const stillFrame = finishes.length ? Math.min(...finishes) : data.timeline.count - 1;
+  const setLine = (node, offset, opacity = 1) => {
+    node.style.strokeDashoffset = String(offset);
+    node.style.opacity = String(opacity);
+  };
+  const drawCars = frame => {
+    for (const { group, car } of carEls) {
+      const carFrame = frame;
+      const lo = Math.max(0, Math.min(data.timeline.count - 1, Math.floor(carFrame)));
+      const hi = Math.min(data.timeline.count - 1, lo + 1);
+      const fraction = carFrame - lo;
+      const a = car.points[lo], b = car.points[hi];
+      group.setAttribute('transform', `translate(${f1(a[0] + (b[0] - a[0]) * fraction)} ${f1(a[1] + (b[1] - a[1]) * fraction)})`);
+    }
+  };
+  const render = p => {
+    const entryProgress = reduced ? 1 : clamp01((p - P_ENTRY[0]) / (P_ENTRY[1] - P_ENTRY[0]));
+    const lapProgress = reduced ? 1 : clamp01((p - P_LAP[0]) / (P_LAP[1] - P_LAP[0]));
+    const exitProgress = reduced ? 1 : clamp01((p - P_EXIT[0]) / (P_EXIT[1] - P_EXIT[0]));
+    setLine(entry, 1 - entryProgress);
+    setLine(lap, 1 - lapProgress);
+    setLine(exit, 1 - exitProgress, exitProgress > 0 ? 1 : 0);
+    const carsVisible = reduced || p >= P_LAP[1];
+    carLayer.style.opacity = carsVisible ? '1' : '0';
+    if (reduced) drawCars(stillFrame); // the moment the winner takes the flag
+    else {
+      if (carsVisible) drawCars(replayClock * 1000 / data.timeline.step);
+      tick();
+    }
+  };
+  function frame(ts) {
+    raf = 0;
+    const dt = previousFrame ? Math.min(0.05, (ts - previousFrame) / 1000) : 0;
+    previousFrame = ts;
+    if (!reduced && lastP >= P_LAP[1]) {
+      if (replayClock < timelineSeconds) replayClock = Math.min(timelineSeconds, replayClock + dt * 4);
+      else if ((finishHold += dt) >= 1.5) { replayClock = 0; finishHold = 0; }
+      drawCars((replayClock * 1000) / data.timeline.step);
+    }
+    tick();
+  }
+  function tick() {
+    const run = !reduced && visible && !document.hidden && lastP >= P_LAP[1];
+    if (run && !raf) raf = requestAnimationFrame(frame);
+    if (!run) { if (raf) cancelAnimationFrame(raf); raf = 0; previousFrame = 0; }
+  }
+  const io = new IntersectionObserver(entries => { visible = entries.at(-1).isIntersecting; tick(); });
+  io.observe(root);
+  const onVisibility = () => tick();
+  document.addEventListener('visibilitychange', onVisibility);
+  const ro = new ResizeObserver(entries => {
+    const w = entries[0].contentRect.width;
+    if (w > 0) root.style.setProperty('--c-u', (width / w).toFixed(4));
+  });
+  ro.observe(root);
+  render(lastP);
+
+  return {
+    update(p) {
+      lastP = reduced ? 0.6 : Math.max(0, Math.min(1, +p || 0));
+      render(lastP);
+    },
+    destroy() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      io.disconnect(); ro.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
+      root.textContent = '';
+    },
+  };
+}
+
+export function mount(root, options = {}) {
+  const reduced = !!options.reduced;
+  let active = mountSuzuka(root, { reduced });
+  let lastP = reduced ? 0.6 : 0;
+  let destroyed = false;
+  fetch(new URL('../assets/data/f1lap.json', import.meta.url), { cache: 'no-cache' })
+    .then(response => response.ok ? response.json() : Promise.reject(response.status))
+    .then(raw => {
+      const data = normalizeLapData(raw);
+      if (destroyed || !data) return;
+      active.destroy();
+      active = mountReplay(root, { reduced, data });
+      active.update(lastP);
+    })
+    .catch(() => { /* missing or incomplete data: keep the Suzuka fallback */ });
+  return {
+    update(p) {
+      lastP = reduced ? 0.6 : Math.max(0, Math.min(1, +p || 0));
+      active.update(lastP);
+    },
+    destroy() {
+      if (!destroyed) {
+        destroyed = true;
+        active?.destroy();
+        active = null;
+      }
     },
   };
 }

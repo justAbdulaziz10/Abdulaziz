@@ -79,6 +79,41 @@ html.is-night [data-world="paper"] .scene--tracklist {
 }
 .scene--tracklist .tl-hole { fill: var(--tl-bg); stroke: var(--tl-fg); stroke-opacity: 0.25; stroke-width: 1; }
 
+/* tonearm and transport */
+.scene--tracklist .tl-tonearm { pointer-events: none; }
+.scene--tracklist .tl-tonearm__shaft { fill: none; stroke: var(--tl-groove); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.scene--tracklist .tl-tonearm__highlight { fill: none; stroke: var(--tl-disc); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .72; }
+.scene--tracklist .tl-tonearm__stylus { fill: none; stroke: var(--tl-groove); stroke-width: 2; stroke-linecap: round; }
+.scene--tracklist .tl-tonearm__pivot { fill: var(--tl-groove); stroke: var(--tl-bg); stroke-width: 3; }
+.scene--tracklist .tl-tonearm__needle { fill: var(--tl-label); stroke: var(--tl-groove); stroke-width: 1.5; }
+.scene--tracklist .tl-controls {
+  position: absolute;
+  top: 1%;
+  left: 4%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.scene--tracklist .tl-control {
+  min-height: 34px;
+  padding: .55rem .72rem;
+  border: 1px solid color-mix(in srgb, var(--tl-fg) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tl-bg) 92%, transparent);
+  color: var(--tl-fg);
+  font: 560 .72rem/1 var(--mono);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background var(--t-state) var(--ease), color var(--t-state) var(--ease), border-color var(--t-state) var(--ease);
+}
+.scene--tracklist .tl-control:hover,
+.scene--tracklist .tl-control[aria-pressed="true"] { background: var(--tl-fg); color: var(--tl-bg); border-color: var(--tl-fg); }
+.scene--tracklist .tl-control:focus-visible { outline: 2px solid var(--tl-fg); outline-offset: 3px; }
+.scene--tracklist.is-playback .tl-band { stroke-opacity: .22; filter: drop-shadow(0 0 4px var(--tl-label)); }
+.scene--tracklist.is-playback .tl-tonearm__needle { filter: drop-shadow(0 0 3px var(--tl-label)); }
+
 /* the line */
 .scene--tracklist .tl-line,
 .scene--tracklist .tl-groove-line {
@@ -118,5 +153,8 @@ html.is-night [data-world="paper"] .scene--tracklist {
   .scene--tracklist .tl-label-dot,
   .scene--tracklist .tl-name,
   .scene--tracklist .tl-band,
+  .scene--tracklist .tl-control,
   .scene--tracklist .tl-hint { transition: none; }
 }
+
+@media (max-width: 900px) { .scene--tracklist .tl-controls { left: auto; right: 4%; } }

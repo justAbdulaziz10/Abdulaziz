@@ -2,6 +2,8 @@
 // computed slots (3D bin packing), the flaps fold shut and the carton is ticked.
 // Round 2: the last three products wait in a tray; the visitor packs them
 // (drag, tap or Enter). Scrolling on packs whatever is left, so the story always ends.
+import { CARTONS, SHIPPING_RATES, packUnits } from './rassah-pack.js';
+
 const NS = 'http://www.w3.org/2000/svg';
 const U = 50;                                  // viewBox units per carton unit
 const C30 = Math.cos(Math.PI / 6), S30 = 0.5;
@@ -12,6 +14,7 @@ const seg = (p, a, b) => clamp((p - a) / (b - a));
 const eo3 = (t) => 1 - Math.pow(1 - t, 3);
 const eio = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const r3 = (n) => Math.round(n * 1000) / 1000;
+const formatCm = (n) => Number(n.toFixed(2)).toString();
 
 const P = (x, y, z) => [(x - y) * C30 * U, ((x + y) * S30 - z) * U];
 const V = (x, y, z) => P(x, y, z);             // projection is linear: same for vectors
@@ -38,6 +41,19 @@ const ITEMS = [
 const AUTO_IDS = ['a', 'book', 'g', 'm'];       // packed by the scroll before the tray appears
 const TRAY_IDS = ['bottle', 'y', 's'];          // the three the visitor packs (tray order, back to front)
 const TRAY_NAMES = { bottle: 'the bottle', y: 'the small box', s: 'the flat blue box' };
+
+// Names are English translations of the source catalogue; dimensions and handling flags
+// come from its ground_truth.json. Each product is represented by one order unit here.
+const PRODUCTS = [
+  { id: 'p-01', name: 'Royal oud perfume, 100 ml', dims: [16, 7, 7], weightG: 420, fragile: true, liquid: true, uprightHeight: 16, c: 'var(--echo)' },
+  { id: 'p-02', name: 'The Art of Quiet Thinking', dims: [21, 14, 2], weightG: 350, fragile: false, liquid: false, uprightHeight: null, c: 'var(--sky)' },
+  { id: 'p-03', name: 'Decorated ceramic incense burner', dims: [22, 18, 12], weightG: 1200, fragile: true, liquid: false, uprightHeight: null, c: 'var(--window-warm)' },
+  { id: 'p-04', name: '20,000 mAh power bank', dims: [15, 7.5, 2.8], weightG: 430, fragile: false, liquid: false, uprightHeight: null, c: 'var(--mara)' },
+  { id: 'p-05', name: 'Scented candle in a glass cup', dims: [12.7, 10.16, 10.16], weightG: 499, fragile: true, liquid: false, uprightHeight: null, c: 'var(--echo-soft)' },
+  { id: 'p-06', name: 'Silicone phone case', dims: [18, 10, 2], weightG: 80, fragile: false, liquid: false, uprightHeight: null, c: 'var(--night-2)' },
+  { id: 'p-07', name: 'Mountain Sidr honey, 500 g', dims: [13, 9, 9], weightG: 850, fragile: true, liquid: true, uprightHeight: 13, c: 'var(--daleelk)' },
+  { id: 'p-08', name: 'Portable Bluetooth speaker', dims: [20, 10, 10], weightG: 650, fragile: false, liquid: false, uprightHeight: null, c: 'var(--daleelk-soft)' },
+];
 
 const T = {
   entry: [0.03, 0.09], rim: [0.09, 0.145], vert: [0.14, 0.185], bottom: [0.18, 0.22],
@@ -333,7 +349,79 @@ export function mount(root, { reduced = false } = {}) {
   const live = document.createElement('p');
   live.className = 'rs-sr';
   live.setAttribute('aria-live', 'polite');
-  root.append(ui, live);
+  const builder = document.createElement('div');
+  builder.className = 'rs-builder';
+  builder.setAttribute('role', 'group');
+  builder.setAttribute('aria-label', 'Try the packing engine');
+  builder.style.setProperty('--rs-builder-vis', 'hidden');
+
+  const packPanel = document.createElement('div');
+  packPanel.className = 'rs-pack-panel';
+  const readout = document.createElement('div');
+  readout.className = 'rs-readout is-message';
+  readout.setAttribute('role', 'status');
+  readout.setAttribute('aria-live', 'polite');
+  readout.setAttribute('aria-atomic', 'true');
+  const readoutMain = document.createElement('div');
+  readoutMain.className = 'rs-readout-main';
+  const cartonId = document.createElement('span');
+  cartonId.className = 'rs-carton-id';
+  const cartonDims = document.createElement('span');
+  cartonDims.className = 'rs-carton-dims';
+  const estimate = document.createElement('span');
+  estimate.className = 'rs-estimate';
+  const message = document.createElement('span');
+  message.className = 'rs-pack-message';
+  message.textContent = 'Choose products';
+  readoutMain.append(cartonId, cartonDims, message);
+  readout.append(readoutMain, estimate);
+
+  const packVisual = document.createElement('div');
+  packVisual.className = 'rs-pack-visual';
+  packVisual.setAttribute('aria-label', 'Carton drop area');
+  packVisual.setAttribute('role', 'group');
+  const packSvg = el('svg', {
+    class: 'rs-pack-svg', role: 'img',
+    'aria-label': 'Packed products shown in an isometric carton',
+    'aria-hidden': 'true', preserveAspectRatio: 'xMidYMid meet',
+  }, packVisual);
+  packPanel.append(readout, packVisual);
+
+  const shelf = document.createElement('div');
+  shelf.className = 'rs-shelf';
+  const shelfTitle = document.createElement('h3');
+  shelfTitle.className = 'rs-shelf-title';
+  shelfTitle.textContent = 'Products';
+  const productGrid = document.createElement('div');
+  productGrid.className = 'rs-products';
+  productGrid.setAttribute('role', 'group');
+  productGrid.setAttribute('aria-label', 'Products to pack');
+  const selected = new Set();
+  const productButtons = new Map();
+  for (const item of PRODUCTS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'rs-product';
+    button.dataset.product = item.id;
+    button.setAttribute('aria-pressed', 'false');
+    const name = document.createElement('span');
+    name.className = 'rs-product-name';
+    name.textContent = item.name;
+    const meta = document.createElement('span');
+    meta.className = 'rs-product-meta';
+    meta.textContent = `${item.dims.map(formatCm).join(' × ')} cm · ${item.weightG} g`;
+    const flags = document.createElement('span');
+    flags.className = 'rs-product-flags';
+    flags.textContent = [item.fragile && 'Fragile', item.liquid && 'Liquid'].filter(Boolean).join(' · ');
+    button.append(name, meta, flags);
+    productGrid.appendChild(button);
+    productButtons.set(item.id, button);
+  }
+  shelf.append(shelfTitle, productGrid);
+  builder.append(packPanel, shelf);
+  root.append(ui, live, builder);
+  let packResult = null;
+  let packRaf = 0;
   let hintUsed = false;
   try { hintUsed = sessionStorage.getItem('rs-hint') === '1'; } catch { /* storage blocked */ }
   if (hintUsed) hint.classList.add('is-used');
@@ -367,6 +455,74 @@ export function mount(root, { reduced = false } = {}) {
     const bottom = vy + vh;
     exitLine.el.setAttribute('d', `M${r3(pB[0])} ${r3(pB[1])}L${r3(pB[0])} ${r3(pB[1] + 0.25 * U)}C${r3(pB[0])} ${r3(pB[1] + 1.0 * U)} 0 ${r3(pB[1] + 0.75 * U)} 0 ${r3(pB[1] + 1.55 * U)}L0 ${r3(bottom + 4)}`);
   };
+
+  function drawPackArt(result, animate = true) {
+    if (packRaf) cancelAnimationFrame(packRaf);
+    packRaf = 0;
+    packSvg.replaceChildren();
+    packSvg.setAttribute('aria-hidden', result?.status === 'box_found' ? 'false' : 'true');
+    if (!result || result.status !== 'box_found') return;
+    const carton = result.carton;
+    const [CL, CW, CH] = carton.inner;
+    const narrow = mq.matches;
+    const vw = narrow ? 360 : 740, vh = narrow ? 220 : 490;
+    const maxW = narrow ? 260 : 440, maxH = narrow ? 145 : 330;
+    const u = Math.min(maxW / ((CL + CW) * C30), maxH / ((CL + CW) * 0.5 + CH));
+    const cx = ((CL - CW) * C30 * u) / 2;
+    const cy = ((CL + CW) * 0.5 - CH) * u / 2;
+    const project = (x, y, z) => [
+      vw / 2 - cx + (x - y) * C30 * u,
+      vh / 2 - cy + ((x + y) * 0.5 - z) * u,
+    ];
+    const list = (q) => q.map(([x, y, z]) => project(x, y, z).map(r3).join(',')).join(' ');
+    const path = (q) => 'M' + q.map(([x, y, z]) => project(x, y, z).map(r3).join(' ')).join('L');
+    const polygon = (q, className, parent = packSvg) => el('polygon', { points: list(q), class: className }, parent);
+    packSvg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
+
+    const shadowCenter = project(CL / 2, CW / 2, 0);
+    el('ellipse', { cx: r3(shadowCenter[0]), cy: r3(shadowCenter[1] + 9), rx: r3(Math.min(vw * 0.34, maxW * 0.56)), ry: r3(narrow ? 13 : 24), class: 'rs-pack-shadow' }, packSvg);
+    polygon([[0, 0, 0], [CL, 0, 0], [CL, CW, 0], [0, CW, 0]], 'rs-pack-floor');
+    polygon([[0, 0, 0], [0, CW, 0], [0, CW, CH], [0, 0, CH]], 'rs-pack-wall rs-pack-wall--back');
+    polygon([[0, 0, 0], [CL, 0, 0], [CL, 0, CH], [0, 0, CH]], 'rs-pack-wall rs-pack-wall--back');
+    const grid = el('g', { class: 'rs-pack-grid', 'aria-hidden': 'true' }, packSvg);
+    const sx = Math.max(4, Math.ceil(CL / 5)), sy = Math.max(4, Math.ceil(CW / 5));
+    for (let x = sx; x < CL - 0.01; x += sx) el('path', { d: path([[x, 0, 0], [x, CW, 0]]) }, grid);
+    for (let y = sy; y < CW - 0.01; y += sy) el('path', { d: path([[0, y, 0], [CL, y, 0]]) }, grid);
+
+    const byId = new Map(PRODUCTS.map((item) => [item.id, item]));
+    const dropping = [];
+    const placements = [...result.placements].sort((a, b) => a.x + a.y - b.x - b.y || a.z - b.z);
+    placements.forEach((p) => {
+      const item = byId.get(p.unitId);
+      if (!item) return;
+      const [x, y, z, w, d, h] = [p.x, p.y, p.z, p.dx, p.dy, p.dz];
+      const g = el('g', { class: 'rs-pack-item' + (animate && !reduced ? ' is-dropping' : ''), style: `--c:${item.c};--drop:${r3(Math.max(18, Math.min(70, h * u * 0.9)))}px` }, packSvg);
+      polygon([[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]], 'rs-pack-face rs-pack-face--right', g);
+      polygon([[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]], 'rs-pack-face rs-pack-face--left', g);
+      polygon([[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]], 'rs-pack-face rs-pack-face--top', g);
+      el('path', { d: path([[x, y + d, z + h], [x + w, y + d, z + h], [x + w, y, z + h]]), class: 'rs-pack-highlight' }, g);
+      dropping.push(g);
+    });
+
+    polygon([[0, CW, 0], [CL, CW, 0], [CL, CW, CH], [0, CW, CH]], 'rs-pack-wall rs-pack-wall--front');
+    polygon([[CL, 0, 0], [CL, CW, 0], [CL, CW, CH], [CL, 0, CH]], 'rs-pack-wall rs-pack-wall--side');
+    const edge = [
+      [[0, 0, 0], [CL, 0, 0], [CL, CW, 0], [0, CW, 0], [0, 0, 0]],
+      [[0, 0, CH], [CL, 0, CH], [CL, CW, CH], [0, CW, CH], [0, 0, CH]],
+      [[0, 0, 0], [0, 0, CH]], [[CL, 0, 0], [CL, 0, CH]],
+      [[CL, CW, 0], [CL, CW, CH]], [[0, CW, 0], [0, CW, CH]],
+    ].map(path).join('');
+    el('path', { d: edge, class: 'rs-pack-edges' }, packSvg);
+    if (dropping.length) {
+      packRaf = requestAnimationFrame(() => {
+        packRaf = requestAnimationFrame(() => {
+          packRaf = 0;
+          dropping.forEach((g) => g.classList.remove('is-dropping'));
+        });
+      });
+    }
+  }
+
   setLayout();
   const ro = new ResizeObserver((entries) => {
     const w = entries[0].contentRect.width;
@@ -381,7 +537,7 @@ export function mount(root, { reduced = false } = {}) {
   TRAY_IDS.forEach((id, i) => { autoT[id] = T.auto0 + i * T.autoGap; });
   const close = { v: 0, from: 0, to: 0, t0: 0, dur: 1 };   // visitor-driven closing progress
   let lastP = 0, lastTv = 0;
-  const pEff = (p) => (reduced ? 0.5 : p);
+  const pEff = (p) => (reduced ? 1 : p);
   const anyUser = () => TRAY_IDS.some((id) => tray[id].user);
   const animating = () => TRAY_IDS.some((id) => /pack|return|pop/.test(tray[id].mode)) || close.v !== close.to;
 
@@ -537,6 +693,10 @@ export function mount(root, { reduced = false } = {}) {
     disc.style.opacity = r3(eio(seg(tk, 0.3, 0.75)));
     tick.style.opacity = tk > 0.35 ? '' : 0;
     root.style.setProperty('--rs-done', r3(tk));
+    const builderT = seg(p, T.close[1], 0.9);
+    root.style.setProperty('--rs-builder', r3(eio(builderT)));
+    root.style.setProperty('--rs-story', r3(1 - eio(seg(p, 0.82, 0.94))));
+    builder.style.setProperty('--rs-builder-vis', builderT > 0.55 ? 'visible' : 'hidden');
   }
 
   // ---------- interaction ----------
@@ -586,6 +746,71 @@ export function mount(root, { reduced = false } = {}) {
 
   const offs = [];
   const on = (t, ev, fn, opt) => { t.addEventListener(ev, fn, opt); offs.push(() => t.removeEventListener(ev, fn, opt)); };
+  function runPacking() {
+    const units = PRODUCTS.filter((item) => selected.has(item.id)).map((item) => ({
+      unitId: item.id, dims: item.dims, weightG: item.weightG,
+      fragile: item.fragile, liquid: item.liquid, uprightHeight: item.uprightHeight,
+    }));
+    if (!units.length) { // the engine would happily pick carton S for nothing; an empty shelf packs nothing
+      packResult = null;
+      drawPackArt(null, false);
+      readout.classList.remove('is-error');
+      readout.classList.add('is-message');
+      cartonId.textContent = cartonDims.textContent = estimate.textContent = '';
+      message.textContent = 'Choose products';
+      return;
+    }
+    packResult = packUnits(units, CARTONS, { rates: SHIPPING_RATES });
+    drawPackArt(packResult, !reduced);
+    readout.classList.remove('is-message', 'is-error');
+    if (packResult.status === 'box_found') {
+      const dims = packResult.carton.inner.map(formatCm).join(' × ');
+      cartonId.textContent = packResult.carton.id;
+      cartonDims.textContent = `${dims} cm`;
+      message.textContent = '';
+      estimate.textContent = `Estimated shipping: SAR ${formatCm(packResult.cost.shippingSar)}`;
+    } else {
+      cartonId.textContent = '';
+      cartonDims.textContent = '';
+      estimate.textContent = '';
+      message.textContent = packResult.reason;
+      readout.classList.add('is-message', 'is-error');
+    }
+  }
+  function setProduct(id, add) {
+    if (!PRODUCTS.some((item) => item.id === id)) return;
+    if (add) selected.add(id);
+    else selected.delete(id);
+    const button = productButtons.get(id);
+    button.setAttribute('aria-pressed', selected.has(id) ? 'true' : 'false');
+    button.classList.toggle('is-selected', selected.has(id));
+    runPacking();
+  }
+  function toggleProduct(id) { setProduct(id, !selected.has(id)); }
+  // open on a real order, so the carton is already there to change
+  for (const id of ['p-01', 'p-02']) setProduct(id, true);
+  const finePointer = matchMedia('(pointer: fine)');
+  const setDraggable = () => { for (const button of productButtons.values()) button.draggable = finePointer.matches; };
+  setDraggable();
+  for (const item of PRODUCTS) {
+    const button = productButtons.get(item.id);
+    on(button, 'click', () => toggleProduct(item.id));
+    on(button, 'dragstart', (e) => {
+      if (!finePointer.matches) { e.preventDefault(); return; }
+      e.dataTransfer?.setData('text/plain', item.id);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copy';
+    });
+  }
+  on(packVisual, 'dragover', (e) => { if (finePointer.matches) e.preventDefault(); });
+  on(packVisual, 'drop', (e) => {
+    if (!finePointer.matches) return;
+    e.preventDefault();
+    const id = e.dataTransfer?.getData('text/plain');
+    if (id) setProduct(id, true);
+  });
+  finePointer.addEventListener('change', setDraggable);
+  offs.push(() => finePointer.removeEventListener('change', setDraggable));
+
   for (const id of TRAY_IDS) {
     const s = tray[id];
     let pid = null, start = null, grab = null, k0 = 1, dragging = false;
@@ -647,22 +872,43 @@ export function mount(root, { reduced = false } = {}) {
   });
 
   render(pEff(0), true);
-  const onMq = () => { setLayout(); render(pEff(lastP), true); };
+  const onMq = () => { setLayout(); drawPackArt(packResult, false); render(pEff(lastP), true); };
   mq.addEventListener('change', onMq);
   coarsePointer.addEventListener('change', updateHint);
 
+  // The shell's p runs over the whole section, and the live screenshot below makes this section much taller
+  // than the scene: the story would end, and the builder appear, after the carton has scrolled away. So p is
+  // re-based on the scene's own pass through the viewport, and the story finishes as the scene reaches centre.
+  const section = root.closest('section') || root;
+  let geo = null;
+  const measure = () => {
+    const sr = section.getBoundingClientRect(), rr = root.getBoundingClientRect();
+    geo = { H: sr.height, off: rr.top - sr.top, h: rr.height, vh: innerHeight };
+  };
+  const localP = (p) => {
+    if (!geo) measure();
+    const lp = (p * (geo.H + geo.vh) - geo.off) / (geo.h + geo.vh);
+    return clamp(lp / 0.62);
+  };
+  const geoRo = new ResizeObserver(() => { measure(); });
+  geoRo.observe(section);
+  addEventListener('resize', measure, { passive: true });
+
   return {
     update(p) {
-      lastP = clamp(+p);
+      lastP = localP(clamp(+p));
       render(pEff(lastP));
     },
     destroy() {
+      geoRo.disconnect();
+      removeEventListener('resize', measure);
       if (raf) cancelAnimationFrame(raf);
+      if (packRaf) cancelAnimationFrame(packRaf);
       offs.forEach((f) => f());
       mq.removeEventListener('change', onMq);
       coarsePointer.removeEventListener('change', updateHint);
       ro.disconnect();
-      svg.remove(); top.remove(); ui.remove(); live.remove();
+      svg.remove(); top.remove(); ui.remove(); live.remove(); builder.remove();
     },
   };
 }

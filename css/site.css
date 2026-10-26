@@ -115,10 +115,39 @@ p, dd, li { text-wrap: pretty; }
 /* the global line */
 .thread { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 0; overflow: visible; }
 .thread path { fill: none; stroke: var(--line); stroke-width: var(--line-w); stroke-linecap: round; stroke-linejoin: round; transition: stroke var(--t-world) var(--ease); }
+.thread__interaction { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 2; overflow: visible; }
+.thread__interaction path { fill: none; stroke: var(--line); stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .thread__old { opacity: 1; transition: opacity var(--t-layout) var(--ease-in-out); }
 .thread__old.is-fading { opacity: 0; }
 .thread path.thread__new { opacity: 0; transition: stroke var(--t-world) var(--ease), opacity var(--t-layout) var(--ease-in-out); }
 .thread path.thread__new.is-in { opacity: 1; }
+.thread__interaction .thread__pulse {
+  stroke: var(--line);
+  stroke-width: calc(var(--line-w) * 2.2);
+  stroke-opacity: .92;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px var(--line));
+  transition: none;
+}
+.thread__interaction .thread__pull {
+  stroke: var(--line);
+  stroke-width: var(--line-w);
+  opacity: 0;
+  transition: none;
+}
+.thread__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+body.thread-near { cursor: grab; }
+body.thread-pulling { cursor: grabbing; }
 .thread__nib { r: calc(var(--line-w) * 1.6); fill: var(--line); opacity: 0; transition: opacity var(--t-focal) var(--ease), fill var(--t-world) var(--ease); }
 .thread__nib.is-moving { opacity: 1; transition: opacity 0ms, fill var(--t-world) var(--ease); }
 .thread__nib.is-away { opacity: 0; transition: opacity 0ms, fill var(--t-world) var(--ease); }
@@ -279,6 +308,20 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .track:hover .track__name, .track:focus-visible .track__name { font-stretch: 122%; text-decoration-color: var(--accent); }
 .track:hover .track__no, .track:focus-visible .track__no { color: var(--fg); }
 .track:focus-visible { outline-offset: 4px; }
+.more .track.is-current {
+  --track-active: var(--accent);
+  margin-inline: -.5rem;
+  padding-inline: .5rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--track-active) 10%, transparent);
+  box-shadow: inset 3px 0 var(--track-active);
+}
+.more .track[data-tone="mara"].is-current { --track-active: var(--mara); }
+.more .track[data-tone="echo"].is-current { --track-active: var(--echo); }
+.more .track[data-tone="daleelk"].is-current { --track-active: var(--daleelk); }
+.more .track[data-tone="rassah"].is-current { --track-active: var(--rassah); }
+.more .track[data-tone="pitlane"].is-current { --track-active: var(--kerb-red); }
+.more .track.is-current .track__name { text-decoration-color: var(--track-active); }
 @media (max-width: 1100px) { .sleeve__sides { grid-template-columns: 1fr; } }
 @media (max-width: 900px) {
   .more__grid { grid-template-columns: 1fr; }

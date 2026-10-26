@@ -71,6 +71,70 @@
   stroke-dashoffset: 1;
 }
 
+/* OpenF1 final-lap replay */
+.scene--circuit .c-stage--replay { overflow: hidden; }
+.scene--circuit .c-replay-base,
+.scene--circuit .c-replay-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.scene--circuit .c-replay-flood-stop { stop-color: var(--kerb-white); }
+.scene--circuit .c-replay-shadow,
+.scene--circuit .c-replay-edge,
+.scene--circuit .c-replay-road {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scene--circuit .c-replay-shadow {
+  stroke: var(--night);
+  stroke-width: 48;
+  stroke-opacity: 0.64;
+  transform: translateY(5px);
+}
+.scene--circuit .c-replay-edge { stroke: var(--c-edge); stroke-width: 34; }
+.scene--circuit .c-replay-road { stroke: var(--road); stroke-width: 26; }
+.scene--circuit .c-replay-line {
+  fill: none;
+  stroke: var(--c-line);
+  stroke-width: calc(var(--line-w) * var(--c-u));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.scene--circuit .c-replay-cars { opacity: 0; }
+.scene--circuit .c-replay-glow,
+.scene--circuit .c-replay-dot { fill: currentColor; }
+.scene--circuit .c-replay-glow { opacity: 0.28; }
+.scene--circuit .c-replay-dot { stroke: var(--asphalt); stroke-width: 2; }
+.scene--circuit .c-replay-label {
+  fill: var(--kerb-white);
+  stroke: var(--asphalt);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.scene--circuit .c-replay-caption {
+  position: absolute;
+  left: 1.8%;
+  bottom: 2.5%;
+  margin: 0;
+  color: var(--c-ink);
+  font: 500 10px / 1.35 var(--mono);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 4px var(--asphalt);
+  pointer-events: none;
+}
+.scene--circuit.is-reduced .c-replay-cars { transition: none; }
+
 /* sectors (timing-screen colours) */
 .scene--circuit .c-sector--1 { color: var(--sector-1); }
 .scene--circuit .c-sector--2 { color: var(--sector-2); }

@@ -210,3 +210,218 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* ---------- the small, working Echo phone ---------- */
+.scene--echo .echo__phone {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 8px;
+  border: var(--line-w) solid var(--line);
+  border-radius: 38px;
+  background: var(--echo-frame);
+  box-shadow: 0 18px 48px -28px color-mix(in oklab, var(--echo-deep) 55%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--t-layout) var(--ease);
+}
+.scene--echo .echo__speaker {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 50%;
+  width: 25%;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--line);
+  transform: translateX(-50%);
+}
+.scene--echo .echo__phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.scene--echo .echo__phone-top {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  padding: 0 13px 5px;
+  color: var(--echo-deep);
+}
+.scene--echo .echo__phone-mark { font: 700 11px/1 var(--font); letter-spacing: -0.03em; }
+.scene--echo .echo__phone-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--echo); }
+.scene--echo .echo__phone-view {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  padding: 2px 13px 12px;
+}
+.scene--echo .echo__phone-view[hidden],
+.scene--echo .echo__voice-panel[hidden],
+.scene--echo .echo__phone-button[hidden] { display: none !important; }
+.scene--echo .echo__phone-title {
+  flex: none;
+  margin: 0;
+  color: var(--echo-deep);
+  font: 600 15px/1.1 var(--font);
+  letter-spacing: -0.02em;
+}
+.scene--echo .echo__phone-photo {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  max-height: 47%;
+  overflow: hidden;
+  aspect-ratio: 0.85;
+  border-radius: 10px;
+  background: var(--echo-deep);
+  touch-action: pan-y;
+  cursor: grab;
+}
+.scene--echo .echo__phone-image,
+.scene--echo .echo__choice-photo img,
+.scene--echo .echo__wall-photo img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.scene--echo .echo__memory-copy {
+  flex: none;
+  margin: 0;
+  color: var(--ink-2);
+  font: 500 11px/1.25 var(--font);
+}
+.scene--echo .echo__phone-actions { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.scene--echo .echo__phone-button,
+.scene--echo .echo__phone-option {
+  min-width: 0;
+  min-height: 33px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in oklab, var(--echo-deep), transparent 75%);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--echo-deep);
+  font: 600 11px/1.1 var(--font);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.scene--echo .echo__phone-button--keep { border-color: var(--echo); background: var(--echo); color: var(--echo-deep); }
+.scene--echo .echo__phone-button:hover,
+.scene--echo .echo__phone-option:hover { border-color: var(--echo); }
+.scene--echo .echo__phone-button:focus-visible,
+.scene--echo .echo__phone-option:focus-visible,
+.scene--echo .echo__line-input:focus-visible { outline: 2px solid var(--echo); outline-offset: 2px; }
+.scene--echo .echo__choice-photo {
+  position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 56px;
+  max-height: 44%;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--echo-deep);
+}
+.scene--echo .echo__phone-options { display: grid; gap: 5px; }
+.scene--echo .echo__phone-option { justify-content: flex-start; min-height: 31px; padding-inline: 10px; text-align: left; }
+.scene--echo .echo__voice-panel {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding-top: 2px;
+}
+.scene--echo .echo__voice-wave { height: 23px; display: flex; align-items: center; justify-content: center; gap: 3px; }
+.scene--echo .echo__voice-wave span {
+  width: 2px;
+  height: var(--h, 10px);
+  border-radius: 2px;
+  background: var(--echo);
+  transform-origin: center;
+}
+.scene--echo .echo__voice-panel.is-active .echo__voice-wave span { animation: echo-wave var(--t-state) var(--ease-in-out) infinite alternate; }
+.scene--echo .echo__voice-label { color: var(--ink-2); font: 500 9px/1.1 var(--font); }
+.scene--echo .echo__line-form { gap: 8px; }
+.scene--echo .echo__line-input {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid color-mix(in oklab, var(--echo-deep), transparent 72%);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 11px/1.2 var(--font);
+}
+.scene--echo .echo__line-input::placeholder { color: var(--ink-3); }
+.scene--echo .echo__line-bottom { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+.scene--echo .echo__line-count { margin-right: auto; color: var(--ink-3); font: 400 9px/1 var(--mono); }
+.scene--echo .echo__wall-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.scene--echo .echo__wall-head:focus { outline: none; }
+.scene--echo .echo__streak { padding: 5px 8px; border-radius: 999px; background: var(--echo-soft); color: var(--echo-deep); font: 600 9px/1 var(--font); }
+.scene--echo .echo__wall-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.scene--echo .echo__wall-back { flex: none; align-self: flex-start; }
+.scene--echo .echo__phone-button { white-space: nowrap; }
+.scene--echo .echo__voice-panel .echo__phone-button { grid-column: 1 / -1; }
+.scene--echo .echo__wall-card,
+.scene--echo .echo__wall-blank { position: relative; min-width: 0; min-height: 0; overflow: hidden; border-radius: 8px; }
+.scene--echo .echo__wall-card { display: flex; flex-direction: column; background: var(--echo-frame); box-shadow: 0 3px 12px color-mix(in oklab, var(--echo-deep) 16%, transparent); }
+.scene--echo .echo__wall-card.is-arriving { animation: echo-kept var(--t-layout) var(--ease) both; }
+.scene--echo .echo__wall-photo { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--echo-deep); }
+.scene--echo .echo__wall-caption { flex: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-bottom: 5px; padding: 3px 5px 0; color: var(--echo-deep); font: 500 8px/1.1 var(--font); }
+.scene--echo .echo__wall-caption:empty { display: none; }
+.scene--echo .echo__wall-blank { border: 1px dashed color-mix(in oklab, var(--echo-deep), transparent 82%); background: color-mix(in oklab, var(--echo-soft), transparent 30%); }
+@keyframes echo-wave { from { transform: scaleY(0.38); } to { transform: scaleY(1); } }
+@keyframes echo-kept { 0% { opacity: 0; transform: translateY(-28px) scale(1.22); } 72% { opacity: 1; transform: translateY(4px) scale(0.94); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 640px) {
+  .scene--echo .echo__phone { padding: 7px; border-radius: 34px; }
+  .scene--echo .echo__speaker { top: 6px; height: 11px; }
+  .scene--echo .echo__phone-screen { border-radius: 25px; }
+  .scene--echo .echo__phone-top { height: 28px; padding-inline: 11px; }
+  .scene--echo .echo__phone-view { gap: 6px; padding: 2px 11px 10px; }
+  .scene--echo .echo__phone-title { font-size: 13px; }
+  .scene--echo .echo__phone-photo { max-height: 48%; }
+  .scene--echo .echo__phone-button,
+  .scene--echo .echo__phone-option { min-height: 30px; font-size: 10px; }
+  .scene--echo .echo__phone-option { min-height: 28px; }
+  .scene--echo .echo__line-input { height: 32px; }
+  .scene--echo .echo__wall-grid { gap: 5px; }
+}
+.scene--echo.is-reduced .echo__phone,
+.scene--echo.is-reduced .echo__wall-card.is-arriving { transition: none !important; animation: none !important; }
+.scene--echo.is-reduced .echo__voice-wave span { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .scene--echo .echo__phone,
+  .scene--echo .echo__wall-card.is-arriving,
+  .scene--echo .echo__voice-wave span { transition: none !important; animation: none !important; }
+}

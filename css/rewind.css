@@ -1,0 +1,30 @@
+/* Rewind: every published version of this page. The strip is the history: one sliver per version, each a
+   miniature of that whole page at its real length; the range input lies over it, so dragging scrubs time. */
+.rewind { padding-block: var(--s-6); }
+.rewind__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s-5); align-items: start; }
+.rewind__when { margin-top: var(--s-3); font-family: var(--mono); font-size: .78rem; color: var(--fg-2); }
+.rewind__what { margin-top: var(--s-1); max-width: 34ch; min-height: 4.2em; font-size: var(--step-1); line-height: 1.3; letter-spacing: -.01em; }
+
+.rewind__scrub { position: relative; margin-top: var(--s-4); }
+.rewind__strip { display: flex; align-items: flex-end; gap: 6px; height: 240px; margin: 0; padding: 0; list-style: none; }
+.rewind__strip li { flex: 1 1 0; height: var(--h); border-radius: 4px; background: var(--fg-3) top / 100% 100% no-repeat; opacity: .5; box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 14%, transparent); transition: opacity var(--t-state) var(--ease), transform var(--t-state) var(--ease); }
+.rewind__strip li.is-on { opacity: 1; transform: translateY(-6px); box-shadow: 0 0 0 2px var(--fg); }
+.rewind__range { position: absolute; inset: -8px 0; width: 100%; height: calc(100% + 16px); margin: 0; opacity: 0; cursor: ew-resize; }
+.rewind__scrub:has(.rewind__range:focus-visible) .rewind__strip { outline: 2px solid var(--fg); outline-offset: 8px; border-radius: 6px; }
+.rewind__link { margin-top: var(--s-4); }
+
+.rewind__stage { margin-top: 0; width: 100%; }
+.rewind__view { position: relative; height: clamp(420px, 72vh, 700px); overflow: hidden; background: var(--paper); }
+.rewind__view img { position: absolute; top: 0; left: 0; width: 100%; height: auto; transform: translate3d(0, var(--y, 0px), 0); transition: opacity 320ms var(--ease); will-change: transform; }
+.rewind__view img.is-gone { opacity: 0; }
+.rewind__view.is-static { overflow-y: auto; }
+.rewind__view.is-static img { position: static; transform: none; }
+
+@media (max-width: 900px) {
+  .rewind__grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+  .rewind__strip { height: 170px; gap: 4px; }
+  .rewind__view { height: 62vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rewind__strip li, .rewind__view img { transition: none; }
+}

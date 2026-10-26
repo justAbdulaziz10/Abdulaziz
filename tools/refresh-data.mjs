@@ -1,21 +1,86 @@
 // Refreshes the site's live numbers: GitHub year, Letterboxd, F1, App Store and RevenueCat data.
 // Run daily by .github/workflows/refresh-data.yml. Each source is independent: if one fails, its last good
 // value is kept, so the page never shows an empty or broken number.
-import { readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('../', import.meta.url);
 const LIVE = new URL('assets/data/live.json', ROOT);
 const WEEKS = new URL('assets/data/weeks.json', ROOT);
+const F1LAP = new URL('assets/data/f1lap.json', ROOT);
+const FILM_POSTERS = new URL('assets/img/films/', ROOT);
 const PAGE = new URL('index.html', ROOT);
 const UA = { 'user-agent': 'Mozilla/5.0 (portfolio data refresh; github.com/justAbdulaziz10/Abdulaziz)' };
 
 const get = async (url, type = 'text', headers = {}) => {
   const r = await fetch(url, { headers: { ...UA, ...headers }, signal: AbortSignal.timeout(20000) });
   if (!r.ok) throw new Error(`${url} → ${r.status}`);
-  return type === 'json' ? r.json() : r.text();
+  if (type === 'json') return r.json();
+  if (type === 'arrayBuffer') return r.arrayBuffer();
+  return r.text();
 };
 const num = s => Number(String(s).replace(/[^\d.]/g, ''));
+const decodeXml = s => String(s).replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (all, code) => {
+  if (code[0] === '#') {
+    const value = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+    return Number.isFinite(value) ? String.fromCodePoint(value) : all;
+  }
+  return ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" })[code.toLowerCase()] ?? all;
+});
+
+const xmlTag = (item, tag) => {
+  const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const value = item.match(new RegExp(`<${escaped}[^>]*>([\\s\\S]*?)<\\/${escaped}>`, 'i'))?.[1];
+  return value == null ? null : decodeXml(value.trim());
+};
+
+function posterSlug(url) {
+  const parts = new URL(url).pathname.split('/').filter(Boolean);
+  const filmIndex = parts.indexOf('film');
+  if (filmIndex < 0) throw new Error(`invalid Letterboxd film URL: ${url}`);
+  const filmParts = parts.slice(filmIndex + 1);
+  if (/^\d+$/.test(filmParts.at(-1))) filmParts.pop();
+  const slug = (filmParts.at(-1) ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!slug) throw new Error(`film URL has no poster slug: ${url}`);
+  return slug;
+}
+
+export function parseLetterboxdRecent(rss) {
+  const entries = [...rss.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map(([, item]) => {
+    const title = xmlTag(item, 'letterboxd:filmTitle');
+    const year = xmlTag(item, 'letterboxd:filmYear');
+    const watchedDate = xmlTag(item, 'letterboxd:watchedDate');
+    const url = xmlTag(item, 'link');
+    const ratingText = xmlTag(item, 'letterboxd:memberRating');
+    const ratingValue = ratingText == null || ratingText === '' ? null : Number(ratingText);
+    const movieId = xmlTag(item, 'tmdb:movieId');
+    const posterText = item.match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i)?.[1];
+    if (!title || !year || !/^\d{4}-\d{2}-\d{2}$/.test(watchedDate ?? '') || !url?.startsWith('https://letterboxd.com/')) {
+      return null;
+    }
+    if (ratingValue !== null && (!Number.isFinite(ratingValue) || ratingValue < 0 || ratingValue > 5)) {
+      return null;
+    }
+    const largePoster = posterText ? decodeXml(posterText) : '';
+    const smallPoster = largePoster.replace('-0-600-0-900-crop', '-0-230-0-345-crop');
+    const identity = movieId ? `tmdb:${movieId}` : `${url.replace(/\/\d+\/?$/, '').replace(/\/$/, '')}|${title}|${year}`;
+    return {
+      identity,
+      film: { title, year, rating: ratingValue, watchedDate, url, posterUrl: smallPoster && smallPoster !== largePoster ? smallPoster : null },
+    };
+  }).filter(Boolean);
+  const seen = new Set();
+  const recent = entries
+    .sort((a, b) => b.film.watchedDate.localeCompare(a.film.watchedDate))
+    .filter(({ identity }) => { if (seen.has(identity)) return false; seen.add(identity); return true; })
+    .slice(0, 4)
+    .map(({ film }) => film);
+  if (recent.length !== 4) throw new Error(`only ${recent.length} distinct recent films`);
+  return recent.map(film => {
+    if (!film.posterUrl) throw new Error(`Letterboxd poster is missing for ${film.title}`);
+    return { ...film, poster: `assets/img/films/${posterSlug(film.url)}.jpg` };
+  });
+}
 
 async function github(prev = {}) {
   // The public calendar already counts private contributions (the profile shows them), so the headline numbers
@@ -70,8 +135,8 @@ async function github(prev = {}) {
 
 // Letterboxd blocks GitHub's runners on the profile page some days, so the feed (latest film) and the profile
 // (film counts) are fetched separately; whichever fails keeps its last good value.
-async function letterboxd(prev = {}) {
-  const [profile, rss] = await Promise.allSettled([get('https://letterboxd.com/notabdulaziz/'), get('https://letterboxd.com/notabdulaziz/rss/')]);
+export async function letterboxd(prev = {}, { request = get, posterDir = FILM_POSTERS, files = { access, mkdir, readdir, rm, writeFile } } = {}) {
+  const [profile, rss] = await Promise.allSettled([request('https://letterboxd.com/notabdulaziz/'), request('https://letterboxd.com/notabdulaziz/rss/')]);
   if (profile.status === 'rejected' && rss.status === 'rejected') throw new Error(`${profile.reason.message}; ${rss.reason.message}`);
   const out = { ...prev };
   if (profile.status === 'fulfilled') {
@@ -84,17 +149,200 @@ async function letterboxd(prev = {}) {
     else console.warn('keep letterboxd counts: film count not found');
   } else console.warn(`keep letterboxd counts: ${profile.reason.message}`);
   if (rss.status === 'fulfilled') {
-    const item = rss.value.split('<item>').slice(1).find(it => it.includes('<letterboxd:filmTitle>'));
-    const tag = (t) => item?.match(new RegExp(`<${t}>([^<]*)</${t}>`))?.[1] ?? null;
-    if (item) out.latest = {
-      title: tag('letterboxd:filmTitle'),
-      year: tag('letterboxd:filmYear'),
-      watched: tag('letterboxd:watchedDate'),
-      rating: tag('letterboxd:memberRating') ? Number(tag('letterboxd:memberRating')) : null,
-      url: tag('link'),
-    };
+    try {
+      const recent = parseLetterboxdRecent(rss.value);
+      if (recent.length !== 4) throw new Error(`only ${recent.length} distinct recent films`);
+      await files.mkdir(posterDir, { recursive: true });
+      for (const film of recent) {
+        const file = new URL(film.poster.split('/').at(-1), posterDir);
+        try {
+          await files.access(file);
+        } catch {
+          const bytes = await request(film.posterUrl, 'arrayBuffer');
+          await files.writeFile(file, new Uint8Array(bytes));
+        }
+      }
+      const keep = new Set(recent.map(film => film.poster.split('/').at(-1)));
+      for (const name of await files.readdir(posterDir)) {
+        if (name.endsWith('.jpg') && !keep.has(name)) await files.rm(new URL(name, posterDir));
+      }
+      out.recent = recent.map(({ posterUrl, ...film }) => film);
+      const latest = recent[0];
+      out.latest = { title: latest.title, year: latest.year, watched: latest.watchedDate, rating: latest.rating, url: latest.url };
+    } catch (e) {
+      console.warn(`keep letterboxd recent and latest: ${e.message}`);
+    }
   } else console.warn(`keep letterboxd latest: ${rss.reason.message}`);
   return out;
+}
+
+const asMillis = value => {
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? time : NaN;
+};
+
+function resampleLocation(records, start, count, step, driverNumber) {
+  const points = records.map(row => ({ t: asMillis(row.date), x: Number(row.x), y: Number(row.y) }))
+    .filter(p => Number.isFinite(p.t) && Number.isFinite(p.x) && Number.isFinite(p.y))
+    .sort((a, b) => a.t - b.t)
+    .filter((p, i, all) => !i || p.t !== all[i - 1].t);
+  if (points.length < 2 || points[0].t > start + 500 || points.at(-1).t < start + (count - 1) * step - 500) {
+    throw new Error(`location coverage is incomplete for driver ${driverNumber}`);
+  }
+  const frames = [];
+  let hi = 1;
+  for (let i = 0; i < count; i++) {
+    const t = start + i * step;
+    while (hi < points.length - 1 && points[hi].t < t) hi++;
+    const a = points[Math.max(0, hi - 1)], b = points[hi];
+    let x, y;
+    if (t < points[0].t) { x = points[0].x; y = points[0].y; }
+    else if (t > points.at(-1).t) { x = points.at(-1).x; y = points.at(-1).y; }
+    else {
+      const mix = (t - a.t) / (b.t - a.t || 1);
+      x = a.x + (b.x - a.x) * mix;
+      y = a.y + (b.y - a.y) * mix;
+    }
+    // OpenF1 positions are quantised to 10-unit (about 10 m) integers to keep the JSON compact.
+    frames.push(Math.round(x / 10), Math.round(y / 10));
+  }
+  return frames;
+}
+
+export function simplifyTrack(points, tolerance = 5) {
+  if (points.length <= 3) return points;
+  const keep = new Uint8Array(points.length);
+  keep[0] = keep[points.length - 1] = 1;
+  const stack = [[0, points.length - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop();
+    const dx = points[b][0] - points[a][0], dy = points[b][1] - points[a][1];
+    const length = Math.hypot(dx, dy) || 1;
+    let best = tolerance, index = -1;
+    for (let i = a + 1; i < b; i++) {
+      const distance = Math.abs(dx * (points[i][1] - points[a][1]) - dy * (points[i][0] - points[a][0])) / length;
+      if (distance > best) { best = distance; index = i; }
+    }
+    if (index >= 0) { keep[index] = 1; stack.push([a, index], [index, b]); }
+  }
+  return points.filter((_, i) => keep[i]);
+}
+
+export function buildF1LapData({ session, meeting, drivers, results, laps, locations, start, end, step = 250 }) {
+  const raceName = meeting?.meeting_name ?? session?.meeting_name;
+  if (!raceName || !session?.circuit_short_name || !session?.date_start || !session?.session_key) {
+    throw new Error('OpenF1 race details are incomplete');
+  }
+  const classified = results.filter(result => Number.isInteger(Number(result.position))
+    && Number(result.position) > 0 && !result.dnf && !result.dns && !result.dsq)
+    .sort((a, b) => Number(a.position) - Number(b.position));
+  const winner = classified.find(result => Number(result.position) === 1);
+  if (!winner) throw new Error('OpenF1 winner was not found');
+  const winnerNumber = Number(winner.driver_number);
+  const winnerLaps = laps.filter(lap => Number(lap.driver_number) === winnerNumber);
+  const winnerLap = winnerLaps.find(lap => Number(lap.lap_number) === Number(winner.number_of_laps))
+    ?? winnerLaps.sort((a, b) => Number(b.lap_number) - Number(a.lap_number))[0];
+  const lapStart = asMillis(winnerLap?.date_start);
+  const duration = Number(winnerLap?.lap_duration);
+  if (!Number.isFinite(lapStart) || !Number.isFinite(duration) || duration <= 0) throw new Error('winner final lap is incomplete');
+  const raceEnd = Math.min(end, lapStart + duration * 1000 + 30000, lapStart + 150000);
+  const frameCount = Math.floor((raceEnd - lapStart) / step) + 1;
+  if (!Number.isFinite(start) || start !== lapStart || !Number.isFinite(end) || end !== raceEnd || frameCount < 2) {
+    throw new Error('OpenF1 replay timeline is invalid');
+  }
+  const driverByNumber = new Map(drivers.map(driver => [Number(driver.driver_number), driver]));
+  const winnerFinish = lapStart + duration * 1000;
+  const cars = classified.map(result => {
+    const number = Number(result.driver_number);
+    const driver = driverByNumber.get(number);
+    const colour = String(driver?.team_colour ?? '').replace(/^#/, '');
+    if (!driver?.name_acronym || !/^[\da-f]{6}$/i.test(colour)) throw new Error(`OpenF1 driver details are incomplete for ${number}`);
+    const rows = locations.get(number);
+    if (!Array.isArray(rows)) throw new Error(`OpenF1 location data is missing for driver ${number}`);
+    const gap = Number(result.position) === 1 ? 0 : Number.isFinite(result.gap_to_leader) ? result.gap_to_leader : null;
+    const finishTime = gap == null ? null : winnerFinish + gap * 1000;
+    const finishFrame = finishTime == null ? null : Math.round((finishTime - lapStart) / step);
+    return {
+      number,
+      acronym: driver.name_acronym,
+      color: `#${colour}`,
+      position: Number(result.position),
+      finish_frame: Number.isInteger(finishFrame) && finishFrame >= 0 && finishFrame < frameCount ? finishFrame : null,
+      frames: resampleLocation(rows, lapStart, frameCount, step, number),
+    };
+  });
+  const winnerRows = locations.get(winnerNumber).map(row => ({ t: asMillis(row.date), x: Number(row.x), y: Number(row.y) }))
+    .filter(point => point.t >= lapStart && point.t <= lapStart + duration * 1000 && Number.isFinite(point.x) && Number.isFinite(point.y))
+    .sort((a, b) => a.t - b.t);
+  if (winnerRows.length < 3) throw new Error('winner final-lap track points are incomplete');
+  const track = simplifyTrack(winnerRows.map(point => [Math.round(point.x / 10), Math.round(point.y / 10)]), 1);
+  return {
+    raceName,
+    circuit: session.circuit_short_name,
+    date: session.date_start.slice(0, 10),
+    session_key: session.session_key,
+    lap: Number(winnerLap.lap_number),
+    coordinate_unit: 10,
+    timeline: { start: 0, step, count: frameCount },
+    track,
+    cars,
+  };
+}
+
+export async function refreshF1Lap({ now = new Date(), fetcher = (...args) => fetch(...args), sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), lapFile = F1LAP, read = readFile, write = writeFile } = {}) {
+  let previous = null;
+  try { previous = JSON.parse(await read(lapFile, 'utf8')); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  let lastRequestAt = 0;
+  const openF1 = async url => {
+    const wait = lastRequestAt ? Math.max(0, 1100 - (Date.now() - lastRequestAt)) : 0;
+    if (wait) await sleep(wait);
+    const options = { headers: UA, signal: AbortSignal.timeout(20000) };
+    let response = await fetcher(url, options);
+    lastRequestAt = Date.now();
+    if (response.status === 429) {
+      await sleep(1100);
+      response = await fetcher(url, options);
+      lastRequestAt = Date.now();
+    }
+    if (!response.ok) throw new Error(`${url} → ${response.status}`);
+    return response.json();
+  };
+  const latestRace = sessions => sessions.filter(session => session.session_type === 'Race'
+    && !session.is_cancelled && asMillis(session.date_end) < now.getTime())
+    .sort((a, b) => asMillis(b.date_end) - asMillis(a.date_end))[0];
+  let session = latestRace(await openF1(`https://api.openf1.org/v1/sessions?session_type=Race&year=${now.getUTCFullYear()}`));
+  if (!session) session = latestRace(await openF1(`https://api.openf1.org/v1/sessions?session_type=Race&year=${now.getUTCFullYear() - 1}`));
+  if (!session) throw new Error('no finished OpenF1 Race session found');
+  if (String(previous?.session_key) === String(session.session_key)) return { updated: false, data: previous };
+
+  const meetingRows = await openF1(`https://api.openf1.org/v1/meetings?meeting_key=${session.meeting_key}`);
+  const meeting = meetingRows.find(row => Number(row.meeting_key) === Number(session.meeting_key));
+  const sessionKey = session.session_key;
+  const drivers = await openF1(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`);
+  const results = await openF1(`https://api.openf1.org/v1/session_result?session_key=${sessionKey}`);
+  const winner = results.find(result => Number(result.position) === 1 && !result.dnf && !result.dns && !result.dsq);
+  if (!winner) throw new Error('OpenF1 winner was not found');
+  const laps = await openF1(`https://api.openf1.org/v1/laps?session_key=${sessionKey}&driver_number=${winner.driver_number}`);
+  const winnerLaps = laps.filter(lap => Number(lap.driver_number) === Number(winner.driver_number));
+  const winnerLap = winnerLaps.find(lap => Number(lap.lap_number) === Number(winner.number_of_laps))
+    ?? winnerLaps.sort((a, b) => Number(b.lap_number) - Number(a.lap_number))[0];
+  const start = asMillis(winnerLap?.date_start);
+  const duration = Number(winnerLap?.lap_duration);
+  if (!Number.isFinite(start) || !Number.isFinite(duration) || duration <= 0) throw new Error('winner final lap is incomplete');
+  const end = Math.min(start + duration * 1000 + 30000, start + 150000);
+  const classified = results.filter(result => Number.isInteger(Number(result.position))
+    && Number(result.position) > 0 && !result.dnf && !result.dns && !result.dsq);
+  const locations = new Map();
+  for (const result of classified) {
+    // OpenF1 wants the comparison operators raw: an encoded `date%3E%3D` is a 404
+    const url = `https://api.openf1.org/v1/location?session_key=${sessionKey}&driver_number=${result.driver_number}`
+      + `&date>=${new Date(start).toISOString()}&date<=${new Date(end).toISOString()}`;
+    locations.set(Number(result.driver_number), await openF1(url));
+  }
+  const data = buildF1LapData({ session, meeting, drivers, results, laps, locations, start, end });
+  await write(lapFile, JSON.stringify(data) + '\n');
+  return { updated: true, data };
 }
 
 async function f1() {
@@ -369,6 +617,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
+  try {
+    await refreshF1Lap();
+    console.log('ok   f1lap');
+  } catch (e) {
+    console.warn(`keep f1lap: ${e.message}`);
+  }
   for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat) })) {
     try {
       next[key] = await fn();

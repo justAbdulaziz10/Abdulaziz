@@ -504,6 +504,7 @@
     display: none !important;
   }
 
+  #rewind,
   .notes__also,
   .hero__proof {
     display: none !important;

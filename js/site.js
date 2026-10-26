@@ -6,6 +6,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const body = document.body;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const SCROLL_TAU = 90;
 
 /* ---------- hero entrance ---------- */
 const hero = document.querySelector('.hero');
@@ -46,10 +47,23 @@ function onScrollHeader() {
 }
 
 /* ---------- reveals ---------- */
+const revealElements = [...document.querySelectorAll('.shot, .progress, .contact')];
+const revealRecords = revealElements.map(el => ({ el, top: 0, height: 0 }));
+let revealFallback = false;
 const revealIO = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); revealIO.unobserve(e.target); }
 }, { rootMargin: '0px 0px -15% 0px' });
-document.querySelectorAll('.shot, .progress, .contact').forEach(el => revealIO.observe(el));
+function useRevealFallback() {
+  if (revealFallback) return;
+  revealFallback = true;
+  revealRecords.forEach(({ el }) => { if (!el.classList.contains('is-in')) revealIO.observe(el); });
+}
+function updateArrivalReveals(anchor) {
+  for (const rec of revealRecords) {
+    if (!rec.el.classList.contains('is-in') && anchor >= rec.top + rec.height * 0.12) rec.el.classList.add('is-in');
+  }
+}
+if (reduced) revealElements.forEach(el => revealIO.observe(el));
 
 /* count-up for the year number */
 const counter = document.querySelector('[data-count]');
@@ -104,6 +118,7 @@ let cachedViewportWidth = innerWidth;
 let timelineLayout = null;
 let lastFrameTime = 0;
 let lastMotionScrollY = scrollY;
+let smoothY = scrollY;
 let maraBeatPhase = 0;
 let maraPulse = 0;
 
@@ -172,7 +187,14 @@ const thread = document.createElementNS(NS, 'svg');
 thread.classList.add('thread');
 thread.setAttribute('aria-hidden', 'true');
 document.querySelector('main').prepend(thread);
-let connectors = []; // { path, y0, y1 }
+const nib = document.createElementNS(NS, 'circle');
+nib.classList.add('thread__nib', 'is-away');
+nib.setAttribute('r', '3.2');
+thread.append(nib);
+let connectors = []; // { path, length, y0, y1 }
+let lastNibPoint = null;
+let oldThreadGroup = null;
+let hasBuiltThread = false;
 
 const obstacleSel = '.project__text, .project--pitlane .project__name, .pm, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .notes__groups, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .contact__links, .foot__credits, .shot';
 
@@ -402,6 +424,15 @@ function cacheMotionLayout(sy, docH) {
   cachedViewportHeight = innerHeight;
   cachedViewportWidth = innerWidth;
   navTargetTops = navTargets.map(target => target ? target.getBoundingClientRect().top + sy : Infinity);
+  for (const rec of revealRecords) {
+    const r = rec.el.getBoundingClientRect();
+    rec.top = r.top + sy;
+    rec.height = r.height;
+  }
+  if (footSignSvg && footerVisibleOnArrival === null) {
+    const r = footSignSvg.getBoundingClientRect();
+    footerVisibleOnArrival = r.top < cachedViewportHeight && r.bottom > 0;
+  }
   if (timeline) {
     const r = timeline.getBoundingClientRect();
     timelineLayout = { top: r.top + sy, height: r.height };
@@ -466,8 +497,19 @@ function buildThread() {
   thread.setAttribute('height', docH);
   thread.setAttribute('viewBox', `0 0 ${innerWidth} ${docH}`);
   thread.style.height = docH + 'px';
-  thread.replaceChildren();
+  oldThreadGroup?.remove();
+  oldThreadGroup = null;
+  const previousPaths = [...thread.children].filter(el => el.localName === 'path');
+  previousPaths.forEach(path => path.classList.remove('thread__new', 'is-in'));
+  const crossfade = hasBuiltThread && !reduced && previousPaths.length > 0;
+  if (crossfade) {
+    oldThreadGroup = document.createElementNS(NS, 'g');
+    oldThreadGroup.classList.add('thread__old');
+    previousPaths.forEach(path => oldThreadGroup.append(path));
+    thread.append(oldThreadGroup);
+  } else previousPaths.forEach(path => path.remove());
   connectors = [];
+  lastNibPoint = null;
   const sy = scrollY;
   cacheMotionLayout(sy, docH);
   const rects = [...document.querySelectorAll(obstacleSel)].map(el => {
@@ -494,6 +536,7 @@ function buildThread() {
   const footEntry = footerSignAnchor();
   if (footEntry) points.push({ entry: footEntry, exit: null, signOff: true });
 
+  const newPaths = [];
   function addPath(d, y0, y1) {
     if (!d || y1 <= y0) return;
     // joined routes repeat their meeting point as a new M; keep one subpath so the dash draws in order
@@ -503,8 +546,13 @@ function buildThread() {
     path.setAttribute('pathLength', '1');
     path.style.strokeDasharray = '1';
     path.style.strokeDashoffset = reduced ? '0' : '1';
+    if (crossfade) {
+      path.classList.add('thread__new');
+      newPaths.push(path);
+    }
     thread.append(path);
-    connectors.push({ path, y0, y1 });
+    const length = path.getTotalLength();
+    connectors.push({ path, length, y0, y1 });
     // where the routed line crosses each section's top edge becomes that section's flood origin
     recordFloodCrossings(path, { y: y0 }, { y: y1 });
   }
@@ -532,32 +580,88 @@ function buildThread() {
       addPath(`M${current.entry.x} ${current.entry.y}V${current.exit.y}`, current.entry.y, current.exit.y);
     }
   }
-  finishWorldLayout(sy);
-  for (const title of titles) updateTitleState(title, sy, cachedViewportHeight, true);
+  finishWorldLayout(reduced ? sy : smoothY);
+  for (const title of titles) updateTitleState(title, reduced ? sy : smoothY, cachedViewportHeight, true);
+  thread.append(nib);
+  if (!reduced) {
+    if (connectors.length) {
+      if (revealFallback) { revealIO.disconnect(); revealFallback = false; }
+      updateArrivalReveals(threadAnchor(smoothY, cachedViewportHeight));
+    } else useRevealFallback();
+  }
+  if (crossfade && oldThreadGroup) {
+    const fadingGroup = oldThreadGroup;
+    requestAnimationFrame(() => {
+      if (!fadingGroup.isConnected) return;
+      fadingGroup.classList.add('is-fading');
+      newPaths.forEach(path => path.classList.add('is-in'));
+    });
+    const pathFadeListeners = [];
+    const cleanup = () => {
+      fadingGroup.remove();
+      if (oldThreadGroup === fadingGroup) oldThreadGroup = null;
+      newPaths.forEach(path => path.classList.remove('thread__new', 'is-in'));
+      pathFadeListeners.forEach(([path, listener]) => path.removeEventListener('transitionend', listener));
+    };
+    fadingGroup.addEventListener('transitionend', e => {
+      if (e.target === fadingGroup && e.propertyName === 'opacity') cleanup();
+    });
+    newPaths.forEach(path => {
+      const listener = e => {
+        if (e.target !== path || e.propertyName !== 'opacity') return;
+        path.classList.remove('thread__new', 'is-in');
+        path.removeEventListener('transitionend', listener);
+      };
+      pathFadeListeners.push([path, listener]);
+      path.addEventListener('transitionend', listener);
+    });
+    setTimeout(cleanup, 1200);
+  }
+  hasBuiltThread = true;
   queue();
 }
 
-function drawThread(y = scrollY, viewportHeight = cachedViewportHeight) {
-  if (reduced) return;
+function threadAnchor(y, viewportHeight) {
   // near the end of the page the anchor slides to the bottom edge, so the last stretch can finish drawing
   const maxY = cachedDocumentHeight - viewportHeight;
   const near = clamp((y - (maxY - viewportHeight)) / viewportHeight);
-  const anchor = y + viewportHeight * (0.62 + 0.38 * near);
+  return y + viewportHeight * (0.62 + 0.38 * near);
+}
+
+function hideThreadNib() {
+  lastNibPoint = null;
+  nib.classList.remove('is-moving');
+  nib.classList.add('is-away');
+}
+
+function drawThread(y = smoothY, viewportHeight = cachedViewportHeight) {
+  if (reduced) { hideThreadNib(); return; }
+  const anchor = threadAnchor(y, viewportHeight);
+  let tip = null;
   for (const c of connectors) {
     const t = clamp((anchor - c.y0) / (c.y1 - c.y0));
     c.path.style.strokeDashoffset = String(1 - t);
+    if (!tip && t > 0 && t < 1) tip = { connector: c, t };
   }
+  if (tip) {
+    const point = tip.connector.path.getPointAtLength(tip.t * tip.connector.length);
+    if (point.x >= 0 && point.x <= cachedViewportWidth && point.y >= y && point.y <= y + viewportHeight) {
+      nib.setAttribute('cx', point.x.toFixed(2));
+      nib.setAttribute('cy', point.y.toFixed(2));
+      const moved = !lastNibPoint || Math.hypot(point.x - lastNibPoint.x, point.y - lastNibPoint.y) > 0.001;
+      lastNibPoint = { x: point.x, y: point.y };
+      nib.classList.remove('is-away');
+      nib.classList.toggle('is-moving', moved);
+    } else hideThreadNib();
+  } else hideThreadNib();
+  if (connectors.length) updateArrivalReveals(anchor);
   if (footSignPath && footSignDot && footSignSvg) {
-    if (footerVisibleOnArrival === null) {
-      const r = footSignSvg.getBoundingClientRect();
-      footerVisibleOnArrival = r.top < innerHeight && r.bottom > 0;
-    }
-    const signMax = Math.max(0, document.documentElement.scrollHeight - innerHeight);
-    const signStart = Math.max(0, signMax - innerHeight);
+    const signMax = Math.max(0, cachedDocumentHeight - viewportHeight);
+    const signStart = Math.max(0, signMax - viewportHeight);
     // Use the actual remaining scroll range when the page/footer is shorter than a viewport.
     const signProgress = footerVisibleOnArrival || signMax === 0
       ? 1
-      : clamp((scrollY - signStart) / Math.max(1, signMax - signStart));
+      : clamp((y - signStart) / Math.max(1, signMax - signStart));
     footSignPath.style.strokeDashoffset = String(1 - signProgress);
     footSignDot.style.opacity = signProgress >= 1 ? '1' : '0';
   }
@@ -580,25 +684,35 @@ function frame(now) {
   pending = false;
   const y = scrollY;
   const viewportHeight = cachedViewportHeight;
-  const elapsed = lastFrameTime ? Math.max(1, now - lastFrameTime) : 16.7;
-  const dt = Math.min(80, elapsed);
-  const speed = Math.abs(y - lastMotionScrollY) / elapsed;
+  const dt = lastFrameTime ? Math.max(1, now - lastFrameTime) : 16.7;
+  const pulseDt = Math.min(80, dt);
+  const speed = Math.abs(y - lastMotionScrollY) / dt;
   lastFrameTime = now;
   lastMotionScrollY = y;
   onScrollHeader();
-  if (!reduced) updateMaraPulse(dt, speed);
-  for (const world of worldRecords) updateWorldState(world, y, viewportHeight);
-  for (const title of titles) updateTitleState(title, y, viewportHeight);
+  if (reduced) smoothY = y;
+  else {
+    const delta = y - smoothY;
+    if (Math.abs(delta) > viewportHeight * 1.5) smoothY = y;
+    else {
+      // the loop sleeps when idle, so the first frame after a pause has a huge dt; cap it to one or two frames
+      smoothY += delta * (1 - Math.exp(-Math.min(dt, 34) / SCROLL_TAU));
+      if (Math.abs(y - smoothY) <= 0.5) smoothY = y;
+    }
+  }
+  if (!reduced) updateMaraPulse(pulseDt, speed);
+  for (const world of worldRecords) updateWorldState(world, smoothY, viewportHeight);
+  for (const title of titles) updateTitleState(title, smoothY, viewportHeight);
   for (const s of scenes) {
     if (!s.visible || !s.height) continue;
-    const p = sectionProgress(s.top, s.height, y, viewportHeight);
+    const p = sectionProgress(s.top, s.height, smoothY, viewportHeight);
     if (Math.abs(p - s.p) > 0.0005) { s.p = p; s.api.update(p); }
   }
-  drawThread(y, viewportHeight);
+  drawThread(smoothY, viewportHeight);
   if (timeline && timelineLayout?.height && !reduced) {
-    timeline.style.setProperty('--tl', clamp((viewportHeight * 0.75 - (timelineLayout.top - y)) / timelineLayout.height).toFixed(3));
+    timeline.style.setProperty('--tl', clamp((viewportHeight * 0.75 - (timelineLayout.top - smoothY)) / timelineLayout.height).toFixed(3));
   }
-  if (!reduced && maraPulse > 0) queue();
+  if (!reduced && (Math.abs(y - smoothY) > 0.5 || maraPulse > 0 || nib.classList.contains('is-moving'))) queue();
 }
 addEventListener('scroll', queue, { passive: true });
 
@@ -609,7 +723,7 @@ new ResizeObserver(scheduleRebuild).observe(document.querySelector('main'));
 
 Promise.all(slots.map(mountScene)).then(() => {
   buildThread();
-  scenes.forEach(s => { s.p = sectionProgress(s.top, s.height); s.api.update(reduced ? 0.6 : s.p); });
+  scenes.forEach(s => { s.p = sectionProgress(s.top, s.height, reduced ? scrollY : smoothY, cachedViewportHeight); s.api.update(reduced ? 0.6 : s.p); });
   root.dataset.ready = '1';
 });
 if (document.fonts) document.fonts.ready.then(scheduleRebuild);

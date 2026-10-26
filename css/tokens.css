@@ -87,9 +87,14 @@
 
   /* motion */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
   --t-fast: 140ms;
   --t-state: 240ms;
   --t-layout: 420ms;
+  --t-world: 900ms;
+  --t-draw: 1100ms;
+  --t-reveal: 900ms;
+  --t-switch: 600ms;
   --t-focal: 700ms;
 
   --radius: 14px;

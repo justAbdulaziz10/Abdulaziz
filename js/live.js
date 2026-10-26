@@ -170,10 +170,42 @@ function film(lb) {
   box.hidden = false;
 }
 
+// "Now": what shipped or got the most work in the last 7 days, the course in progress, and a film from the last
+// two weeks. A part with nothing recent is left out; with no part at all, the written-in line stays.
+function now(data) {
+  const box = $('[data-now]'), out = $('[data-now-items]');
+  if (!box || !out) return;
+  const parts = [];
+  const link = (text, href) => {
+    const a = document.createElement('a');
+    a.className = 'link'; a.textContent = text;
+    if (href?.startsWith('https://')) { a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    return a;
+  };
+  const items = Array.isArray(data.week?.items) ? data.week.items : [];
+  const shipped = items.find(i => i.kind === 'app' || i.kind === 'release');
+  const busiest = items.filter(i => i.kind === 'push' && i.repo && i.repo !== 'justAbdulaziz10/Abdulaziz').sort((a, b) => b.count - a.count)[0];
+  if (shipped) {
+    const name = shipped.kind === 'app' && data.apps?.[shipped.app]?.version
+      ? `${{ echo: 'Echo', docmara: 'DocMara' }[shipped.app]} ${data.apps[shipped.app].version}` : shipped.label;
+    parts.push(['shipped ', link(name, shipped.url)]);
+  } else if (busiest) {
+    parts.push(['building ', link(busiest.repo.split('/').at(-1).replace(/[_-]/g, ' '), busiest.url)]);
+  }
+  const l = data.learning;
+  if (l?.course) parts.push(['learning ', link(l.course, l.url), l.total ? ` (${l.done} of ${l.total})` : '']);
+  const f = data.letterboxd?.latest;
+  if (f?.title && Date.now() - Date.parse(`${f.watched}T00:00:00Z`) < 14 * 864e5) parts.push(['watched ', link(f.title, f.url)]);
+  if (!parts.length) return;
+  out.replaceChildren();
+  parts.forEach((p, i) => { if (i) out.append(', '); out.append(...p); });
+  out.append('.');
+}
+
 fetch(new URL('../assets/data/live.json', import.meta.url), { cache: 'no-cache' })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
   .then(data => {
-    fill(data); race(data.f1); lastRace(data.f1Result); week(data.week); film(data.letterboxd);
+    fill(data); race(data.f1); lastRace(data.f1Result); week(data.week); film(data.letterboxd); now(data);
     dispatchEvent(new Event('resize')); // new lines moved the text, so the thread re-routes around it
   })
   .catch(() => {});

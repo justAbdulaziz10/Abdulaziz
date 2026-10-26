@@ -315,7 +315,8 @@
     break-inside: avoid;
   }
 
-  .notes {
+  .notes,
+  .now {
     display: none !important;
   }
 

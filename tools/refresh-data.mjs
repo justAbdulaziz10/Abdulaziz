@@ -248,6 +248,53 @@ async function week(apps) {
   return parseWeek(events, apps, now, counts);
 }
 
+// What he is learning: the course tables in his To-infinity-and-AI README. A row in progress reads "🟨 8 / 40".
+// The course shown is the in-progress row his latest README edits touched; with no such edit, the first one.
+const LEARN_REPO = 'justAbdulaziz10/To-infinity-and-AI';
+const progressRow = line => {
+  if (!line.trim().startsWith('|')) return null;
+  const cells = line.split('|').slice(1, -1).map(c => c.trim());
+  const st = cells.map(c => c.match(/🟨\s*(\d+)\s*\/\s*(\d+)/)).find(Boolean);
+  if (!st || !cells[0]) return null;
+  const links = [...line.matchAll(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g)];
+  return { name: cells[0], by: cells[1] && !cells[1].includes('](') ? cells[1] : '', done: Number(st[1]), total: Number(st[2]), linkText: links[0]?.[1] ?? '', url: links[0]?.[2] ?? null };
+};
+
+export function parseLearning(readme, patches = []) {
+  const rows = readme.split('\n').map(progressRow).filter(Boolean);
+  if (!rows.length) throw new Error('no course in progress');
+  let pick = null;
+  for (const patch of patches) {
+    for (const line of patch.split('\n')) {
+      const r = line.startsWith('+') ? progressRow(line.slice(1)) : null;
+      if (r) pick = rows.find(x => x.name === r.name);
+      if (pick) break;
+    }
+    if (pick) break;
+  }
+  pick ??= rows[0];
+  const code = /\b[A-Z]{2,}\s?\d{2,}\b/;
+  const title = !code.test(pick.name) && code.test(pick.linkText) ? pick.linkText : pick.name;
+  const by = pick.by.replace(/\s*\(.*\)$/, '');
+  return {
+    course: by && !title.toLowerCase().includes(by.toLowerCase()) ? `${title}, ${by}` : title,
+    done: pick.done, total: pick.total, url: pick.url,
+  };
+}
+
+async function learning() {
+  const gh = url => get(url, 'json', process.env.GITHUB_TOKEN ? { authorization: `bearer ${process.env.GITHUB_TOKEN}` } : {});
+  const readme = Buffer.from((await gh(`https://api.github.com/repos/${LEARN_REPO}/readme`)).content, 'base64').toString('utf8');
+  const commits = await gh(`https://api.github.com/repos/${LEARN_REPO}/commits?path=README.md&per_page=10`).catch(() => []);
+  const patches = [];
+  for (const c of commits) {
+    const full = await gh(`https://api.github.com/repos/${LEARN_REPO}/commits/${c.sha}`).catch(() => null);
+    const patch = full?.files?.find(f => f.filename === 'README.md')?.patch;
+    if (patch) patches.push(patch);
+  }
+  return parseLearning(readme, patches);
+}
+
 // Active users come from each app's RevenueCat project. RevenueCat secret keys are per project, so each app
 // has its own key; an app without a key (or a failed call) keeps its last good number.
 async function revenuecat(prev = {}) {
@@ -276,7 +323,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
-  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd, f1, apps, f1Result, week: () => week(next.apps), revenuecat: () => revenuecat(next.revenuecat) })) {
+  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd, f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat) })) {
     try {
       next[key] = await fn();
       changed = true;

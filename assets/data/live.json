@@ -142,5 +142,11 @@
    "activeUsers": 35,
    "period": "P28D"
   }
+ },
+ "learning": {
+  "course": "Stanford CS109",
+  "done": 3,
+  "total": 29,
+  "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv"
  }
 }

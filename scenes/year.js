@@ -34,9 +34,45 @@ function smooth(pts) {
   return d;
 }
 
+// GitLab's own activity calendar: one square per day, a column per week, Sunday on top.
+function drawCalendar(host, lab) {
+  const DAY = 864e5, C = 20, G = 5, top = 22, left = 34;
+  const counts = new Map(lab.days);
+  const first = Date.parse(lab.days[0][0]), end = Date.parse(lab.to);
+  const start = first - new Date(first).getUTCDay() * DAY;
+  const cols = Math.floor((end - start) / DAY / 7) + 1;
+  const sorted = lab.days.map(d => d[1]).sort((a, b) => a - b);
+  const q = f => sorted[Math.min(sorted.length - 1, Math.floor(f * sorted.length))];
+  const cuts = [q(0.25), q(0.5), q(0.75)];
+  const level = n => (n ? 1 + cuts.filter(c => n > c).length : 0);
+  const W = left + cols * (C + G) - G, H = top + 7 * (C + G) - G;
+  const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const total = lab.days.reduce((s, d) => s + d[1], 0);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': `GitLab activity calendar: ${total.toLocaleString('en-US')} pushes on ${lab.days.length} days, busiest ${Math.max(...sorted)} in a day.` });
+  ['Mon', 'Wed', 'Fri'].forEach((d, i) => {
+    el('text', { x: 0, y: top + (1 + i * 2) * (C + G) + C - 3, class: 'lab__axis', 'aria-hidden': 'true' }, svg).textContent = d;
+  });
+  let lastMonth = -1;
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < 7; r++) {
+      const t = start + (c * 7 + r) * DAY;
+      if (t > end) break;
+      const dt = new Date(t);
+      if (dt.getUTCMonth() !== lastMonth && dt.getUTCDate() <= 7 && r === 0) {
+        lastMonth = dt.getUTCMonth();
+        el('text', { x: left + c * (C + G), y: 13, class: 'lab__axis', 'aria-hidden': 'true' }, svg).textContent = dt.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+      }
+      const n = counts.get(dt.toISOString().slice(0, 10)) ?? 0;
+      const sq = el('rect', { x: left + c * (C + G), y: top + r * (C + G), width: C, height: C, rx: 3, fill: `var(--lab-${level(n)})`, class: 'lab__day', style: `transition-delay:${c * 45 + r * 12}ms` }, svg);
+      el('title', {}, sq).textContent = `${n ? n : 'No'} ${n === 1 ? 'push' : 'pushes'} on ${fmt.format(dt)}`;
+    }
+  }
+  host.replaceChildren(svg);
+}
+
 export function mount(root, { reduced }) {
   const mq = matchMedia('(min-width: 761px)');
-  let data = null, lab = null, L = null, line, area, marks = [], months = [];
+  let labIO = null, data = null, lab = null, L = null, line, area, marks = [], months = [];
   let lastP = reduced ? 1 : 0;
 
   function render() {
@@ -54,7 +90,7 @@ export function mount(root, { reduced }) {
     const total = lab ? lab.days.reduce((s, d) => s + d[1], 0) : 0;
     root.replaceChildren();
     root.style.aspectRatio = `${W} / ${H}`;
-    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Weekly GitHub contributions from ${data.from} to ${data.to}, ${data.total.toLocaleString('en-US')} in total. Activity climbs through the year and peaks in September and October 2026.${lab ? ` Below the axis, ${total.toLocaleString('en-US')} pushes to GitLab, one bar per day.` : ''}` }, root);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': `Weekly GitHub contributions from ${data.from} to ${data.to}, ${data.total.toLocaleString('en-US')} in total. Activity climbs through the year and peaks in September and October 2026.${lab ? ` Below the axis, ${total.toLocaleString('en-US')} pushes to GitLab, one bar per day.` : ''}` }, root);
     const defs = el('defs', {}, svg);
     const grad = el('linearGradient', { id: 'year-fill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     el('stop', { offset: '0', 'stop-color': 'currentColor', 'stop-opacity': '.14' }, grad);
@@ -91,7 +127,7 @@ export function mount(root, { reduced }) {
       }
       const t = el('text', { x: firstX - 10, y: L.base + 18, 'text-anchor': 'end', class: 'year__lab-label' }, svg);
       t.setAttribute('aria-hidden', 'true');
-      t.textContent = wide ? `${total.toLocaleString('en-US')} pushes to GitLab` : 'GitLab pushes';
+      t.textContent = 'GitLab';
     }
     const d = smooth(pts);
     area = el('path', { d: `${d}L${W} ${L.base}L0 ${L.base}Z`, class: 'year__area', fill: 'url(#year-fill)', 'clip-path': 'url(#year-reveal)' }, svg);
@@ -140,12 +176,25 @@ export function mount(root, { reduced }) {
   Promise.all([
     fetch('assets/data/weeks.json').then(r => r.json()),
     fetch('assets/data/gitlab.json').then(r => (r.ok ? r.json() : null)).catch(() => null),
-  ]).then(([j, g]) => { data = j; lab = g?.days?.length ? g : null; render(); });
+  ]).then(([j, g]) => {
+    data = j; lab = g?.days?.length ? g : null;
+    const host = root.closest('section')?.querySelector('[data-lab-cal]');
+    if (lab && host) {
+      drawCalendar(host, lab);
+      const block = host.closest('.lab');
+      if (reduced) block.classList.add('is-on');
+      else {
+        labIO = new IntersectionObserver(([e]) => { if (e.isIntersecting) { block.classList.add('is-on'); labIO.disconnect(); } }, { threshold: 0.3 });
+        labIO.observe(host);
+      }
+    }
+    render();
+  });
   const onChange = () => render();
   mq.addEventListener('change', onChange);
   return {
     update,
     anchors: () => L ? { entry: { x: 0, y: L.pts[0][1] / L.H }, exit: { x: 1, y: 1 } } : null,
-    destroy() { mq.removeEventListener('change', onChange); root.replaceChildren(); },
+    destroy() { labIO?.disconnect(); mq.removeEventListener('change', onChange); root.replaceChildren(); },
   };
 }

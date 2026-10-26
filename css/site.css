@@ -232,6 +232,20 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .num { font-variant-numeric: tabular-nums; }
 .year__sub { margin-top: var(--s-2); max-width: 60ch; color: var(--fg-2); }
 .year .scene-slot { margin-top: var(--s-4); }
+.lab { --lab-0: var(--rule-c); --lab-1: #fdd6bd; --lab-2: #fca06a; --lab-3: #fc6d26; --lab-4: #d93f1f;
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3) var(--s-5); margin-top: var(--s-5); max-width: calc(100% - 4rem); }
+.lab__text { flex: 0 1 30ch; }
+.lab__count { font-size: var(--step-2); font-weight: 650; line-height: 1.1; letter-spacing: -.02em; font-stretch: 108%; }
+.lab__count .num { color: #d93f1f; }
+.lab__sub { margin-top: var(--s-1); color: var(--fg-2); }
+.lab__cal { flex: 0 1 auto; min-width: 0; }
+.lab__cal:empty { display: none; }
+.lab__cal svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+.lab__day { rx: 3px; transition: opacity var(--t-layout) var(--ease), transform var(--t-layout) var(--ease); transform-box: fill-box; transform-origin: center; }
+.lab__axis { font: 500 12px var(--font); fill: var(--fg-3); }
+.lab:not(.is-on) .lab__day { opacity: 0; transform: scale(.4); }
+@media (max-width: 760px) { .lab { max-width: none; } }
+@media (prefers-reduced-motion: reduce) { .lab__day { transition: none; } }
 
 /* projects */
 .project { padding-block: clamp(4.5rem, 10vh, 7.5rem); }

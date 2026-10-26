@@ -265,7 +265,7 @@ const PULSE_REST = 5200;
 const MAX_PULL = 34;
 const PULL_SPAN = 140;
 
-const obstacleSel = '.project__text, .project__live, .project--pitlane .project__name, .pm, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .notes__groups, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .contact__links, .foot__credits, .shot';
+const obstacleSel = '.project__text, .project__live, .project--pitlane .project__name, .pm, .section-title, .year__title, .year__sub, .lab, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .notes__groups, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .contact__links, .foot__credits, .shot';
 
 function pseudoCenter(el, pseudo) {
   const s = getComputedStyle(el, pseudo);

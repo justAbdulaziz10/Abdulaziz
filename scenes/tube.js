@@ -1,5 +1,5 @@
 // Scene: tube — the page line becomes an original, schematic route map. Products branches at Mara and Work
-// at Echo; each branch ends at a supplied project or co-op fact. Education runs from King Saud University
+// at Echo; each branch ends at a supplied project or co-op fact. Certificates and programmes are ticks on Education. Education runs from King Saud University
 // to the B.Sc. endpoint. Stations appear as their lines draw; hover, tap or focus one to read its detail.
 // Phones get the same 45/90-degree geometry running vertically.
 // Facts come from the <ol class="tube__list"> in the section (the fallback below is for the harness only).
@@ -22,10 +22,17 @@ const FALLBACK = {
 // map order = time order. kind: end (terminus bar), ring (interchange), tick
 const STATIONS = [
   { id: 'ksu', key: 'edu', line: 'edu', kind: 'end' },
+  { id: 'hcia', key: 'hcia', line: 'edu', kind: 'tick', side: 'below' },
+  { id: 'cs50', key: 'cs50', line: 'edu', kind: 'tick', side: 'below' },
   { id: 'mara', key: 'mara', line: 'edu', kind: 'ring' },
+  { id: 'dlai', key: 'dlai', line: 'edu', kind: 'tick', side: 'below' },
+  { id: 'daleelk', key: 'daleelk', line: 'prod', kind: 'tick' },
+  { id: 'tuwaiq', key: 'tuwaiq', line: 'edu', kind: 'tick', side: 'below' },
+  { id: 'pitlane', key: 'pitlane', line: 'prod', kind: 'tick' },
   { id: 'echo', key: 'echo', line: 'prod', kind: 'ring' },
   { id: 'coop', key: 'coop', line: 'work', kind: 'end' },
   { id: 'docmara', key: 'docmara', line: 'prod', kind: 'tick' },
+  { id: 'tuwaiqai', key: 'tuwaiqai', line: 'edu', kind: 'tick', side: 'below' },
   { id: 'rassah', key: 'rassah', line: 'prod', kind: 'end' },
   { id: 'bsc', key: 'edu', line: 'edu', kind: 'end', alt: true },
 ];
@@ -104,7 +111,7 @@ export function mount(root, { reduced = false } = {}) {
 
   const map = h('div', 'tb-map');
   const svg = el('svg', { class: 'tb-svg', role: 'img',
-    'aria-label': 'A line map with Education from King Saud University to a B.Sc. in Computer Information Systems, Products from Mara through Echo and DocMara to Rassah, and Work from Echo to the co-op at the Air Connectivity Program.' }, map);
+    'aria-label': 'A line map with Education from King Saud University through five certificates and programmes to a B.Sc. in Computer Information Systems, Products from Mara through Daleelk, Pit Lane Hub, Echo and DocMara to Rassah, and Work from Echo to the co-op at the Air Connectivity Program.' }, map);
   const labels = h('div', 'tb-labels', null, map);
   const panel = h('div', 'tb-panel', null, map);
   const key = h('div', 'tb-key', null, map);
@@ -123,11 +130,14 @@ export function mount(root, { reduced = false } = {}) {
   let width = 0;
 
   function layout(W) {
-    if (W >= 820) {
-      const yE = 92, yP = 250, yW = 330, H = 500;
-      const xK = 18, xM = Math.round(0.25 * W), xE = Math.round(0.49 * W), xD = Math.round(0.635 * W);
-      const xR = Math.round(0.872 * W), xB = W - 18;
+    if (W >= 1080) {
+      const yE = 92, yP = 250, yW = 330, H = 470;
+      const X = (f) => Math.round(f * W);
+      const xK = 18, xM = X(0.28), xE = X(0.67), xD = X(0.775);
+      const xR = X(0.885), xB = W - 18;
       const xC = xE + (yW - yP) + 40;
+      const below = (x) => ({ x, y: yE, dir: 'down', lab: { x: x - 3, y: yE + 22, pos: 'below' } });
+      const onProd = (x) => ({ x, y: yP, dir: 'up', lab: { x: x - 3, y: yP - 22, pos: 'above' } });
       return {
         mode: 'h', ax: 'x', W, H, lw: 6, rad: 26,
         lines: {
@@ -139,15 +149,22 @@ export function mount(root, { reduced = false } = {}) {
         exit: [[xB, yE + 12], [xB, H]],
         st: {
           ksu: { x: xK, y: yE, dir: 'v', lab: { x: xK + 16, y: yE - 22, pos: 'above' } },
+          hcia: below(X(0.095)),
+          cs50: below(X(0.19)),
           mara: { x: xM, y: yE, lab: { x: xM - 9, y: yE - 22, pos: 'above' } },
+          dlai: below(X(0.43)),
+          daleelk: onProd(X(0.46)),
+          tuwaiq: below(X(0.555)),
+          pitlane: onProd(X(0.565)),
           echo: { x: xE, y: yP, lab: { x: xE - 9, y: yP - 22, pos: 'above' } },
           coop: { x: xC, y: yW, dir: 'v', lab: { x: xC - 3, y: yW + 22, pos: 'below' } },
-          docmara: { x: xD, y: yP, dir: 'up', lab: { x: xD - 3, y: yP - 22, pos: 'above' } },
+          docmara: onProd(xD),
+          tuwaiqai: below(X(0.845)),
           rassah: { x: xR, y: yP, dir: 'v', lab: { x: xR - 3, y: yP - 22, pos: 'above' } },
           bsc: { x: xB, y: yE, dir: 'v', lab: { x: xB - 16, y: yE - 22, pos: 'above', end: true } },
         },
         panel: { x: xK, y: yP + 44, w: Math.min(460, xE - xK - 80) },
-        key: { x: xB - 150, y: yW + 84 },
+        key: { x: xB - 120, y: yW + 76 },
       };
     }
     // vertical: lanes on the left, labels in a column on the right; rows sized by their labels
@@ -193,12 +210,12 @@ export function mount(root, { reduced = false } = {}) {
       for (const id in btns) hgt[id] = btns[id].offsetHeight;
       const gap = 30, ys = {};
       let y = 40;
-      ys.ksu = y; y += hgt.ksu + gap;
-      ys.mara = y; y += Math.max(hgt.mara + gap, 40);
-      ys.echo = y; y += Math.max(hgt.echo + gap, 40);
-      ys.coop = y; y += hgt.coop + gap;
-      ys.docmara = y; y += hgt.docmara + gap + 22;
-      ys.rassah = y; y += hgt.rassah + gap;
+      for (const st of STATIONS) {
+        if (st.id === 'bsc') break;
+        ys[st.id] = y;
+        y += Math.max((hgt[st.id] || 0) + gap, 40);
+        if (st.id === 'docmara') y += 22;
+      }
       ys.bsc = y;
       const keyY = y - 12 + hgt.bsc + 34;
       const panelY = keyY + 92;
@@ -217,10 +234,17 @@ export function mount(root, { reduced = false } = {}) {
         panel: { x: LX, y: panelY, w: width - LX },
         st: {
           ksu: { x: L0, y: ys.ksu, dir: 'h' },
+          hcia: { x: L0, y: ys.hcia, dir: 'left' },
+          cs50: { x: L0, y: ys.cs50, dir: 'left' },
           mara: { x: L0, y: ys.mara },
+          dlai: { x: L0, y: ys.dlai, dir: 'left' },
+          daleelk: { x: L1, y: ys.daleelk, dir: 'right' },
+          tuwaiq: { x: L0, y: ys.tuwaiq, dir: 'left' },
+          pitlane: { x: L1, y: ys.pitlane, dir: 'right' },
           echo: { x: L1, y: ys.echo },
           coop: { x: L2, y: ys.coop, dir: 'h' },
           docmara: { x: L1, y: ys.docmara, dir: 'right' },
+          tuwaiqai: { x: L0, y: ys.tuwaiqai, dir: 'left' },
           rassah: { x: L1, y: ys.rassah, dir: 'h' },
           bsc: { x: L0, y: ys.bsc, dir: 'h' },
         },
@@ -263,7 +287,7 @@ export function mount(root, { reduced = false } = {}) {
         el('path', { class: 'tb-bar', d, 'stroke-width': lw }, g);
       } else {
         const len = lw / 2 + (L.mode === 'h' ? 9 : 7);
-        const d = s.dir === 'up' ? `M${s.x} ${s.y}V${s.y - len}` : s.dir === 'down' ? `M${s.x} ${s.y}V${s.y + len}` : `M${s.x} ${s.y}H${s.x + len}`;
+        const d = s.dir === 'up' ? `M${s.x} ${s.y}V${s.y - len}` : s.dir === 'down' ? `M${s.x} ${s.y}V${s.y + len}` : s.dir === 'left' ? `M${s.x} ${s.y}H${s.x - len}` : `M${s.x} ${s.y}H${s.x + len}`;
         el('path', { class: 'tb-tick', d, 'stroke-width': lw }, g);
       }
       el('circle', { class: 'tb-hit', cx: s.x, cy: s.y, r: 16 }, g);

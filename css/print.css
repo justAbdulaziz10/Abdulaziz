@@ -84,6 +84,15 @@
     display: block !important;
   }
 
+  /* coloured sections fade in as they scroll into view; paper has no scroll, so show them all */
+  main [data-world] > * {
+    opacity: 1 !important;
+  }
+
+  main [data-world]::before {
+    display: none !important;
+  }
+
   /* Keep the print identity separate from the screen hero. */
   #main {
     position: static;
@@ -491,6 +500,15 @@
     line-height: 1.18;
   }
 
+  #experience .tube__list li.tube__extra {
+    display: none !important;
+  }
+
+  .notes__also,
+  .hero__proof {
+    display: none !important;
+  }
+
   #experience .tube__list h3 {
     font-weight: 650;
   }
@@ -536,21 +554,26 @@
     content: ": ";
   }
 
-  #skills .learn {
+  .learn,
+  .experience .learn {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 2mm;
+    gap: 2mm 5mm;
     margin-top: 1.8mm;
   }
 
-  #skills .sub-title {
+  .learn__now {
+    display: block;
+  }
+
+  .sub-title {
     margin: 0 0 .8mm;
     font-size: 10pt;
     line-height: 1.1;
     font-weight: 700;
   }
 
-  #skills .certs li {
+  .certs li {
     display: grid;
     grid-template-columns: 9mm minmax(0, 1fr);
     gap: 1.5mm;
@@ -563,20 +586,20 @@
     page-break-inside: avoid;
   }
 
-  #skills .certs__year {
+  .certs__year {
     padding: 0;
     color: #222;
     font-family: var(--mono);
     font-size: 7.5pt;
   }
 
-  #skills .certs strong {
+  .certs strong {
     display: inline;
     color: #000;
     font-weight: 650;
   }
 
-  #skills .progress li {
+  .progress li {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0 1.5mm;
@@ -588,15 +611,15 @@
     page-break-inside: avoid;
   }
 
-  #skills .progress__val {
+  .progress__val {
     color: #222;
     font-family: var(--mono);
     font-size: 7.5pt;
     white-space: nowrap;
   }
 
-  #skills .progress__bar,
-  #skills .learn__link {
+  .progress__bar,
+  .learn__link {
     display: none !important;
   }
 }

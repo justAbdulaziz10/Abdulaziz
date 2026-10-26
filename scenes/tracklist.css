@@ -1,8 +1,8 @@
 .scene--tracklist {
-  --tl-bg: var(--paper);
-  --tl-fg: var(--ink);
-  --tl-fg-2: var(--ink-2);
-  --tl-fg-3: var(--ink-3);
+  --tl-bg: var(--bg, var(--paper));
+  --tl-fg: var(--fg, var(--ink));
+  --tl-fg-2: var(--fg-2, var(--ink-2));
+  --tl-fg-3: var(--fg-3, var(--ink-3));
   --tl-disc: var(--ink);
   --tl-groove: var(--paper);
   --tl-rim: var(--ink-2);
@@ -12,7 +12,7 @@
   position: relative;
   aspect-ratio: 600 / 656;
 }
-.scene--tracklist:where(html.is-night *) {
+html.is-night [data-world="paper"] .scene--tracklist {
   --tl-bg: var(--night);
   --tl-fg: var(--paper);
   --tl-fg-2: var(--paper-2);

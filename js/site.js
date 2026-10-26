@@ -105,6 +105,8 @@ if (counter && !reduced) {
     requestAnimationFrame(tick);
   }, { rootMargin: '0px 0px -20% 0px' });
   io.observe(counter);
+  // printing mid-count would put "0" on the CV; jump to the real figure
+  addEventListener('beforeprint', () => { io.disconnect(); counter.textContent = fmt.format(+counter.dataset.count); });
 }
 
 /* ---------- copy email ---------- */

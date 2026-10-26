@@ -1,17 +1,17 @@
 .scene--tube {
-  --tb-bg: var(--paper);
-  --tb-fg: var(--ink);
-  --tb-fg-2: var(--ink-2);
-  --tb-fg-3: var(--ink-3);
-  --tb-rule: var(--rule);
-  --tb-accent: var(--ink);
+  --tb-bg: var(--bg, var(--paper));
+  --tb-fg: var(--fg, var(--ink));
+  --tb-fg-2: var(--fg-2, var(--ink-2));
+  --tb-fg-3: var(--fg-3, var(--ink-3));
+  --tb-rule: var(--rule-c, var(--rule));
+  --tb-accent: var(--accent, var(--ink));
   --tb-edu: var(--line);
   --tb-prod: var(--docmara);
   --tb-work: var(--rassah);
   position: relative;
   color: var(--tb-fg);
 }
-.scene--tube:where(html.is-night *) {
+html.is-night [data-world="paper"] .scene--tube {
   --tb-bg: var(--night);
   --tb-fg: var(--paper);
   --tb-fg-2: var(--paper-2);

@@ -13,7 +13,7 @@ console.log(
 const CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let at = 0, toastTimer;
 
-function toast(text) {
+export function showToast(text) {
   let el = document.querySelector('.toast');
   if (!el) {
     el = document.createElement('p');
@@ -27,16 +27,24 @@ function toast(text) {
   toastTimer = setTimeout(() => el.classList.remove('is-on'), 2600);
 }
 
-addEventListener('keydown', (e) => {
-  if (e.target.closest?.('input, textarea, [contenteditable]')) return;
-  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  at = key === CODE[at] ? at + 1 : (key === CODE[0] ? 1 : 0);
-  if (at < CODE.length) return;
-  at = 0;
+export function toggleNightMode() {
   const root = document.documentElement;
   const on = !root.classList.contains('is-night');
   if (!reduced) root.classList.add('is-switching');
   root.classList.toggle('is-night', on);
   setTimeout(() => root.classList.remove('is-switching'), 700);
-  toast(on ? 'Night mode on. Same code turns it off.' : 'Night mode off.');
+  showToast(on ? 'Night mode on. Same code turns it off.' : 'Night mode off.');
+}
+
+addEventListener('keydown', (e) => {
+  if (document.querySelector('dialog[data-cmdk]')?.open) {
+    at = 0;
+    return;
+  }
+  if (e.target.closest?.('input, textarea, [contenteditable]')) return;
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  at = key === CODE[at] ? at + 1 : (key === CODE[0] ? 1 : 0);
+  if (at < CODE.length) return;
+  at = 0;
+  toggleNightMode();
 });

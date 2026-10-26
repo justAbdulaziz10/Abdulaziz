@@ -67,24 +67,33 @@ async function github(prev = {}) {
   return out;
 }
 
-async function letterboxd() {
-  const [profile, rss] = await Promise.all([get('https://letterboxd.com/notabdulaziz/'), get('https://letterboxd.com/notabdulaziz/rss/')]);
-  const stat = label => {
-    const m = profile.match(new RegExp(`<span class="value">([\\d,]+)</span><span class="definition[^"]*">${label}`, 'i'));
-    return m ? num(m[1]) : null;
-  };
-  const films = stat('Films');
-  if (!films) throw new Error('film count not found');
-  const item = rss.split('<item>').slice(1).find(it => it.includes('<letterboxd:filmTitle>'));
-  const tag = (t) => item?.match(new RegExp(`<${t}>([^<]*)</${t}>`))?.[1] ?? null;
-  const latest = item ? {
-    title: tag('letterboxd:filmTitle'),
-    year: tag('letterboxd:filmYear'),
-    watched: tag('letterboxd:watchedDate'),
-    rating: tag('letterboxd:memberRating') ? Number(tag('letterboxd:memberRating')) : null,
-    url: tag('link'),
-  } : null;
-  return { films, thisYear: stat('This year'), latest };
+// Letterboxd blocks GitHub's runners on the profile page some days, so the feed (latest film) and the profile
+// (film counts) are fetched separately; whichever fails keeps its last good value.
+async function letterboxd(prev = {}) {
+  const [profile, rss] = await Promise.allSettled([get('https://letterboxd.com/notabdulaziz/'), get('https://letterboxd.com/notabdulaziz/rss/')]);
+  if (profile.status === 'rejected' && rss.status === 'rejected') throw new Error(`${profile.reason.message}; ${rss.reason.message}`);
+  const out = { ...prev };
+  if (profile.status === 'fulfilled') {
+    const stat = label => {
+      const m = profile.value.match(new RegExp(`<span class="value">([\\d,]+)</span><span class="definition[^"]*">${label}`, 'i'));
+      return m ? num(m[1]) : null;
+    };
+    const films = stat('Films');
+    if (films) Object.assign(out, { films, thisYear: stat('This year') });
+    else console.warn('keep letterboxd counts: film count not found');
+  } else console.warn(`keep letterboxd counts: ${profile.reason.message}`);
+  if (rss.status === 'fulfilled') {
+    const item = rss.value.split('<item>').slice(1).find(it => it.includes('<letterboxd:filmTitle>'));
+    const tag = (t) => item?.match(new RegExp(`<${t}>([^<]*)</${t}>`))?.[1] ?? null;
+    if (item) out.latest = {
+      title: tag('letterboxd:filmTitle'),
+      year: tag('letterboxd:filmYear'),
+      watched: tag('letterboxd:watchedDate'),
+      rating: tag('letterboxd:memberRating') ? Number(tag('letterboxd:memberRating')) : null,
+      url: tag('link'),
+    };
+  } else console.warn(`keep letterboxd latest: ${rss.reason.message}`);
+  return out;
 }
 
 async function f1() {
@@ -323,7 +332,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
-  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd, f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat) })) {
+  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat) })) {
     try {
       next[key] = await fn();
       changed = true;

@@ -1,5 +1,5 @@
 // Daleelk — the line becomes a travel route over the Arabian Gulf coastline,
-// then resolves into the system: question → OpenAI API + local knowledge base → trip plan + traveler safety.
+// then resolves into the system: question → OpenAI API + destination facts from its database → trip plan + traveler safety.
 // Round 2: the question pill is a button. Pressing it types an example question and sends a pulse
 // through the diagram; tapping a coastal stop traces the route from that stop into the question.
 // Coastline and land: Natural Earth (public domain), 1:10m, clipped to 46–60°E, 22–30.5°N,
@@ -53,7 +53,7 @@ const LAYOUTS = {
     map: { x: 270, y: 34, s: 0.78 },
     font: 23, nodeH: 64, r: 16,
     q: { x: 660, y: 628, w: 392 },
-    mid: [{ x: 460, y: 762, w: 310, label: 'OpenAI API' }, { x: 860, y: 762, w: 310, label: 'Local knowledge base' }],
+    mid: [{ x: 460, y: 762, w: 310, label: 'OpenAI API' }, { x: 860, y: 762, w: 310, label: 'Destination database' }],
     jY: 846,
     out: [{ x: 460, y: 930, w: 310, label: 'Trip plan' }, { x: 860, y: 930, w: 310, label: 'Traveler safety' }],
     credit: { x: 318, y: 548 },
@@ -64,7 +64,7 @@ const LAYOUTS = {
     map: { x: -4, y: 6, s: 0.358 },
     font: 12.5, nodeH: 40, r: 10,
     q: { x: 175, y: 322, w: 232 },
-    mid: [{ x: 89, y: 414, w: 162, label: 'OpenAI API' }, { x: 261, y: 414, w: 162, label: 'Local knowledge base' }],
+    mid: [{ x: 89, y: 414, w: 162, label: 'OpenAI API' }, { x: 261, y: 414, w: 162, label: 'Destination database' }],
     jY: 478,
     out: [{ x: 89, y: 542, w: 162, label: 'Trip plan' }, { x: 261, y: 542, w: 162, label: 'Traveler safety' }],
     credit: { x: 14, y: 252 },
@@ -132,7 +132,7 @@ export function mount(root, { reduced = false } = {}) {
     svg = el('svg', {
       viewBox: `0 0 ${L.w} ${L.h}`,
       role: 'img',
-      'aria-label': 'A single line traces a travel route between unnamed waypoints over a minimal outline of the Arabian Gulf coastline, then draws the system: a question in plain language goes to the OpenAI API and a local knowledge base, which produce a trip plan and traveler safety guidance.',
+      'aria-label': 'A single line traces a travel route between unnamed waypoints over a minimal outline of the Arabian Gulf coastline, then draws the system: a question in plain language goes to the OpenAI API with destination facts from its database, which produce a trip plan and traveler safety guidance.',
     });
     root.appendChild(svg);
     const lines = [];

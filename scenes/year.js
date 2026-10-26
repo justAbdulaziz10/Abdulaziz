@@ -1,4 +1,5 @@
 // The year: weekly GitHub contributions drawn as the line, with real milestones marked on it.
+// Daily pushes to GitLab hang below the axis on the same calendar, kept apart from the GitHub total.
 const NS = 'http://www.w3.org/2000/svg';
 const MARKS = [
   { date: '2026-06-02', label: 'Echo on the App Store' },
@@ -35,23 +36,25 @@ function smooth(pts) {
 
 export function mount(root, { reduced }) {
   const mq = matchMedia('(min-width: 761px)');
-  let data = null, L = null, line, area, marks = [], months = [];
+  let data = null, lab = null, L = null, line, area, marks = [], months = [];
   let lastP = reduced ? 1 : 0;
 
   function render() {
     if (!data) return;
     const wide = mq.matches;
-    const W = wide ? 1200 : 360, H = wide ? 380 : 360;
-    const padT = wide ? 70 : 64, padB = 36;
+    const S = lab ? (wide ? 64 : 44) : 0; // room for the GitLab strip under the axis
+    const W = wide ? 1200 : 360, H = (wide ? 380 : 360) + S;
+    const padT = wide ? 70 : 64, padB = 36 + S;
     const weeks = data.weeks.slice(0, -1); // drop the partial current week
     const max = Math.max(...weeks.map(w => w[1]));
     const x = i => (i / (weeks.length - 1)) * W;
     const y = v => padT + (1 - Math.sqrt(v / max)) * (H - padT - padB);
     const pts = weeks.map((w, i) => [x(i), y(w[1])]);
     L = { W, H, pts, base: H - padB };
+    const total = lab ? lab.days.reduce((s, d) => s + d[1], 0) : 0;
     root.replaceChildren();
     root.style.aspectRatio = `${W} / ${H}`;
-    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Weekly GitHub contributions from ${data.from} to ${data.to}, ${data.total.toLocaleString('en-US')} in total. Activity climbs through the year and peaks in September and October 2026.` }, root);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Weekly GitHub contributions from ${data.from} to ${data.to}, ${data.total.toLocaleString('en-US')} in total. Activity climbs through the year and peaks in September and October 2026.${lab ? ` Below the axis, ${total.toLocaleString('en-US')} pushes to GitLab, one bar per day.` : ''}` }, root);
     const defs = el('defs', {}, svg);
     const grad = el('linearGradient', { id: 'year-fill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     el('stop', { offset: '0', 'stop-color': 'currentColor', 'stop-opacity': '.14' }, grad);
@@ -73,6 +76,23 @@ export function mount(root, { reduced }) {
         t.textContent = mon;
       }
     });
+    if (lab) {
+      // one bar per day, hanging from the axis; square-root scale like the line
+      const t0 = Date.parse(data.from), span = Date.parse(data.to) - t0;
+      const dmax = Math.max(...lab.days.map(dd => dd[1]));
+      const bw = Math.max(1.4, (W / (span / 864e5)) * 0.62);
+      const gl = el('g', { class: 'year__lab', 'clip-path': 'url(#year-reveal)', 'aria-hidden': 'true' }, svg);
+      let firstX = W;
+      for (const [day, n] of lab.days) {
+        const cx = ((Date.parse(day) - t0) / span) * W;
+        if (cx < 0 || cx > W) continue;
+        firstX = Math.min(firstX, cx);
+        el('rect', { x: (cx - bw / 2).toFixed(1), y: L.base + 3, width: bw.toFixed(1), height: (Math.sqrt(n / dmax) * (S - 12)).toFixed(1), rx: Math.min(bw / 2, 1.5), class: 'year__push' }, gl);
+      }
+      const t = el('text', { x: firstX - 10, y: L.base + 18, 'text-anchor': 'end', class: 'year__lab-label' }, svg);
+      t.setAttribute('aria-hidden', 'true');
+      t.textContent = wide ? `${total.toLocaleString('en-US')} pushes to GitLab` : 'GitLab pushes';
+    }
     const d = smooth(pts);
     area = el('path', { d: `${d}L${W} ${L.base}L0 ${L.base}Z`, class: 'year__area', fill: 'url(#year-fill)', 'clip-path': 'url(#year-reveal)' }, svg);
     // after the last week the line drops past the axis, so the thread leaves below the months
@@ -117,7 +137,10 @@ export function mount(root, { reduced }) {
     marks.forEach(m => m.g.classList.toggle('is-on', k >= m.t - 0.005));
   }
 
-  fetch('assets/data/weeks.json').then(r => r.json()).then(j => { data = j; render(); });
+  Promise.all([
+    fetch('assets/data/weeks.json').then(r => r.json()),
+    fetch('assets/data/gitlab.json').then(r => (r.ok ? r.json() : null)).catch(() => null),
+  ]).then(([j, g]) => { data = j; lab = g?.days?.length ? g : null; render(); });
   const onChange = () => render();
   mq.addEventListener('change', onChange);
   return {

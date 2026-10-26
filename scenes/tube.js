@@ -12,11 +12,11 @@ const LINES = { edu: 'Education', prod: 'Products', work: 'Work' };
 
 const FALLBACK = {
   edu: { key: 'edu', line: 'edu', name: 'King Saud University', when: '2022', endName: 'B.Sc. Computer Information Systems', endWhen: '2026', time: '2022 – 2026', title: 'King Saud University', paras: [{ text: 'B.Sc. Computer Information Systems' }] },
-  mara: { key: 'mara', line: 'prod', name: 'Mara', when: '2025', time: '2025', title: 'Started building Mara', paras: [{ text: 'Misk Launchpad Cohort 9; private beta of 38 users.' }] },
+  mara: { key: 'mara', line: 'prod', name: 'Mara', when: '2025', time: '2025', title: 'Started building Mara', paras: [{ text: 'Founded in January 2026. Completed Misk Launchpad Cohort 9.' }] },
   echo: { key: 'echo', line: 'prod', name: 'Echo', when: 'Jun 2026', time: 'June 2026', title: 'Echo on the App Store', paras: [] },
   coop: { key: 'coop', line: 'work', name: 'Air Connectivity Program', when: 'Jun – Sep 2026', time: 'Jun – Sep 2026', title: 'Digital Systems & Business Analysis Co-op Trainee', paras: [{ text: 'Air Connectivity Program', org: true }, { text: 'QA testing, system reviews, issue analysis and technical documentation.' }] },
   docmara: { key: 'docmara', line: 'prod', name: 'DocMara', when: 'Jul 2026', time: 'July 2026', title: 'DocMara on the App Store', paras: [] },
-  rassah: { key: 'rassah', line: 'prod', name: 'Rassah', when: 'Oct 2026', time: 'October 2026', title: 'Rassah', paras: [{ text: "Built in two days, in Tuwaiq Academy's AI product programme." }] },
+  rassah: { key: 'rassah', line: 'prod', name: 'Rassah', when: 'Oct 2026', time: 'October 2026', title: 'Rassah', paras: [{ text: "An MVP, built in two days by a team of three." }] },
 };
 
 // map order = time order. kind: end (terminus bar), ring (interchange), tick

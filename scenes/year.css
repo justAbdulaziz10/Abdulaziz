@@ -9,4 +9,6 @@
 .scene--year .year__mark { opacity: 0; transform: translateY(6px); transition: opacity var(--t-layout) var(--ease), transform var(--t-layout) var(--ease); }
 .scene--year .year__mark.is-on { opacity: 1; transform: none; }
 .scene--year .year__legend .year__label { font-size: 13px; }
+.scene--year .year__push { fill: #e24329; }
+.scene--year .year__lab-label { font: 600 13px var(--font); fill: #b8351f; }
 @media (prefers-reduced-motion: reduce) { .scene--year .year__mark { transition: none; } }

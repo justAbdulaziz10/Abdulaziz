@@ -14,6 +14,33 @@ const CARDS = [
   { k: 0, name: 'Big Ben', file: 'echo-screen-02', crop: [105, 587, 820, 1608], photoCrop: [106, 587, 818, 1350], alt: 'Echo memory card: Big Ben at night with the story written beneath it' },
   { k: 1, name: 'Book and voice note', file: 'echo-screen-03', crop: [105, 560, 820, 1581], photoCrop: [106, 560, 818, 1206], alt: 'Echo memory card: an open book beside a coffee cup, with a voice note player' },
 ];
+// Photos from Echo's own App Store screenshot set (app-store/screenshots/watch/fixtures in the Echo repo).
+const PHOTOS = [
+  { file: 'echo-photo-travel', years: 3, alt: 'Clouds below a plane window' },
+  { file: 'echo-photo-garden', years: 5, alt: 'Bougainvillea over a garden wall' },
+  { file: 'echo-photo-waffle', years: 1, alt: 'Waffles and juice on a wooden table' },
+];
+const SHELF = [
+  { file: 'echo-photo-bigben', alt: 'Big Ben at night', voice: true },
+  { file: 'echo-photo-book', alt: 'An open book beside a cup of coffee' },
+];
+const STREAK = 12;
+// A few of the app's own journal prompts (Echo/Utilities/JournalPrompts.swift).
+const PROMPTS = ['what were you feeling in this exact moment?', 'who were you back then?', 'what did this day smell like?', 'what made you smile on this day?'];
+const svgIcon = (d, fill = false) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"${fill ? ' class="is-fill"' : ''}>${d}</svg>`;
+const ICON = {
+  chevron: svgIcon('<path d="M9.5 6l6 6-6 6"/>'),
+  grid: svgIcon('<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>'),
+  photo: svgIcon('<rect x="3.5" y="5" width="17" height="14" rx="2.6"/><path d="M3.8 16.5l4.6-4.6 4 4 2.6-2.6 5 5"/><circle cx="15.8" cy="9.4" r="1.5"/>'),
+  gear: svgIcon('<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5"/>'),
+  mic: svgIcon('<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0013 0M12 18v2.5"/>'),
+  play: svgIcon('<path d="M8 5.5v13l10.5-6.5z"/>', true),
+  check: svgIcon('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  flame: svgIcon('<path d="M12 3c.6 3.2 4.8 5.6 4.8 10a4.8 4.8 0 01-9.6 0c0-2.3 1.2-3.6 2.4-4.8.3 1.7 1.2 2.6 2.2 2.6C11 8.6 11 5.6 12 3z"/>', true),
+  signal: '<svg viewBox="0 0 18 12" aria-hidden="true" class="is-fill"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>',
+  wifi: '<svg viewBox="0 0 16 12" aria-hidden="true"><path d="M1.5 4.2a9.4 9.4 0 0113 0M4 6.8a5.8 5.8 0 018 0M6.5 9.3a2.2 2.2 0 013 0"/></svg>',
+  battery: '<svg viewBox="0 0 27 12" aria-hidden="true"><rect x="0.6" y="0.6" width="22.8" height="10.8" rx="3"/><rect class="echo__battery-fill" x="2.4" y="2.4" width="19.2" height="7.2" rx="1.6"/><path d="M25 4.2v3.6"/></svg>',
+};
 const MESS = { '-2': -5, '-1': 3.5, '0': -1.2, '1': 2.4 };
 
 const LAYOUTS = {
@@ -122,107 +149,94 @@ export function mount(root, { reduced = false } = {}) {
     if (parent) parent.appendChild(n);
     return n;
   };
+  // The phone follows the real app (Echo/Views/Home): Today shows one photo from this day in an
+  // earlier year; the shutter keeps it, which opens a note with Record and Save under the photo;
+  // Save puts it on the Wall and Today moves to another photo. No audio is ever recorded here.
   const phone = make('section', 'echo__phone');
   phone.setAttribute('role', 'group');
-  phone.setAttribute('aria-label', 'Echo memory flow');
+  phone.setAttribute('aria-label', 'Echo, working demo');
   const speaker = make('span', 'echo__speaker');
   speaker.setAttribute('aria-hidden', 'true');
   const phoneScreen = make('div', 'echo__phone-screen', undefined, phone);
   phone.appendChild(speaker);
-  const phoneTop = make('div', 'echo__phone-top', undefined, phoneScreen);
-  make('span', 'echo__phone-mark', 'echo', phoneTop);
-  make('span', 'echo__phone-dot', '', phoneTop).setAttribute('aria-hidden', 'true');
-  const todayScreen = make('div', 'echo__phone-view echo__today');
-  const todayTitle = make('h3', 'echo__phone-title', 'Today', todayScreen);
-  const todayPhoto = make('div', 'echo__phone-photo', undefined, todayScreen);
-  const todayImage = make('img', 'echo__phone-image', undefined, todayPhoto);
-  todayImage.width = 1284;
-  todayImage.height = 2778;
+  const status = make('div', 'echo__status', undefined, phoneScreen);
+  status.setAttribute('aria-hidden', 'true');
+  status.innerHTML = `<span>9:41</span><span class="echo__status-icons">${ICON.signal}${ICON.wifi}${ICON.battery}</span>`;
+  const bar = make('div', 'echo__bar', undefined, phoneScreen);
+  const titlePill = make('p', 'echo__pill echo__pill--title', undefined, bar);
+  const titleText = make('span', '', 'Today', titlePill);
+  const keptCount = make('span', 'echo__pill-sub', '', titlePill);
+  const streakPill = make('p', 'echo__pill echo__pill--streak', undefined, bar);
+  const streakNum = make('span', '', String(STREAK), streakPill);
+  streakPill.insertAdjacentHTML('beforeend', ICON.flame);
+  streakPill.setAttribute('aria-label', `${STREAK} day streak`);
+
+  const todayScreen = make('div', 'echo__phone-view echo__today', undefined, phoneScreen);
+  const todayPhoto = make('div', 'echo__photo-card', undefined, todayScreen);
+  const todayImage = make('img', '', undefined, todayPhoto);
+  todayImage.width = 420;
+  todayImage.height = 600;
   todayImage.decoding = 'async';
-  todayImage.alt = 'A photo from your past';
-  const memoryCopy = make('p', 'echo__memory-copy', 'A photo from your past', todayScreen);
-  const todayActions = make('div', 'echo__phone-actions', undefined, todayScreen);
-  const another = make('button', 'echo__phone-button echo__phone-button--quiet', 'Another', todayActions);
-  another.type = 'button';
-  const keep = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep', todayActions);
+  const yearChip = make('span', 'echo__chip echo__chip--year', '', todayPhoto);
+  const chips = make('span', 'echo__chips', undefined, todayPhoto);
+  const dateChip = make('span', 'echo__chip', '', chips);
+  const agoChip = make('span', 'echo__chip', '', chips);
+  const controls = make('div', 'echo__controls', undefined, todayScreen);
+  make('span', 'echo__controls-pad', '', controls).setAttribute('aria-hidden', 'true');
+  const keep = make('button', 'echo__shutter', undefined, controls);
   keep.type = 'button';
-
-  const choiceScreen = make('div', 'echo__phone-view echo__choice', undefined, phoneScreen);
-  choiceScreen.hidden = true;
-  make('h3', 'echo__phone-title', 'Keep', choiceScreen);
-  const choicePhoto = make('div', 'echo__choice-photo', undefined, choiceScreen);
-  const choiceImage = make('img', '', undefined, choicePhoto);
-  choiceImage.width = 1284;
-  choiceImage.height = 2778;
-  choiceImage.decoding = 'async';
-  choiceImage.alt = 'A photo from your past';
-  const choiceActions = make('div', 'echo__phone-options', undefined, choiceScreen);
-  const addLine = make('button', 'echo__phone-option', 'Add a line', choiceActions);
-  const voiceNote = make('button', 'echo__phone-option', 'Voice note', choiceActions);
-  voiceNote.setAttribute('aria-label', 'Voice note. Hold to animate a waveform; no audio is recorded.');
-  voiceNote.setAttribute('aria-pressed', 'false');
-  const keepAsIs = make('button', 'echo__phone-option', 'Keep as it is', choiceActions);
-  [addLine, voiceNote, keepAsIs].forEach((b) => { b.type = 'button'; });
-  const voicePanel = make('div', 'echo__voice-panel', undefined, choiceScreen);
-  voicePanel.hidden = true;
-  voicePanel.setAttribute('role', 'group');
-  voicePanel.setAttribute('aria-label', 'Visual voice-note simulation');
-  const voiceWave = make('div', 'echo__voice-wave', undefined, voicePanel);
-  voiceWave.setAttribute('aria-hidden', 'true');
-  for (let i = 0; i < 17; i++) {
-    const bar = make('span', '', undefined, voiceWave);
-    bar.style.setProperty('--h', `${6 + ((i * 7) % 13)}px`);
-  }
-  const voiceReadyText = make('span', 'echo__voice-label', 'Waveform', voicePanel);
-  const keepVoice = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep voice', voicePanel);
-  keepVoice.type = 'button';
-  keepVoice.hidden = true;
-
-  const lineScreen = make('form', 'echo__phone-view echo__line-form', undefined, phoneScreen);
-  lineScreen.hidden = true;
-  make('h3', 'echo__phone-title', 'Add a line', lineScreen);
-  const linePhoto = make('div', 'echo__choice-photo', undefined, lineScreen);
-  const lineImage = make('img', '', undefined, linePhoto);
-  lineImage.width = 1284;
-  lineImage.height = 2778;
-  lineImage.decoding = 'async';
-  lineImage.alt = 'A photo from your past';
-  const lineInput = make('input', 'echo__line-input', undefined, lineScreen);
-  lineInput.type = 'text';
-  lineInput.maxLength = 80;
-  lineInput.autocomplete = 'off';
-  lineInput.setAttribute('aria-label', 'Add a line, up to 80 characters');
-  lineInput.placeholder = 'A few words';
-  const lineBottom = make('div', 'echo__line-bottom', undefined, lineScreen);
-  const lineCount = make('span', 'echo__line-count', '0/80', lineBottom);
-  const lineBack = make('button', 'echo__phone-button echo__phone-button--quiet', 'Back', lineBottom);
-  lineBack.type = 'button';
-  const lineSave = make('button', 'echo__phone-button echo__phone-button--keep', 'Keep', lineBottom);
-  lineSave.type = 'submit';
+  keep.setAttribute('aria-label', 'Keep this memory');
+  const next = make('button', 'echo__round', undefined, controls);
+  next.type = 'button';
+  next.setAttribute('aria-label', 'Another photo');
+  next.innerHTML = ICON.chevron;
+  const todayHint = make('p', 'echo__today-hint', 'Tap to keep · swipe for another', todayScreen);
+  todayHint.setAttribute('aria-hidden', 'true');
+  const composer = make('form', 'echo__composer', undefined, todayScreen);
+  composer.hidden = true;
+  const note = make('textarea', 'echo__note', undefined, composer);
+  note.rows = 2;
+  note.maxLength = 140;
+  note.setAttribute('aria-label', 'Note');
+  make('span', 'echo__rule', '', composer).setAttribute('aria-hidden', 'true');
+  const composerActions = make('div', 'echo__composer-actions', undefined, composer);
+  const record = make('button', 'echo__capsule echo__capsule--record', undefined, composerActions);
+  record.type = 'button';
+  record.innerHTML = `${ICON.mic}<span>Record</span>`;
+  record.setAttribute('aria-label', 'Record voice note. A demo: no audio is recorded.');
+  const recordLabel = record.querySelector('span');
+  const play = make('span', 'echo__capsule-play', undefined, composerActions);
+  play.innerHTML = ICON.play;
+  play.hidden = true;
+  play.setAttribute('aria-hidden', 'true');
+  make('span', 'echo__grow', '', composerActions);
+  const save = make('button', 'echo__capsule echo__capsule--save', undefined, composerActions);
+  save.type = 'submit';
+  save.innerHTML = `${ICON.check}<span>Save</span>`;
 
   const wallScreen = make('div', 'echo__phone-view echo__wall', undefined, phoneScreen);
   wallScreen.hidden = true;
-  const wallHead = make('div', 'echo__wall-head', undefined, wallScreen);
-  wallHead.tabIndex = -1;
-  make('h3', 'echo__phone-title', 'Memory wall', wallHead);
-  const streak = make('span', 'echo__streak', '1 day', wallHead);
-  const wallGrid = make('div', 'echo__wall-grid', undefined, wallScreen);
-  const wallCard = make('div', 'echo__wall-card', undefined, wallGrid);
-  const wallPhoto = make('div', 'echo__wall-photo', undefined, wallCard);
-  const wallImage = make('img', '', undefined, wallPhoto);
-  wallImage.width = 1284;
-  wallImage.height = 2778;
-  wallImage.decoding = 'async';
-  wallImage.alt = 'Kept memory';
-  const wallCaption = make('span', 'echo__wall-caption', '', wallCard);
-  for (let i = 0; i < 3; i++) {
-    const blank = make('span', 'echo__wall-blank', '', wallGrid);
-    blank.setAttribute('aria-hidden', 'true');
-  }
-  const wallBack = make('button', 'echo__phone-button echo__phone-button--quiet echo__wall-back', 'Today', wallScreen);
-  wallBack.type = 'button';
-  phone.appendChild(phoneScreen);
-  phoneScreen.append(todayScreen, choiceScreen, lineScreen, wallScreen);
+  wallScreen.tabIndex = -1;
+  const filters = make('div', 'echo__filters', undefined, wallScreen);
+  filters.setAttribute('aria-hidden', 'true');
+  ['All', 'Favorites', 'Voice notes'].forEach((t, i) => make('span', `echo__filter${i ? '' : ' is-on'}`, t, filters));
+  const wallGrid = make('ul', 'echo__wall-grid', undefined, wallScreen);
+  wallGrid.setAttribute('aria-label', 'Kept memories');
+
+  const tabs = make('nav', 'echo__tabs', undefined, phoneScreen);
+  tabs.setAttribute('aria-label', 'Echo tabs');
+  const wallTab = make('button', 'echo__tab echo__tab--wall', undefined, tabs);
+  wallTab.type = 'button';
+  wallTab.setAttribute('aria-label', 'Wall');
+  wallTab.innerHTML = ICON.grid;
+  const tabPill = make('span', 'echo__tab-pill', undefined, tabs);
+  const todayTab = make('button', 'echo__tab echo__tab--today', undefined, tabPill);
+  todayTab.type = 'button';
+  todayTab.setAttribute('aria-label', 'Today');
+  todayTab.innerHTML = ICON.photo;
+  const gear = make('span', 'echo__tab echo__tab--quiet', undefined, tabPill);
+  gear.setAttribute('aria-hidden', 'true');
+  gear.innerHTML = ICON.gear;
   const phoneLive = make('p', 'echo__sr', '', phone);
   phoneLive.setAttribute('aria-live', 'polite');
 
@@ -451,111 +465,113 @@ export function mount(root, { reduced = false } = {}) {
   function focusHero() { cards[order[CENTER]].node.focus({ preventScroll: true }); }
   const onClickBlock = (e) => e.preventDefault();
 
-  let photoIndex = 0, phoneView = 'today', voiceTimer = 0, voicePointer = null, voiceKeyDown = false, ignoreVoiceClick = false, swipe = null;
+  let photoIndex = 0, phoneView = 'today', composing = false, recording = 0, recordStart = 0, hasVoice = false, swipe = null, streak = STREAK;
+  const kept = [], keptFiles = new Set();
   const phoneOffs = [];
   const listen = (target, event, fn, options) => {
     target.addEventListener(event, fn, options);
     phoneOffs.push(() => target.removeEventListener(event, fn, options));
   };
-  // cover the frame with the photo part of the screenshot, so no card label or caption shows at the edges
-  function setCrop(img, card) {
-    const [x0, y0, x1, y1] = card.photoCrop || card.crop;
-    img.src = `${IMG}${card.file}.webp`;
-    const bw = img.parentElement.clientWidth, bh = img.parentElement.clientHeight;
-    if (!bw || !bh) return; // hidden view: set again when it is shown
-    const s = Math.max(bw / (x1 - x0), bh / (y1 - y0));
-    img.style.width = `${(924 * s).toFixed(1)}px`;
-    img.style.transform = `translate(${(bw / 2 - (x0 + x1) / 2 * s).toFixed(1)}px,${(bh / 2 - (y0 + y1) / 2 * s).toFixed(1)}px)`;
+  const today = new Date();
+  const dayLabel = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const waiting = () => PHOTOS.filter((p) => !keptFiles.has(p.file));
+  function setTodayPhoto() {
+    const list = waiting();
+    if (!list.length) { keptFiles.clear(); return setTodayPhoto(); }
+    const p = list[photoIndex % list.length];
+    todayImage.src = `${IMG}${p.file}.webp`;
+    todayImage.alt = p.alt;
+    yearChip.textContent = String(today.getFullYear() - p.years);
+    dateChip.textContent = dayLabel;
+    agoChip.textContent = `${p.years} ${p.years === 1 ? 'year' : 'years'} ago today`;
+    return p;
   }
-  function setPhonePhoto() {
-    const card = CARDS[photoIndex];
-    setCrop(todayImage, card);
-    setCrop(choiceImage, card);
-    setCrop(lineImage, card);
-    setCrop(wallImage, card);
+  function tile(p, text, voice, fresh) {
+    const li = document.createElement('li');
+    li.className = `echo__tile${fresh ? ' is-arriving' : ''}`;
+    li.innerHTML = `<img src="${IMG}${p.file}.webp" width="420" height="600" alt="" decoding="async">${voice ? `<span class="echo__tile-voice">${ICON.play}</span>` : ''}`;
+    if (text) make('span', 'echo__tile-note', text, li);
+    li.setAttribute('aria-label', `${p.alt}${text ? `: ${text}` : ''}${voice ? ', with a voice note' : ''}`);
+    return li;
+  }
+  function renderWall(fresh) {
+    wallGrid.replaceChildren(...kept.slice(0, 3).map((k, i) => tile(k.photo, k.note, k.voice, fresh && i === 0)), ...SHELF.map((s) => tile(s, '', s.voice, false)));
+    const n = kept.length + SHELF.length;
+    keptCount.textContent = `${n} ${n === 1 ? 'memory' : 'memories'} kept`;
   }
   function showPhoneView(name) {
     phoneView = name;
     todayScreen.hidden = name !== 'today';
-    choiceScreen.hidden = name !== 'choice';
-    lineScreen.hidden = name !== 'line';
     wallScreen.hidden = name !== 'wall';
-    setPhonePhoto();
+    titleText.textContent = name === 'wall' ? 'Wall' : 'Today';
+    keptCount.hidden = name !== 'wall';
+    wallTab.classList.toggle('is-on', name === 'wall');
+    todayTab.classList.toggle('is-on', name === 'today');
+    wallTab.setAttribute('aria-current', name === 'wall' ? 'page' : 'false');
+    todayTab.setAttribute('aria-current', name === 'today' ? 'page' : 'false');
+  }
+  function setComposing(on) {
+    composing = on;
+    todayScreen.classList.toggle('is-composing', on);
+    composer.hidden = !on;
+    controls.hidden = on;
+    todayHint.hidden = on;
+    if (on) {
+      note.value = '';
+      note.placeholder = PROMPTS[(photoIndex + kept.length) % PROMPTS.length];
+      hasVoice = false;
+      play.hidden = true;
+      recordLabel.textContent = 'Record';
+    } else stopRecording(false);
   }
   function nextPhoto() {
-    if (phoneView !== 'today') return;
-    photoIndex = (photoIndex + 1) % CARDS.length;
-    setPhonePhoto();
+    if (phoneView !== 'today' || composing) return;
+    photoIndex++;
+    setTodayPhoto();
     phoneLive.textContent = 'Another photo';
   }
-  function keepCurrent(kind) {
-    if (voiceTimer) clearTimeout(voiceTimer);
-    voiceTimer = 0;
-    const line = kind === 'line' ? lineInput.value.slice(0, 80) : '';
-    wallCaption.textContent = kind === 'line' ? line : kind === 'voice' ? 'Voice note' : '';
-    wallCard.setAttribute('aria-label', kind === 'voice'
-      ? 'Kept photo with a simulated voice-note waveform; no audio was recorded'
-      : 'Kept photo');
-    wallCard.classList.add('is-arriving');
+  function tickRecording() {
+    recordLabel.textContent = `${Math.floor((performance.now() - recordStart) / 1000)}s`;
+  }
+  function stopRecording(keepIt) {
+    if (!recording) return;
+    clearInterval(recording);
+    recording = 0;
+    record.classList.remove('is-recording');
+    if (keepIt) { hasVoice = true; play.hidden = false; }
+    recordLabel.textContent = hasVoice ? 'Re-record' : 'Record';
+    record.setAttribute('aria-label', `${hasVoice ? 'Record voice note again' : 'Record voice note'}. A demo: no audio is recorded.`);
+  }
+  function toggleRecording() {
+    if (recording) { stopRecording(true); phoneLive.textContent = 'Voice note added'; return; }
+    hasVoice = false;
+    play.hidden = true;
+    recordStart = performance.now();
+    record.classList.add('is-recording');
+    record.setAttribute('aria-label', 'Stop recording voice note');
+    tickRecording();
+    recording = setInterval(tickRecording, 250);
+    phoneLive.textContent = 'Recording, simulated';
+  }
+  function saveMemory() {
+    stopRecording(true);
+    const list = waiting();
+    const photo = list[photoIndex % list.length];
+    kept.unshift({ photo, note: note.value.trim().slice(0, 140), voice: hasVoice });
+    keptFiles.add(photo.file); // the saved photo stays off Today
+    photoIndex = 0;
+    setTodayPhoto();
+    streak = STREAK + 1;
+    streakNum.textContent = String(streak);
+    streakPill.setAttribute('aria-label', `${streak} day streak`);
+    setComposing(false);
+    renderWall(true);
     showPhoneView('wall');
-    phoneLive.textContent = 'Kept. Memory wall. 1 day.';
-    wallHead.focus({ preventScroll: true });
-  }
-  function startVoice() {
-    if (phoneView !== 'choice') return;
-    if (voiceTimer) clearTimeout(voiceTimer);
-    voiceTimer = 0;
-    voicePanel.hidden = false;
-    voicePanel.classList.add('is-active');
-    voiceReadyText.textContent = 'Waveform';
-    keepVoice.hidden = true;
-    voiceNote.setAttribute('aria-pressed', 'true');
-  }
-  function finishVoice() {
-    if (phoneView !== 'choice') return;
-    voicePanel.classList.remove('is-active');
-    voiceNote.setAttribute('aria-pressed', 'false');
-    voiceReadyText.textContent = 'Waveform ready';
-    keepVoice.hidden = false;
-    phoneLive.textContent = 'Waveform ready';
-  }
-  function onVoicePointerDown(e) {
-    if (e.button > 0 || phoneView !== 'choice') return;
-    voicePointer = e.pointerId;
-    ignoreVoiceClick = false;
-    startVoice();
-    try { voiceNote.setPointerCapture(e.pointerId); } catch { /* element may be hidden */ }
-  }
-  function onVoicePointerUp(e) {
-    if (voicePointer !== e.pointerId) return;
-    voicePointer = null;
-    finishVoice();
-    ignoreVoiceClick = true;
-  }
-  function onVoiceKeyDown(e) {
-    if ((e.key !== 'Enter' && e.key !== ' ') || e.repeat || phoneView !== 'choice') return;
-    e.preventDefault();
-    voiceKeyDown = true;
-    ignoreVoiceClick = false;
-    startVoice();
-  }
-  function onVoiceKeyUp(e) {
-    if (!voiceKeyDown || (e.key !== 'Enter' && e.key !== ' ')) return;
-    e.preventDefault();
-    voiceKeyDown = false;
-    finishVoice();
-    ignoreVoiceClick = false;
-  }
-  function onVoiceClick(e) {
-    if (ignoreVoiceClick && e.detail > 0) { ignoreVoiceClick = false; return; }
-    ignoreVoiceClick = false;
-    if (phoneView !== 'choice') return;
-    startVoice();
-    if (reduced) finishVoice();
-    else voiceTimer = setTimeout(finishVoice, 720);
+    phoneLive.textContent = `Saved to the Wall. ${streak} day streak.`;
+    wallScreen.focus({ preventScroll: true });
   }
   function onPhotoDown(e) {
-    if (e.button > 0 || phoneView !== 'today') return;
+    if (e.button > 0 || phoneView !== 'today' || composing) return;
     swipe = { id: e.pointerId, x: e.clientX, y: e.clientY };
     try { todayPhoto.setPointerCapture(e.pointerId); } catch { /* element may be hidden */ }
   }
@@ -564,42 +580,30 @@ export function mount(root, { reduced = false } = {}) {
     const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
     swipe = null;
     if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy)) nextPhoto();
+    else if (Math.abs(dx) < 6 && Math.abs(dy) < 6) keep.click();
   }
-  setPhonePhoto();
-  const photoRo = new ResizeObserver(() => setPhonePhoto());
-  photoRo.observe(phoneScreen);
-  listen(another, 'click', nextPhoto);
+  setTodayPhoto();
+  renderWall(false);
+  showPhoneView('today');
+  listen(next, 'click', nextPhoto);
   listen(keep, 'click', () => {
-    showPhoneView('choice');
-    phoneLive.textContent = 'Choose how to keep it';
-    addLine.focus({ preventScroll: true });
+    setComposing(true);
+    phoneLive.textContent = 'Kept. Add words or a voice note, then Save.';
+    note.focus({ preventScroll: true });
   });
   listen(todayPhoto, 'pointerdown', onPhotoDown);
   listen(todayPhoto, 'pointerup', onPhotoUp);
-  listen(todayPhoto, 'pointercancel', onPhotoUp);
-  listen(addLine, 'click', () => {
-    lineInput.value = '';
-    lineCount.textContent = '0/80';
-    showPhoneView('line');
-    lineInput.focus({ preventScroll: true });
-  });
-  listen(lineInput, 'input', () => { lineCount.textContent = `${lineInput.value.length}/80`; });
-  listen(lineScreen, 'submit', (e) => { e.preventDefault(); keepCurrent('line'); });
-  listen(lineBack, 'click', () => { showPhoneView('choice'); addLine.focus({ preventScroll: true }); });
-  listen(keepAsIs, 'click', () => keepCurrent('still'));
-  listen(voiceNote, 'pointerdown', onVoicePointerDown);
-  listen(voiceNote, 'pointerup', onVoicePointerUp);
-  listen(voiceNote, 'pointercancel', onVoicePointerUp);
-  listen(voiceNote, 'keydown', onVoiceKeyDown);
-  listen(voiceNote, 'keyup', onVoiceKeyUp);
-  listen(voiceNote, 'click', onVoiceClick);
-  listen(keepVoice, 'click', () => keepCurrent('voice'));
-  listen(wallBack, 'click', () => {
-    voicePanel.hidden = true;
-    keepVoice.hidden = true;
-    wallCard.classList.remove('is-arriving');
+  listen(todayPhoto, 'pointercancel', () => { swipe = null; });
+  listen(record, 'click', toggleRecording);
+  listen(composer, 'submit', (e) => { e.preventDefault(); saveMemory(); });
+  listen(note, 'keydown', (e) => { if (e.key === 'Escape') { setComposing(false); keep.focus({ preventScroll: true }); } });
+  listen(wallTab, 'click', () => { if (composing) setComposing(false); showPhoneView('wall'); });
+  listen(todayTab, 'click', () => {
+    if (phoneView === 'today') return;
+    photoIndex = 0;
+    setTodayPhoto();
     showPhoneView('today');
-    nextPhoto();
+    phoneLive.textContent = 'Today';
     keep.focus({ preventScroll: true });
   });
 
@@ -621,10 +625,9 @@ export function mount(root, { reduced = false } = {}) {
     },
     destroy() {
       cancelAnimationFrame(raf);
-      if (voiceTimer) clearTimeout(voiceTimer);
+      if (recording) clearInterval(recording);
       phoneOffs.forEach((off) => off());
       ro.disconnect();
-      photoRo.disconnect();
       fan.removeEventListener('pointerdown', onDown);
       fan.removeEventListener('pointermove', onMove);
       fan.removeEventListener('pointerup', onUp);

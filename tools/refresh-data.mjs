@@ -8,6 +8,7 @@ const ROOT = new URL('../', import.meta.url);
 const LIVE = new URL('assets/data/live.json', ROOT);
 const WEEKS = new URL('assets/data/weeks.json', ROOT);
 const F1LAP = new URL('assets/data/f1lap.json', ROOT);
+const GITLAB = new URL('assets/data/gitlab.json', ROOT);
 const PAGE = new URL('index.html', ROOT);
 const UA = { 'user-agent': 'Mozilla/5.0 (portfolio data refresh; github.com/justAbdulaziz10/Abdulaziz)' };
 
@@ -344,7 +345,14 @@ async function f1Result() {
   return parseF1Result(await get('https://api.jolpi.ca/ergast/f1/current/last/results.json', 'json'));
 }
 
-async function apps() {
+// Apple's lookup API can lag a release by days, so a version never moves backwards.
+const newer = (a, b) => {
+  const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
+  return false;
+};
+
+async function apps(prev = {}) {
   const ids = { echo: '6775021634', docmara: '6780952627' };
   const out = {};
   for (const [k, id] of Object.entries(ids)) {
@@ -359,6 +367,11 @@ async function apps() {
       currentVersionReleaseDate: a.currentVersionReleaseDate ?? null,
       url: a.trackViewUrl ?? `https://apps.apple.com/sa/app/id${id}`,
     };
+    const was = prev[k];
+    if (was?.version && newer(was.version, out[k].version)) {
+      out[k].version = was.version;
+      out[k].currentVersionReleaseDate = was.currentVersionReleaseDate;
+    }
   }
   return out;
 }
@@ -574,6 +587,31 @@ async function work(prev = {}) {
   return out;
 }
 
+// GitLab, where Mara's builds run: pushes per day over the same year as the GitHub chart. Only dates and counts
+// leave here, never project names. Kept apart from the GitHub total, since much of it is the same code.
+export async function gitlab() {
+  const token = process.env.WORK_GITLAB_TOKEN;
+  if (!token) throw new Error('no WORK_GITLAB_TOKEN');
+  const { from } = JSON.parse(await readFile(WEEKS, 'utf8'));
+  const after = new Date(Date.parse(from) - 864e5).toISOString().slice(0, 10);
+  const day = ts => new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+  const counts = new Map();
+  for (let page = 1; ; page++) {
+    if (page > 100) throw new Error('too many pages');
+    const events = await get(`https://gitlab.com/api/v4/users/41425146/events?action=pushed&after=${after}&per_page=100&page=${page}`, 'json', { authorization: `Bearer ${token}` });
+    if (!Array.isArray(events)) throw new Error('unexpected response');
+    for (const e of events) {
+      const d = day(e.created_at);
+      if (d >= from) counts.set(d, (counts.get(d) ?? 0) + 1);
+    }
+    if (events.length < 100) break;
+  }
+  if (!counts.size) throw new Error('no pushes found');
+  const days = [...counts].sort((a, b) => a[0].localeCompare(b[0]));
+  await writeFile(GITLAB, JSON.stringify({ from, to: day(Date.now()), days }));
+  return { pushes: days.reduce((s, d) => s + d[1], 0), activeDays: days.length, first: days[0][0] };
+}
+
 // The page ships with the numbers written in, for crawlers, link previews, print and visitors without
 // JavaScript. Rewrite those copies from the data so they never disagree with what live.js fills in.
 const nfmt = new Intl.NumberFormat('en-US');
@@ -589,6 +627,26 @@ export function bakeFallbacks(html, data) {
     const opened = typeof v === 'number' ? open.replace(/data-count="[^"]*"/, `data-count="${v}"`) : open;
     return opened + esc(out) + close;
   });
+  // The F1 boxes stay hidden until live.js checks the dates, but their text is written in too.
+  const f1 = data.f1, iso = d => String(d).slice(0, 10);
+  if (f1?.raceName && f1.start && Number.isFinite(Date.parse(f1.start))) {
+    html = html.replace(/(<span class="race__name">)[^<]*(<\/span>)/, `$1${esc(f1.locality ? `${f1.raceName}, ${f1.locality}` : f1.raceName)}$2`)
+      .replace(/<time class="race__clock"[^>]*>[^<]*<\/time>/, `<time class="race__clock" datetime="${esc(f1.start)}">${dfmt.format(new Date(`${iso(f1.start)}T00:00:00Z`))}</time>`);
+  }
+  const last = data.f1Result, podium = Array.isArray(last?.podium) ? last.podium.slice(0, 3).filter(d => d?.driver && d.team && d.time) : [];
+  if (last?.raceName && /^\d{4}-\d{2}-\d{2}/.test(String(last.date)) && podium.length === 3) {
+    const row = (d, i) => {
+      const pos = String(d.pos ?? i + 1);
+      return `\n              <li class="last-race__row"><span class="last-race__position${i === 0 ? ' is-p1' : ''}">${esc(pos.startsWith('P') ? pos : `P${pos}`)}</span><span class="last-race__driver"><span class="last-race__name">${esc(d.driver)}</span>${d.code ? `<span class="last-race__code">${esc(d.code)}</span>` : ''}<span class="last-race__team">${esc(d.team)}</span></span><span class="last-race__time">${esc(d.time)}</span></li>`;
+    };
+    html = html.replace(/(<span data-last-race-name>)[^<]*(<\/span>)/, `$1${esc(last.raceName)}$2`)
+      .replace(/<time data-last-race-date[^>]*>[^<]*<\/time>/, `<time data-last-race-date datetime="${iso(last.date)}">${dfmt.format(new Date(`${iso(last.date)}T00:00:00Z`))}</time>`)
+      .replace(/(<ol class="last-race__podium" data-last-race-podium aria-label="Podium">)[\s\S]*?(<\/ol>)/, (all, open, close) => open + podium.map(row).join('') + '\n            ' + close);
+    const fl = last.fastestLap;
+    if (fl?.driver && fl.time) {
+      html = html.replace(/(<p class="last-race__fastest" data-last-race-fastest[^>]*>)[\s\S]*?(<\/p>)/, `$1<span class="last-race__fastest-label">Fastest lap</span><span class="last-race__fastest-value">${esc(fl.driver)}, <span class="last-race__time">${esc(fl.time)}</span></span>$2`);
+    }
+  }
   const courses = Array.isArray(data.learning?.courses) ? data.learning.courses.filter(c => c?.course && c.total > 0).slice(0, 5) : [];
   if (courses.length) {
     html = html.replace(/(<ul class="progress">)[\s\S]*?(\n\s*<\/ul>)/, (all, open, close) => open + courses.map(c =>
@@ -607,7 +665,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } catch (e) {
     console.warn(`keep f1lap: ${e.message}`);
   }
-  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work) })) {
+  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab })) {
     try {
       next[key] = await fn();
       changed = true;

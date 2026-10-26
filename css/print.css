@@ -1,7 +1,7 @@
 /* A compact CV from the portfolio's existing content. */
 @page {
   size: auto;
-  margin: 12mm;
+  margin: 10mm 12mm;
 }
 
 @media print {
@@ -59,6 +59,7 @@
   .scene,
   .project__scene,
   .thread,
+  .thread__status,
   svg,
   img,
   .shot,

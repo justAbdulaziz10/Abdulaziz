@@ -104,7 +104,7 @@
   <section class="year" id="year" data-world="paper" aria-labelledby="year-title">
     <div class="wrap">
       <h2 class="year__title" id="year-title"><span class="num" data-count="6396" data-live="github.total">6,396</span> contributions in the last year</h2>
-      <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">26 October 2026</span>. <span data-live="github.activeDays">299</span> active days, and a run of <span data-live="github.streak">77</span> days in a row that is still going.</p>
+      <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">26 October 2026</span>. <span data-live="github.activeDays">299</span> active days, and a run of <span data-live="github.streak">77</span> days in a row that is still going. Below the axis, <span data-live="gitlab.pushes">1,494</span> pushes to GitLab since <span data-live="gitlab.first" data-fmt="date">23 August 2026</span>, where Mara’s builds run.</p>
       <p class="year__week" data-week hidden><span class="year__week-label">This week:</span> <span class="year__week-items" data-week-items></span></p>
       <div class="scene-slot" data-scene="year"></div>
     </div>
@@ -122,15 +122,15 @@
           <p class="project__kind">An AI-powered health and wellness platform.</p>
           <dl class="project__facts">
             <div><dt>What I did</dt><dd>Product requirements, AI workflows, APIs, QA, analytics and system integrations.</dd></div>
-            <div><dt>Outcome</dt><dd><strong>38</strong> private beta users. Completed <strong>Misk Launchpad Cohort 9</strong>. Incubated at <strong>Monsha’at</strong>.</dd></div>
+            <div><dt>Outcome</dt><dd>Founded in <strong>January 2026</strong>. <strong>250+</strong> people on the waitlist and <strong>38</strong> private beta users. Completed <strong>Misk Launchpad Cohort 9</strong>. Incubated at <strong>Monsha’at</strong>.</dd></div>
             <div><dt>Shipped</dt><dd><strong data-live="work.githubPrs">1,122</strong> pull requests merged across Mara’s repositories, most of them in the Mara app, and <strong data-live="work.gitlabMrs">48</strong> merge requests on GitLab, where the builds run.</dd></div>
           </dl>
           <div class="pm" data-pm hidden>
             <div class="pm__inner">
               <dl class="project__facts pm__facts">
-                <div><dt>Requirement</dt><dd>Show today's health target only when the backend has a valid one for that exact day. Otherwise show nothing, never a guess.</dd></div>
+                <div><dt>Requirement</dt><dd>Show today's health target only when the backend has a valid one for that exact day. Otherwise say it's unavailable and offer one next step, never a guess.</dd></div>
                 <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Read the profile and the local date</li><li>Fingerprint the fields that change the target</li><li>Fetch it through the provider and repository</li><li>Accept only valid v2 data for that day</li><li>Format the result for each screen</li></ol></dd></div>
-                <div><dt>Decision</dt><dd>Validated backend targets only.<span class="pm__why">Over client-side formulas, cached goals or a v1 fallback. The backend owns the calculation, so no screen invents a substitute. When a target is missing, comparisons hide and the recorded data stays visible.</span></dd></div>
+                <div><dt>Decision</dt><dd>Validated backend targets only.<span class="pm__why">Over daily targets computed on the phone, or the v1 contract with its legacy defaults. The backend owns the calculation, and every target shows where it came from. When a target is missing, comparisons hide and the recorded data stays visible.</span></dd></div>
               </dl>
             </div>
           </div>
@@ -153,10 +153,10 @@
           <div class="pm" data-pm hidden>
             <div class="pm__inner">
               <dl class="project__facts pm__facts">
-                <div><dt>Requirement</dt><dd>People with years of photos rarely look back at them. Surface one photo a day from their own library, processed on the device and never uploaded.</dd></div>
-                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Today</li><li>See a photo from your camera roll</li><li>Keep it</li><li>Add words or a voice note, if you want</li><li>Save, and Today moves on</li><li>The saved photo stays off Today, even after relaunch</li></ol></dd></div>
-                <div><dt>Decision</dt><dd>Start from photos people already have.<span class="pm__why">Over a blank journal page or an upload service. No account and no server copy of anyone's photos.</span></dd></div>
-                <div><dt>Result</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,231</strong> active users in the last 28 days. In a simulated library of about 2,700 photos, 40 picks in a row had no two from within three days.</dd></div>
+                <div><dt>Requirement</dt><dd>People with years of photos rarely look back at them. Surface one photo a day from their own library, chosen on the device. Mara's servers never receive the photos.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Today</li><li>See a photo from your camera roll</li><li>Keep it</li><li>Add words or a voice note, if you want</li><li>Save it to the Wall</li><li>The saved photo stays off Today, even after relaunch</li></ol></dd></div>
+                <div><dt>Decision</dt><dd>Start from photos people already have.<span class="pm__why">Over a blank journal page or an upload service. No account, and no copy on Mara's servers. Saved memories sync only through the person's own iCloud.</span></dd></div>
+                <div><dt>Result</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,231</strong> active users in the last 28 days. In a unit test on a simulated library of over 2,000 photos, 40 picks in a row had no two from within three days.</dd></div>
               </dl>
             </div>
           </div>
@@ -173,13 +173,13 @@
           <p class="project__kind">An AI-powered travel platform for the Gulf.</p>
           <dl class="project__facts">
             <div><dt>What it does</dt><dd>Natural-language assistance, personalized trip planning and traveler safety.</dd></div>
-            <div><dt>How</dt><dd>The OpenAI API grounded in a local knowledge base. FastAPI, Supabase and Firebase Auth. A King Saud University team project.</dd></div>
+            <div><dt>How</dt><dd>The OpenAI API, given country-specific facts from Daleelk's own database. FastAPI, PostgreSQL on Supabase and Firebase Auth. A King Saud University team project.</dd></div>
           </dl>
           <div class="pm" data-pm hidden>
             <div class="pm__inner">
               <dl class="project__facts pm__facts">
-                <div><dt>Requirement</dt><dd>Ask for a three-day trip and get at most three dated days, with the activity, meal and cafe counts you asked for and no overlapping times.</dd></div>
-                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Sign in</li><li>Start a new trip</li><li>Enter a destination and a start date</li><li>Get a day-by-day schedule</li></ol></dd></div>
+                <div><dt>Requirement</dt><dd>Ask for a three-day trip and get three dated days, with the activity and cafe counts you asked for, lunch and dinner, and no overlapping times.</dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Sign in</li><li>Start a new trip</li><li>Enter a destination and dates</li><li>Get a day-by-day schedule</li></ol></dd></div>
                 <div><dt>Decision</dt><dd>Answer itinerary questions first, then offer the planner.<span class="pm__why">Over sending people straight to the planner. They get guidance before the builder opens.</span></dd></div>
               </dl>
             </div>
@@ -193,18 +193,18 @@
       <div class="wrap project__grid">
         <div class="project__text">
           <h2 class="project__name" id="rassah-title">Rassah</h2>
-          <p class="project__kind">An AI packing assistant for Saudi online stores.</p>
+          <p class="project__kind">An AI packing assistant MVP for Saudi online stores.</p>
           <dl class="project__facts">
-            <div><dt>Built</dt><dd>End to end in two days, in Tuwaiq Academy's AI product programme with Startupbootcamp and Meta.</dd></div>
-            <div><dt>How</dt><dd>Gemini reads Arabic and English product pages, a 3D packing engine picks the cheapest safe carton, and every run is monitored in production.</dd></div>
+            <div><dt>Built</dt><dd>End to end in two days by a team of three, in Tuwaiq Academy's AI product programme with Startupbootcamp and Meta.</dd></div>
+            <div><dt>How</dt><dd>Gemini reads Arabic and English product descriptions, a 3D packing engine picks the cheapest carton that passes a separate safety check, and each run is logged to a monitoring dashboard with alerts. It runs on a demo store with synthetic products, not a live store.</dd></div>
           </dl>
           <div class="pm" data-pm hidden>
             <div class="pm__inner">
               <dl class="project__facts pm__facts">
                 <div><dt>Requirement</dt><dd>A small-store packer needs a safe carton even when product sizes are missing. With no usable size, ask for a measurement; never guess.</dd></div>
-                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Enter an order number</li><li>Use cached product facts or read them from the product pages</li><li>Search for the cheapest carton that fits safely</li><li>Ask for a measurement, or split into up to four cartons</li><li>Validate the layout</li><li>Show the carton, Arabic packing steps and the 3D layout</li></ol></dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Enter an order number from the demo store</li><li>Use cached product facts or read them from the product text</li><li>Search for the cheapest carton that fits safely</li><li>Ask for a measurement, or split into up to four cartons</li><li>Validate the layout</li><li>Show the carton, Arabic packing steps and the 3D layout</li></ol></dd></div>
                 <div><dt>Decision</dt><dd>Gemini reads the product text; code packs and checks.<span class="pm__why">Over letting a language model compute and approve the layout. Geometry needs exact maths.</span></dd></div>
-                <div><dt>Result</dt><dd>All 258 feasible benchmark cases produced valid layouts, on synthetic data rather than a live store.</dd></div>
+                <div><dt>Result</dt><dd>All 258 feasible cases in a synthetic benchmark produced valid layouts. No real store data was used.</dd></div>
               </dl>
             </div>
           </div>
@@ -227,7 +227,7 @@
       <div class="wrap project__grid project__grid--stack">
         <div class="project__text">
           <h2 class="project__name" id="pitlane-title">Pit Lane Hub</h2>
-          <p class="project__kind">Live Formula 1, F2 and F3 data. Free and open source.</p>
+          <p class="project__kind">Live Formula 1 data, with F2 and F3 guides. Free and open source.</p>
           <dl class="project__facts">
             <div><dt>Inside</dt><dd>Live timing, standings, driver comparisons, track maps and every season from 2023 to 2026.</dd></div>
             <div><dt>Why</dt><dd>I follow Formula 1 closely enough to build my own timing screen.</dd></div>
@@ -236,7 +236,7 @@
             <div class="pm__inner">
               <dl class="project__facts pm__facts">
                 <div><dt>Requirement</dt><dd>Follow a session live: timing and positions, or the entry list when no live data is coming in.</dd></div>
-                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Live</li><li>Load the session</li><li>Show real positions, or the entry list</li><li>Refresh every ten seconds while a session runs</li></ol></dd></div>
+                <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Live</li><li>Load the session</li><li>Show real positions, or the entry list</li><li>Reload for positions at most ten seconds old</li></ol></dd></div>
                 <div><dt>Decision</dt><dd>Show the entry list when there's no live data.<span class="pm__why">Over drawing a timing grid with made-up positions.</span></dd></div>
               </dl>
             </div>
@@ -244,14 +244,18 @@
           <p class="project__links"><a class="link" href="https://f1-xi-weld.vercel.app" target="_blank" rel="noopener noreferrer">Open Pit Lane Hub</a><a class="link" href="https://github.com/justAbdulaziz10/Pit-Lane-Hub" target="_blank" rel="noopener noreferrer">Source</a></p>
         </div>
         <div class="project__live">
-          <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name"></span> <time class="race__clock"></time> <a class="race__follow link" href="https://f1-xi-weld.vercel.app/live" target="_blank" rel="noopener noreferrer" hidden>Follow it live on Pit Lane Hub</a></p>
+          <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name">Mexico City Grand Prix, Mexico City</span> <time class="race__clock" datetime="2026-11-01T20:00:00Z">1 November 2026</time> <a class="race__follow link" href="https://f1-xi-weld.vercel.app/live" target="_blank" rel="noopener noreferrer" hidden>Follow it live on Pit Lane Hub</a></p>
           <section class="last-race" data-last-race hidden aria-labelledby="last-race-title">
             <div class="last-race__heading">
               <h3 class="last-race__label" id="last-race-title">Last race</h3>
-              <p class="last-race__event"><span data-last-race-name></span>, <time data-last-race-date></time></p>
+              <p class="last-race__event"><span data-last-race-name>United States Grand Prix</span>, <time data-last-race-date datetime="2026-10-25">25 October 2026</time></p>
             </div>
-            <ol class="last-race__podium" data-last-race-podium aria-label="Podium"></ol>
-            <p class="last-race__fastest" data-last-race-fastest hidden></p>
+            <ol class="last-race__podium" data-last-race-podium aria-label="Podium">
+              <li class="last-race__row"><span class="last-race__position is-p1">P1</span><span class="last-race__driver"><span class="last-race__name">Andrea Kimi Antonelli</span><span class="last-race__code">ANT</span><span class="last-race__team">Mercedes</span></span><span class="last-race__time">1:35:16.650</span></li>
+              <li class="last-race__row"><span class="last-race__position">P2</span><span class="last-race__driver"><span class="last-race__name">Charles Leclerc</span><span class="last-race__code">LEC</span><span class="last-race__team">Ferrari</span></span><span class="last-race__time">+13.078</span></li>
+              <li class="last-race__row"><span class="last-race__position">P3</span><span class="last-race__driver"><span class="last-race__name">Max Verstappen</span><span class="last-race__code">VER</span><span class="last-race__team">Red Bull</span></span><span class="last-race__time">+17.485</span></li>
+            </ol>
+            <p class="last-race__fastest" data-last-race-fastest hidden><span class="last-race__fastest-label">Fastest lap</span><span class="last-race__fastest-value">Charles Leclerc, <span class="last-race__time">1:37.976</span></span></p>
           </section>
         </div>
         <div class="project__scene project__scene--wide"><div class="scene-slot" data-scene="circuit"></div></div>
@@ -284,18 +288,18 @@
               <li><a class="track" href="#mara" data-track="A1" data-tone="mara"><span class="track__no" aria-hidden="true">A1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-mara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">Mara</span><span class="track__year">2025</span><span class="track__desc">An AI-powered health and wellness platform.</span></a></li>
               <li><a class="track" href="#echo" data-track="A2" data-tone="echo"><span class="track__no" aria-hidden="true">A2</span><span class="track__name"><img class="track__icon" src="assets/img/icon-echo.webp" width="192" height="192" alt="" loading="lazy" decoding="async">Echo</span><span class="track__year">2026</span><span class="track__desc">A 0-to-1, privacy-first photo-memory app for iPhone.</span></a></li>
               <li><a class="track" href="#daleelk" data-track="A3" data-tone="daleelk"><span class="track__no" aria-hidden="true">A3</span><span class="track__name">Daleelk</span><span class="track__year">2025</span><span class="track__desc">An AI-powered travel platform for the Gulf.</span></a></li>
-              <li><a class="track" href="#rassah" data-track="A4" data-tone="rassah"><span class="track__no" aria-hidden="true">A4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-rassah.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Rassah</span><span class="track__year">2026</span><span class="track__desc">An AI packing assistant for Saudi online stores.</span></a></li>
-              <li><a class="track" href="#pitlane" data-track="A5" data-tone="pitlane"><span class="track__no" aria-hidden="true">A5</span><span class="track__name"><img class="track__icon" src="assets/img/icon-pit-lane-hub.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Pit Lane Hub</span><span class="track__year">2026</span><span class="track__desc">Live Formula 1, F2 and F3 data. Free and open source.</span></a></li>
+              <li><a class="track" href="#rassah" data-track="A4" data-tone="rassah"><span class="track__no" aria-hidden="true">A4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-rassah.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Rassah</span><span class="track__year">2026</span><span class="track__desc">An AI packing assistant MVP for Saudi online stores.</span></a></li>
+              <li><a class="track" href="#pitlane" data-track="A5" data-tone="pitlane"><span class="track__no" aria-hidden="true">A5</span><span class="track__name"><img class="track__icon" src="assets/img/icon-pit-lane-hub.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Pit Lane Hub</span><span class="track__year">2026</span><span class="track__desc">Live Formula 1 data, with F2 and F3 guides. Free and open source.</span></a></li>
             </ol>
           </div>
           <div class="side">
             <h3 class="side__name" id="side-b">Side B</h3>
             <ol class="more__list tracks" aria-labelledby="side-b">
-              <li><a class="track" href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer" data-track="B1"><span class="track__no" aria-hidden="true">B1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-docmara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">DocMara</span><span class="track__year">2026</span><span class="track__desc">Scan, compress, convert, organise and sign files on device, in Arabic and English. iPhone, iPad and Mac. Rated <span data-live="apps.docmara.rating">4.2</span>.</span></a></li>
-              <li><a class="track" href="https://github.com/justAbdulaziz10/Halo" target="_blank" rel="noopener noreferrer" data-track="B2"><span class="track__no" aria-hidden="true">B2</span><span class="track__name">Halo</span><span class="track__year">2026</span><span class="track__desc">An open-source AI inbox agent: a morning briefing, replies drafted in your tone and rules that act on their own.</span></a></li>
+              <li><a class="track" href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer" data-track="B1"><span class="track__no" aria-hidden="true">B1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-docmara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">DocMara</span><span class="track__year">2026</span><span class="track__desc">Scan, compress, convert, organise and sign files on device, in <span data-live="apps.docmara.languages">39</span> languages including Arabic. iPhone, iPad and Mac. Rated <span data-live="apps.docmara.rating">4.2</span>.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/Halo" target="_blank" rel="noopener noreferrer" data-track="B2"><span class="track__no" aria-hidden="true">B2</span><span class="track__name">Halo</span><span class="track__year">2026</span><span class="track__desc">An open-source AI inbox agent: a morning briefing, replies drafted in your tone and one-tap cleanup of noise.</span></a></li>
               <li><a class="track" href="https://github.com/justAbdulaziz10/ObsessionSystem" target="_blank" rel="noopener noreferrer" data-track="B3"><span class="track__no" aria-hidden="true">B3</span><span class="track__name">ObsessionSystem</span><span class="track__year">2026</span><span class="track__desc">Rules, skills and a delivery gate that make an AI coding agent prove its work before anything ships.</span></a></li>
-              <li><a class="track" href="https://github.com/justAbdulaziz10/Deadware-Risk-Scanner" target="_blank" rel="noopener noreferrer" data-track="B4"><span class="track__no" aria-hidden="true">B4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-deadware.svg" width="32" height="32" alt="" loading="lazy" decoding="async">Deadware Risk Scanner</span><span class="track__year">2026</span><span class="track__desc">Finds abandoned and unmaintained open-source packages in dependency files before they break a build.</span></a></li>
-              <li><a class="track" href="https://github.com/justAbdulaziz10/photo-manager" target="_blank" rel="noopener noreferrer" data-track="B5"><span class="track__no" aria-hidden="true">B5</span><span class="track__name">Photo Manager</span><span class="track__year">2025</span><span class="track__desc">Tag-based photo albums on hand-written data structures, for CSC 212 at King Saud University.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/Deadware-Risk-Scanner" target="_blank" rel="noopener noreferrer" data-track="B4"><span class="track__no" aria-hidden="true">B4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-deadware.svg" width="32" height="32" alt="" loading="lazy" decoding="async">Deadware Risk Scanner</span><span class="track__year">2026</span><span class="track__desc">Finds abandoned and unmaintained npm and PyPI packages in dependency files before they break a build.</span></a></li>
+              <li><a class="track" href="https://github.com/justAbdulaziz10/photo-manager" target="_blank" rel="noopener noreferrer" data-track="B5"><span class="track__no" aria-hidden="true">B5</span><span class="track__name">Photo Manager</span><span class="track__year">2025</span><span class="track__desc">Tag-based photo albums on hand-written data structures, a team project for CSC 212 at King Saud University.</span></a></li>
             </ol>
           </div>
         </div>
@@ -437,10 +441,10 @@
               <button class="tool__name" type="button" aria-pressed="false" disabled>Cloudflare Workers</button>
               <span class="tool__projects"><a href="https://iammara.com" target="_blank" rel="noopener noreferrer">iammara.com</a></span>
             </li>
-            <li class="tool" data-tracks="A1 B1">
+            <li class="tool" data-tracks="A1">
               <svg class="tool__glyph" aria-hidden="true" focusable="false"><use href="assets/img/tools.svg#t-docker"></use></svg>
               <button class="tool__name" type="button" aria-pressed="false" disabled>Docker</button>
-              <span class="tool__projects"><a href="#mara">Mara</a>, <a href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer">DocMara</a></span>
+              <span class="tool__projects"><a href="#mara">Mara</a></span>
             </li>
             <li class="tool" data-tracks="A4 A5">
               <svg class="tool__glyph" aria-hidden="true" focusable="false"><use href="assets/img/tools.svg#t-vitest"></use></svg>
@@ -470,17 +474,17 @@
         <li data-key="edu" data-line="edu" data-name="King Saud University" data-when="2022" data-end-name="B.Sc. Computer Information Systems" data-end-when="2026"><time>2022 – 2026</time> <h3>King Saud University</h3> <p>B.Sc. Computer Information Systems</p></li>
         <li class="tube__extra" data-key="hcia" data-line="edu" data-name="HCIA-Security" data-when="2023"><time>2023</time> <h3>HCIA-Security V3.0</h3> <p class="tube__org">Huawei</p></li>
         <li class="tube__extra" data-key="cs50" data-line="edu" data-name="CS50" data-when="2024"><time>2024</time> <h3>CS50's Introduction to Computer Science</h3> <p class="tube__org">Harvard</p></li>
-        <li data-key="mara" data-line="prod" data-name="Mara" data-when="2025"><time>2025</time> <h3>Started building Mara</h3> <p>Misk Launchpad Cohort 9 and Monsha’at incubation; private beta of 38 users.</p></li>
+        <li data-key="mara" data-line="prod" data-name="Mara" data-when="2025"><time>2025</time> <h3>Started building Mara</h3> <p>Founded in January 2026. Completed Misk Launchpad Cohort 9.</p></li>
         <li class="tube__extra" data-key="dlai" data-line="edu" data-name="Maths for ML" data-when="2025"><time>2025</time> <h3>Mathematics for Machine Learning and Data Science</h3> <p class="tube__org">DeepLearning.AI</p></li>
         <li class="tube__extra" data-key="daleelk" data-line="prod" data-name="Daleelk" data-when="2025"><time>2025</time> <h3>Daleelk</h3> <p>An AI travel platform for the Gulf, built as a King Saud University team project.</p></li>
         <li class="tube__extra" data-key="tuwaiq" data-line="edu" data-name="Tuwaiq Academy" data-when="2025"><time>2025</time> <h3>Cloud engineering and software testing</h3> <p class="tube__org">Tuwaiq Academy</p> <p>Cloud Engineering Solutions Program Using Google Compute Engine, and Fundamentals of Software Testing Using Agile and Automation.</p></li>
-        <li class="tube__extra" data-key="pitlane" data-line="prod" data-name="Pit Lane Hub" data-when="Feb 2026"><time datetime="2026-02">February 2026</time> <h3>Started Pit Lane Hub</h3> <p>Live Formula 1, F2 and F3 data. Free and open source.</p></li>
+        <li class="tube__extra" data-key="pitlane" data-line="prod" data-name="Pit Lane Hub" data-when="Feb 2026"><time datetime="2026-02">February 2026</time> <h3>Started Pit Lane Hub</h3> <p>Live Formula 1 data, with F2 and F3 guides. Free and open source.</p></li>
         <li class="tube__extra" data-key="locket" data-line="work" data-name="Locket" data-when="May 2026"><time datetime="2026-05">May 2026</time> <h3>Security disclosure to Locket</h3> <p>A coordinated, good-faith report to Locket Labs on how accounts are protected.</p></li>
         <li data-key="echo" data-line="prod" data-name="Echo" data-when="Jun 2026"><time datetime="2026-06">June 2026</time> <h3>Echo on the App Store</h3></li>
         <li data-key="coop" data-line="work" data-name="Air Connectivity Program" data-when="Jun – Sep 2026"><time>Jun – Sep 2026</time> <h3>Digital Systems &amp; Business Analysis Co-op Trainee</h3> <p class="tube__org">Air Connectivity Program</p> <p>QA testing, system reviews, issue analysis and technical documentation.</p></li>
         <li data-key="docmara" data-line="prod" data-name="DocMara" data-when="Jul 2026"><time datetime="2026-07">July 2026</time> <h3>DocMara on the App Store</h3></li>
         <li class="tube__extra" data-key="tuwaiqai" data-line="edu" data-name="AI product programme" data-when="Oct 2026"><time datetime="2026-10">October 2026</time> <h3>AI product programme</h3> <p class="tube__org">Tuwaiq Academy, with Startupbootcamp and Meta</p></li>
-        <li data-key="rassah" data-line="prod" data-name="Rassah" data-when="Oct 2026"><time datetime="2026-10">October 2026</time> <h3>Rassah</h3> <p>Built in two days in Tuwaiq Academy's AI product programme.</p></li>
+        <li data-key="rassah" data-line="prod" data-name="Rassah" data-when="Oct 2026"><time datetime="2026-10">October 2026</time> <h3>Rassah</h3> <p>An MVP, built in two days by a team of three.</p></li>
       </ol>
       <div class="learn">
         <div class="learn__certs print-only" hidden>

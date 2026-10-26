@@ -307,6 +307,10 @@
     font-weight: 700;
   }
 
+  /* Mara's outcome and shipped counts share one line of print */
+  #mara .project__facts > div:nth-child(n + 2) { display: inline; }
+  #mara .project__facts > div:nth-child(3)::before { content: " "; }
+
   #mara .project__facts > div:first-child,
   #echo .project__facts > div:first-child,
   #daleelk .project__facts > div:first-child,

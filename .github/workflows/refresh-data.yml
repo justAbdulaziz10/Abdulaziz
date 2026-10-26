@@ -21,11 +21,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch GitHub, Letterboxd, OpenF1, App Store and RevenueCat data
+      - name: Fetch GitHub, GitLab, Letterboxd, OpenF1, App Store and RevenueCat data
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REVENUECAT_ECHO_KEY: ${{ secrets.REVENUECAT_ECHO_KEY }}
           REVENUECAT_DOCMARA_KEY: ${{ secrets.REVENUECAT_DOCMARA_KEY }}
+          # optional read-only tokens that can see Mara's private repos; unset, the Mara counts keep their last value
+          WORK_GITHUB_TOKEN: ${{ secrets.WORK_GITHUB_TOKEN }}
+          WORK_GITLAB_TOKEN: ${{ secrets.WORK_GITLAB_TOKEN }}
         run: node tools/refresh-data.mjs
       - name: Redraw the link preview
         run: node tools/og.mjs

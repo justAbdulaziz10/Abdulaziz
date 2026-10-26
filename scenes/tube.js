@@ -1,5 +1,5 @@
 // Scene: tube — the page line becomes an original, schematic route map. Products branches at Mara and Work
-// at Echo; each branch ends at a supplied project or co-op fact. Certificates and programmes are ticks on Education. Education runs from King Saud University
+// just before Echo; each branch ends at a supplied project or co-op fact. Certificates and programmes are ticks on Education. Education runs from King Saud University
 // to the B.Sc. endpoint. Stations appear as their lines draw; hover, tap or focus one to read its detail.
 // Phones get the same 45/90-degree geometry running vertically.
 // Facts come from the <ol class="tube__list"> in the section (the fallback below is for the harness only).
@@ -29,6 +29,7 @@ const STATIONS = [
   { id: 'daleelk', key: 'daleelk', line: 'prod', kind: 'tick' },
   { id: 'tuwaiq', key: 'tuwaiq', line: 'edu', kind: 'tick', side: 'below' },
   { id: 'pitlane', key: 'pitlane', line: 'prod', kind: 'tick' },
+  { id: 'locket', key: 'locket', line: 'work', kind: 'tick' },
   { id: 'echo', key: 'echo', line: 'prod', kind: 'ring' },
   { id: 'coop', key: 'coop', line: 'work', kind: 'end' },
   { id: 'docmara', key: 'docmara', line: 'prod', kind: 'tick' },
@@ -135,7 +136,7 @@ export function mount(root, { reduced = false } = {}) {
       const X = (f) => Math.round(f * W);
       const xK = 18, xM = X(0.28), xE = X(0.67), xD = X(0.775);
       const xR = X(0.885), xB = W - 18;
-      const xC = xE + (yW - yP) + 40;
+      const xJ = X(0.6), xL = xJ + (yW - yP) + 30, xC = xE + (yW - yP) + 40; // Work leaves Products at xJ, before Echo
       const below = (x) => ({ x, y: yE, dir: 'down', lab: { x: x - 3, y: yE + 22, pos: 'below' } });
       const onProd = (x) => ({ x, y: yP, dir: 'up', lab: { x: x - 3, y: yP - 22, pos: 'above' } });
       return {
@@ -143,7 +144,7 @@ export function mount(root, { reduced = false } = {}) {
         lines: {
           edu: [[xK, yE], [xB, yE]],
           prod: [[xM, yE], [xM + (yP - yE), yP], [xR, yP]],
-          work: [[xE, yP], [xE + (yW - yP), yW], [xC, yW]],
+          work: [[xJ, yP], [xJ + (yW - yP), yW], [xC, yW]],
         },
         entry: [[xK, 0], [xK, yE - 12]],
         exit: [[xB, yE + 12], [xB, H]],
@@ -157,6 +158,7 @@ export function mount(root, { reduced = false } = {}) {
           tuwaiq: below(X(0.555)),
           pitlane: onProd(X(0.565)),
           echo: { x: xE, y: yP, lab: { x: xE - 9, y: yP - 22, pos: 'above' } },
+          locket: { x: xL, y: yW, dir: 'up', lab: { x: xL - 3, y: yW - 22, pos: 'above' } },
           coop: { x: xC, y: yW, dir: 'v', lab: { x: xC - 3, y: yW + 22, pos: 'below' } },
           docmara: onProd(xD),
           tuwaiqai: below(X(0.845)),
@@ -225,7 +227,7 @@ export function mount(root, { reduced = false } = {}) {
         lines: {
           edu: [[L0, ys.ksu], [L0, ys.bsc]],
           prod: [[L0, ys.mara], [L1, ys.mara + (L1 - L0)], [L1, ys.rassah]],
-          work: [[L1, ys.echo], [L2, ys.echo + (L2 - L1)], [L2, ys.coop]],
+          work: [[L1, ys.locket - 16 - (L2 - L1)], [L2, ys.locket - 16], [L2, ys.coop]],
         },
         entry: [[L0, 0], [L0, ys.ksu + 4]],
         exit: [[L0, ys.bsc - 4], [L0, H]],
@@ -242,6 +244,7 @@ export function mount(root, { reduced = false } = {}) {
           tuwaiq: { x: L0, y: ys.tuwaiq, dir: 'left' },
           pitlane: { x: L1, y: ys.pitlane, dir: 'right' },
           echo: { x: L1, y: ys.echo },
+          locket: { x: L2, y: ys.locket, dir: 'right' },
           coop: { x: L2, y: ys.coop, dir: 'h' },
           docmara: { x: L1, y: ys.docmara, dir: 'right' },
           tuwaiqai: { x: L0, y: ys.tuwaiqai, dir: 'left' },

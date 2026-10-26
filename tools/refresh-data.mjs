@@ -590,6 +590,40 @@ async function revenuecat(prev = {}) {
   return out;
 }
 
+// Shipping at Mara, counted where the code lives. Mara's repos are private, so each count needs a token that can
+// see them (WORK_GITHUB_TOKEN, WORK_GITLAB_TOKEN); without one it keeps its last good number. Only totals leave here.
+async function work(prev = {}) {
+  const out = { ...prev };
+  let fresh = 0;
+  const ghToken = process.env.WORK_GITHUB_TOKEN;
+  if (ghToken) {
+    try {
+      const q = encodeURIComponent('author:justAbdulaziz10 type:pr is:merged org:mara-org');
+      const j = await get(`https://api.github.com/search/issues?q=${q}&per_page=1`, 'json', { authorization: `bearer ${ghToken}` });
+      if (!Number.isInteger(j.total_count) || j.incomplete_results) throw new Error('incomplete search');
+      out.githubPrs = j.total_count;
+      fresh++;
+    } catch (e) {
+      console.warn(`keep work.githubPrs: ${e.message}`);
+    }
+  }
+  const glToken = process.env.WORK_GITLAB_TOKEN;
+  if (glToken) {
+    try {
+      const r = await fetch('https://gitlab.com/api/v4/merge_requests?scope=created_by_me&state=merged&per_page=1', { headers: { ...UA, authorization: `Bearer ${glToken}` }, signal: AbortSignal.timeout(20000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const total = Number(r.headers.get('x-total'));
+      if (!Number.isInteger(total)) throw new Error('x-total missing');
+      out.gitlabMrs = total;
+      fresh++;
+    } catch (e) {
+      console.warn(`keep work.gitlabMrs: ${e.message}`);
+    }
+  }
+  if (!fresh) throw new Error('no work token set or every call failed');
+  return out;
+}
+
 // The page ships with the numbers written in, for crawlers, link previews, print and visitors without
 // JavaScript. Rewrite those copies from the data so they never disagree with what live.js fills in.
 const nfmt = new Intl.NumberFormat('en-US');
@@ -623,7 +657,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } catch (e) {
     console.warn(`keep f1lap: ${e.message}`);
   }
-  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat) })) {
+  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps, f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work) })) {
     try {
       next[key] = await fn();
       changed = true;

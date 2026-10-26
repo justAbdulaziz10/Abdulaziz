@@ -118,9 +118,13 @@ function lastRace(result) {
   box.hidden = false;
 }
 
+// repo names as people read them: the portfolio repo is "this site", the design picker for it is left out
+const HIDDEN_REPOS = ['justAbdulaziz10/abdulazizprotofoliopicker'];
+const repoName = repo => (repo === 'justAbdulaziz10/Abdulaziz' ? 'this site' : repo.split('/').at(-1).replace(/[_-]+/g, ' '));
+
 function week(data) {
   const box = $('[data-week]');
-  const items = Array.isArray(data?.items) ? data.items.slice(0, 6) : [];
+  const items = Array.isArray(data?.items) ? data.items.filter(i => !HIDDEN_REPOS.includes(i?.repo)).slice(0, 6) : [];
   const list = $('[data-week-items]');
   if (!box || !list || !items.length) return;
 
@@ -130,7 +134,7 @@ function week(data) {
     if (!item?.url?.startsWith('https://')) continue;
     const push = item.kind === 'push' && typeof item.count === 'number' && Number.isFinite(item.count) && item.repo;
     const label = push
-      ? `${item.count} ${item.count === 1 ? 'commit' : 'commits'} to ${item.repo.split('/').at(-1)}`
+      ? `${item.count} ${item.count === 1 ? 'commit' : 'commits'} to ${repoName(item.repo)}`
       : item.label;
     if (!label) continue;
 
@@ -144,7 +148,7 @@ function week(data) {
       const count = document.createElement('span');
       count.className = 'year__week-count';
       count.textContent = nf.format(item.count);
-      link.append(count, document.createTextNode(` ${item.count === 1 ? 'commit' : 'commits'} to ${item.repo.split('/').at(-1)}`));
+      link.append(count, document.createTextNode(` ${item.count === 1 ? 'commit' : 'commits'} to ${repoName(item.repo)}`));
     } else {
       link.textContent = label;
     }
@@ -170,6 +174,23 @@ function film(lb) {
   box.hidden = false;
 }
 
+// "Learning in public": the five courses in progress most recently moved forward in the roadmap README
+function learning(l) {
+  const list = $('.progress');
+  const courses = Array.isArray(l?.courses) ? l.courses.filter(c => c?.course && c.total > 0).slice(0, 5) : [];
+  if (!list || !courses.length) return;
+  list.replaceChildren(...courses.map(c => {
+    const li = document.createElement('li');
+    li.style.setProperty('--v', Math.min(c.done / c.total, 1).toFixed(3));
+    const name = document.createElement('span'), val = document.createElement('span'), bar = document.createElement('span');
+    name.className = 'progress__name'; name.textContent = c.course;
+    val.className = 'progress__val'; val.textContent = `${c.done} / ${c.total}`;
+    bar.className = 'progress__bar'; bar.setAttribute('aria-hidden', 'true');
+    li.append(name, val, bar);
+    return li;
+  }));
+}
+
 // "Now": what shipped or got the most work in the last 7 days, the course in progress, and a film from the last
 // two weeks. A part with nothing recent is left out; with no part at all, the written-in line stays.
 function now(data) {
@@ -184,13 +205,13 @@ function now(data) {
   };
   const items = Array.isArray(data.week?.items) ? data.week.items : [];
   const shipped = items.find(i => i.kind === 'app' || i.kind === 'release');
-  const busiest = items.filter(i => i.kind === 'push' && i.repo && i.repo !== 'justAbdulaziz10/Abdulaziz').sort((a, b) => b.count - a.count)[0];
+  const busiest = items.filter(i => i.kind === 'push' && i.repo && i.repo !== 'justAbdulaziz10/Abdulaziz' && !HIDDEN_REPOS.includes(i.repo)).sort((a, b) => b.count - a.count)[0];
   if (shipped) {
     const name = shipped.kind === 'app' && data.apps?.[shipped.app]?.version
       ? `${{ echo: 'Echo', docmara: 'DocMara' }[shipped.app]} ${data.apps[shipped.app].version}` : shipped.label;
     parts.push(['shipped ', link(name, shipped.url)]);
   } else if (busiest) {
-    parts.push(['building ', link(busiest.repo.split('/').at(-1).replace(/[_-]/g, ' '), busiest.url)]);
+    parts.push(['building ', link(repoName(busiest.repo), busiest.url)]);
   }
   const l = data.learning;
   if (l?.course) parts.push(['learning ', link(l.course, l.url), l.total ? ` (${l.done} of ${l.total})` : '']);
@@ -205,7 +226,7 @@ function now(data) {
 fetch(new URL('../assets/data/live.json', import.meta.url), { cache: 'no-cache' })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
   .then(data => {
-    fill(data); race(data.f1); lastRace(data.f1Result); week(data.week); film(data.letterboxd); now(data);
+    fill(data); race(data.f1); lastRace(data.f1Result); week(data.week); film(data.letterboxd); learning(data.learning); now(data);
     dispatchEvent(new Event('resize')); // new lines moved the text, so the thread re-routes around it
   })
   .catch(() => {});

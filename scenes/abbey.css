@@ -14,11 +14,16 @@
 .scene--abbey .ab-sky0 { stop-color: var(--sky); }
 .scene--abbey .ab-sky1 { stop-color: var(--paper); }
 .scene--abbey .ab-ground { fill: var(--ink-2); }
-.scene--abbey .ab-tree-base { fill: var(--paper); }
-.scene--abbey .ab-tree { fill: var(--rassah); }
-.scene--abbey .ab-tree-shade { fill: var(--ink); opacity: 0.22; }
-.scene--abbey .ab-garden { fill: var(--rassah); }
-.scene--abbey .ab-hedge { fill: var(--ink); opacity: 0.28; }
+.scene--abbey .ab-house-base { fill: var(--paper); }
+.scene--abbey .ab-house { fill: var(--zebra); }
+.scene--abbey .ab-house--r { fill: var(--paper-2); }
+.scene--abbey .ab-house--brick { fill: color-mix(in oklab, var(--carton-dark) 62%, var(--ink-2)); }
+.scene--abbey .ab-cornice { fill: var(--ink); opacity: 0.16; }
+.scene--abbey .ab-band { fill: var(--ink); opacity: 0.1; }
+.scene--abbey .ab-win { fill: var(--road); }
+.scene--abbey .ab-door { fill: var(--ink); }
+.scene--abbey .ab-party { fill: var(--ink); opacity: 0.18; }
+.scene--abbey .ab-wall { fill: var(--ink); opacity: 0.32; }
 
 /* road */
 .scene--abbey .ab-road0 { stop-color: var(--road); stop-opacity: 0.62; }
@@ -136,7 +141,10 @@
   left: 2.2%;
   top: calc(var(--ab-top, 5%) + 2.2%);
   margin: 0;
-  color: var(--ink-2);
+  padding: 0.5em 0.8em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  color: var(--ink);
   font: 600 var(--step--1) / 1 var(--font);
   font-stretch: 104%;
   letter-spacing: 0.01em;

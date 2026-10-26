@@ -18,10 +18,7 @@ const LAYOUTS = {
     W: 1200, Ht: 760, plate: [0, 44, 1200, 700],
     H: 330, vx: 600, s: 1.75, yF: 545, yN: 672,
     feetY: 630, figH: 214, spacing: 138, xa: 110, x55: 822, xb: 1075,
-    trees: [
-      [-1, 343], [-1, 358], [-1, 380], [-1, 410], [-1, 452], [-1, 515],
-      [1, 346], [1, 364], [1, 390], [1, 428], [1, 488],
-    ],
+    street: { step: 0.0011, near: 1.7, line: 2.2 },
     beetle: { g: 404, u: -0.62 },
     beacons: true,
   },
@@ -29,10 +26,7 @@ const LAYOUTS = {
     W: 600, Ht: 900, plate: [0, 40, 600, 830],
     H: 380, vx: 300, s: 1.45, yF: 642, yN: 805,
     feetY: 732, figH: 196, spacing: 118, xa: 16, x55: 472, xb: 578,
-    trees: [
-      [-1, 392], [-1, 406], [-1, 428], [-1, 462], [-1, 515],
-      [1, 395], [1, 412], [1, 438], [1, 478], [1, 540],
-    ],
+    street: { step: 0.0016, near: 1.7, line: 1.45 },
     beetle: { g: 456, u: -0.62 },
     beacons: false,
   },
@@ -205,10 +199,9 @@ function buildScene(root, L) {
   const road = P([[vx - 0.6, H], [vx + 0.6, H], [X(1, py1), py1], [X(-1, py1), py1]]);
   const kerb = (sd) => P([[vx, H], [X(sd * 1.022, py1), py1], [X(sd * 1, py1), py1]]);
 
-  // front gardens beyond the pavement: a dark hedge line converging on the vanishing point
-  const UG = 1.75;
-  const garden = (sd) => P([[vx, H], [X(sd * UG, py1), py1], [sd < 0 ? px0 - 400 : px1 + 400, py1], [sd < 0 ? px0 - 400 : px1 + 400, H]]);
-  const hedge = (sd) => P([[vx, H], [X(sd * UG, py1), py1], [X(sd * UG, py1), py1 - 0.24 * hw(py1)]]);
+  // the building line, set back behind a forecourt and a low front wall
+  const UG = L.street.line;
+  const wall = (sd) => P([[vx, H], [X(sd * UG, py1), py1], [X(sd * UG, py1), py1 - 0.09 * hw(py1)]]);
   const N = 4; // stripes each side of the centre one
   const w = 1.9 / (4 * N + 1);
   const stripes = [];
@@ -218,21 +211,41 @@ function buildScene(root, L) {
     stripes.push({ i, pts: P([[xs[0], yF], [xs[1], yF], [xs[2], yN], [xs[3], yN]]), x0: Math.min(...xs) - 2, x1: Math.max(...xs) + 2 });
   }
 
-  // ---- trees (flat rounded canopies receding along both pavements)
-  const trees = L.trees
-    .map(([sd, g]) => {
-      const th = 2.55 * (g - H);
-      const x = vx + sd * hw(g) * 1.3;
-      return { sd, g, th, x, rx: th * 0.25, ry: th * 0.29, cy: g - th * 0.64, tw: Math.max(1.2, th * 0.016) };
-    })
-    .sort((a, b) => a.g - b.g);
-  const treeSvg = trees
-    .map((t, n) => {
-      const tone = n % 2 ? 'ab-tree ab-tree--b' : 'ab-tree';
-      const fade = clamp(0.26 + ((t.g - H) / (yF - H)) * 1.1, 0.26, 1);
-      const sh = `<rect x="${f1(t.x - t.tw / 2)}" y="${f1(t.cy)}" width="${f1(t.tw)}" height="${f1(t.g - t.cy)}"/><ellipse cx="${f1(t.x)}" cy="${f1(t.cy)}" rx="${f1(t.rx)}" ry="${f1(t.ry)}"/>`;
-      const cr = `M${f1(t.x)},${f1(t.cy - t.ry)} A${f1(t.rx)},${f1(t.ry)} 0 0 1 ${f1(t.x)},${f1(t.cy + t.ry)} A${f1(t.rx * 0.42)},${f1(t.ry)} 0 0 0 ${f1(t.x)},${f1(t.cy - t.ry)} Z`;
-      return `<g class="ab-tree-base">${sh}</g><g class="${tone}" style="opacity:${fade.toFixed(2)}">${sh}<path class="ab-tree-shade" d="${cr}"/></g>`;
+  // ---- terraced houses along both pavements. Depth runs linearly in 1/d (d = pixels below the horizon), so a
+  // point a fraction f of the way along a house sits at 1/d = lerp(1/dNear, 1/dFar, f); h is height in metres.
+  const at = (sd, dA, dB, f, h) => {
+    const d = 1 / ((1 - f) / dA + f / dB);
+    return [vx + sd * UG * s * d, H + d - h * 0.2 * s * d];
+  };
+  const quad = (sd, dA, dB, f0, f1_, h0, h1) => P([at(sd, dA, dB, f0, h0), at(sd, dA, dB, f1_, h0), at(sd, dA, dB, f1_, h1), at(sd, dA, dB, f0, h1)]);
+  const HEIGHTS = [9.6, 9.6, 10.4, 9.2, 9.2, 10.8, 9.6, 9.6, 10];
+  const houses = [];
+  for (const sd of [-1, 1]) {
+    let inv = 1 / ((py1 - H) * L.street.near), n = sd < 0 ? 0 : 4;
+    while (1 / inv > 7) {
+      const dA = 1 / inv, dB = 1 / (inv + L.street.step);
+      houses.push({ sd, dA, dB, h: HEIGHTS[n % HEIGHTS.length], brick: n % 3 === 1, n });
+      inv += L.street.step; n++;
+    }
+  }
+  houses.sort((a, b) => a.dA - b.dA); // far first
+  const houseSvg = houses
+    .map(({ sd, dA, dB, h, brick, n }) => {
+      const fade = clamp(0.12 + (dA / (yF - H)) * 1.6, 0.12, 1);
+      const near = dA * UG * s * (1 - dB / dA) > 11; // house wider than ~11px: draw its windows
+      const tone = `ab-house${brick ? ' ab-house--brick' : ''}${sd > 0 ? ' ab-house--r' : ''}`;
+      let win = '';
+      const cols = [0.18, 0.5, 0.82];
+      if (near) for (const [h0, h1] of [[3.9, 5.9], [6.6, 8.4]]) for (const c of cols) win += `<polygon points="${quad(sd, dA, dB, c - 0.09, c + 0.09, h0, h1)}"/>`;
+      const door = n % 2 ? 0.2 : 0.8;
+      if (near) win += `<polygon points="${quad(sd, dA, dB, cols[n % 2 ? 1 : 0] - 0.09, cols[n % 2 ? 1 : 0] + 0.09, 1.2, 3.1)}"/>`;
+      return `<polygon class="ab-house-base" points="${quad(sd, dA, dB, 0, 1, 0, h)}"/><g style="opacity:${fade.toFixed(2)}">
+        <polygon class="${tone}" points="${quad(sd, dA, dB, 0, 1, 0, h)}"/>
+        <polygon class="ab-cornice" points="${quad(sd, dA, dB, 0, 1, h - 0.7, h)}"/>
+        <polygon class="ab-band" points="${quad(sd, dA, dB, 0, 1, 3.45, 3.7)}"/>
+        <g class="ab-win">${win}</g>
+        ${near ? `<polygon class="ab-door" points="${quad(sd, dA, dB, door - 0.07, door + 0.07, 0, 2.6)}"/>` : ''}
+        <polygon class="ab-party" points="${quad(sd, dA, dB, 0, 0.012, 0, h)}"/></g>`;
     })
     .join('');
 
@@ -285,7 +298,7 @@ function buildScene(root, L) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Four figures walking in single file across a zebra crossing on a tree-lined street, a white Beetle parked at the kerb — an homage to the Abbey Road cover.');
+  svg.setAttribute('aria-label', 'Four figures walking in single file across a zebra crossing on a street of terraced houses, a white Beetle parked at the kerb — an homage to the Abbey Road cover.');
   svg.innerHTML = `
   <defs>
     <linearGradient id="${id}-sky" x1="0" y1="0" x2="0" y2="1">
@@ -309,9 +322,8 @@ function buildScene(root, L) {
     <rect class="ab-skyrect" x="${px0}" y="${py0}" width="${px1 - px0}" height="${H - py0 + 1}" fill="url(#${id}-sky)"/>
 
     <rect class="ab-ground" x="${px0}" y="${H}" width="${px1 - px0}" height="${py1 - H}"/>
-    <polygon class="ab-garden" points="${garden(-1)}"/><polygon class="ab-garden" points="${garden(1)}"/>
-    <polygon class="ab-hedge" points="${hedge(-1)}"/><polygon class="ab-hedge" points="${hedge(1)}"/>
-    <g aria-hidden="true">${treeSvg}</g>
+    <g aria-hidden="true">${houseSvg}</g>
+    <polygon class="ab-wall" points="${wall(-1)}"/><polygon class="ab-wall" points="${wall(1)}"/>
     <polygon class="ab-road" points="${road}" fill="url(#${id}-road)"/>
     <polygon class="ab-kerb" points="${kerb(-1)}"/><polygon class="ab-kerb" points="${kerb(1)}"/>
     <use href="#${id}-stripes"/>

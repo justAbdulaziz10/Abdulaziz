@@ -34,12 +34,18 @@ let lastY = scrollY;
 const navLinks = [...document.querySelectorAll('.top__nav a')];
 const navTargets = navLinks.map(a => document.querySelector(a.getAttribute('href')));
 let navTargetTops = navTargets.map(() => Infinity);
+let headerHalf = 34;
 function onScrollHeader() {
   const y = scrollY;
   top.toggleAttribute('data-scrolled', y > 24);
   const goingDown = y > lastY && y > 400;
   top.toggleAttribute('data-hidden', goingDown && !top.contains(document.activeElement));
   lastY = y;
+  // the header takes the colours of the section right under it, not the one in the middle of the screen
+  const under = y + headerHalf;
+  const rec = worldRecords.find(r => r.height && under >= r.top && under < r.top + r.height);
+  const world = rec ? rec.world : 'paper';
+  if (top.dataset.world !== world) top.dataset.world = world;
   const mid = y + cachedViewportHeight * 0.4;
   let current = -1;
   navTargetTops.forEach((t, i) => { if (t < mid) current = i; });
@@ -196,7 +202,7 @@ let lastNibPoint = null;
 let oldThreadGroup = null;
 let hasBuiltThread = false;
 
-const obstacleSel = '.project__text, .project--pitlane .project__name, .pm, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .notes__groups, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .contact__links, .foot__credits, .shot';
+const obstacleSel = '.project__text, .project__live, .project--pitlane .project__name, .pm, .section-title, .year__title, .year__sub, .off__caption, .off__meta, .exp__lead, .timeline, .more__list, .notes__groups, .skills__grid, .learn, .hero__inner, .contact__title, .contact__body, .contact__links, .foot__credits, .shot';
 
 function pseudoCenter(el, pseudo) {
   const s = getComputedStyle(el, pseudo);
@@ -241,8 +247,11 @@ function blocked(x, y0, y1, rects) {
   return rects.some(r => x > r.l - 14 && x < r.r + 14 && r.b > lo && r.t < hi);
 }
 
+// how far a horizontal run of the thread stays from text above or below it
+const CLEAR = 24;
+
 function route(E, N, rects, laneX) {
-  const hHit = (y, xa, xb) => rects.find(q => y > q.t - 12 && y < q.b + 12 && Math.max(xa, xb) > q.l - 12 && Math.min(xa, xb) < q.r + 12);
+  const hHit = (y, xa, xb) => rects.find(q => y > q.t - CLEAR + 4 && y < q.b + CLEAR - 4 && Math.max(xa, xb) > q.l - 12 && Math.min(xa, xb) < q.r + 12);
   // ending in the lane itself: run down the lane and turn into the target from the side
   if (Math.abs(N.x - laneX) < 1 && N.tail) {
     const t = 14, d1 = Math.sign(laneX - E.x) || -1;
@@ -256,7 +265,7 @@ function route(E, N, rects, laneX) {
   const midY = (E.y + N.y) / 2;
   const straight = Math.abs(N.x - E.x) < 1;
   if (straight && !blocked(E.x, E.y, N.y, rects)) return `M${E.x} ${E.y}V${N.y}`;
-  const directOk = !blocked(E.x, E.y, midY, rects) && !blocked(N.x, midY, N.y, rects) && !rects.some(q => midY > q.t - 10 && midY < q.b + 10 && Math.max(E.x, N.x) > q.l && Math.min(E.x, N.x) < q.r);
+  const directOk = !blocked(E.x, E.y, midY, rects) && !blocked(N.x, midY, N.y, rects) && !rects.some(q => midY > q.t - CLEAR && midY < q.b + CLEAR && Math.max(E.x, N.x) > q.l && Math.min(E.x, N.x) < q.r);
   if (directOk) {
     const dir = Math.sign(N.x - E.x);
     return `M${E.x} ${E.y}V${midY - r}Q${E.x} ${midY} ${E.x + dir * r} ${midY}H${N.x - dir * r}Q${N.x} ${midY} ${N.x} ${midY + r}V${N.y}`;
@@ -264,10 +273,12 @@ function route(E, N, rects, laneX) {
   // route through the margin lane, clear of text; the two horizontal legs slide until they miss every block
   const rr = Math.max(4, Math.min(40, (N.y - E.y) / 6, Math.abs(N.x - laneX) / 2 || 40, Math.abs(laneX - E.x) / 2 || 40));
   let y1 = E.y + Math.min(56, (N.y - E.y) / 5), y2 = N.y - Math.min(56, (N.y - E.y) / 5), q;
-  for (let i = 0; i < 6 && (q = hHit(y1, E.x, laneX)); i++) y1 = Math.max(E.y + rr, q.t - 16);
-  for (let i = 0; i < 6 && (q = hHit(y2, laneX, N.x)); i++) y2 = Math.min(N.y - rr, q.b + 16);
+  for (let i = 0; i < 6 && (q = hHit(y1, E.x, laneX)); i++) y1 = Math.max(E.y + 4, q.t - CLEAR);
+  for (let i = 0; i < 6 && (q = hHit(y2, laneX, N.x)); i++) y2 = Math.min(N.y - 4, q.b + CLEAR);
+  // a leg squeezed into a short gap keeps its distance from the text and takes a tighter bend instead
+  const r1 = Math.max(4, Math.min(rr, y1 - E.y)), r2 = Math.max(4, Math.min(rr, N.y - y2));
   const d1 = Math.sign(laneX - E.x) || -1, d2 = Math.sign(N.x - laneX) || 1;
-  return `M${E.x} ${E.y}V${y1 - rr}Q${E.x} ${y1} ${E.x + d1 * rr} ${y1}H${laneX - d1 * rr}Q${laneX} ${y1} ${laneX} ${y1 + rr}V${y2 - rr}Q${laneX} ${y2} ${laneX + d2 * rr} ${y2}H${N.x - d2 * rr}Q${N.x} ${y2} ${N.x} ${y2 + rr}V${N.y}`;
+  return `M${E.x} ${E.y}V${y1 - r1}Q${E.x} ${y1} ${E.x + d1 * r1} ${y1}H${laneX - d1 * r1}Q${laneX} ${y1} ${laneX} ${y1 + r1}V${y2 - r2}Q${laneX} ${y2} ${laneX + d2 * r2} ${y2}H${N.x - d2 * r2}Q${N.x} ${y2} ${N.x} ${y2 + r2}V${N.y}`;
 }
 
 // The Flow row's top and bottom rules: the thread rides along them, so it never crosses the "Flow" label.
@@ -424,6 +435,7 @@ function cacheMotionLayout(sy, docH) {
   cachedViewportHeight = innerHeight;
   cachedViewportWidth = innerWidth;
   navTargetTops = navTargets.map(target => target ? target.getBoundingClientRect().top + sy : Infinity);
+  headerHalf = top.offsetHeight / 2;
   for (const rec of revealRecords) {
     const r = rec.el.getBoundingClientRect();
     rec.top = r.top + sy;

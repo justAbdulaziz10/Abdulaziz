@@ -147,6 +147,62 @@
   "course": "Stanford CS109",
   "done": 3,
   "total": 29,
-  "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv"
+  "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv",
+  "courses": [
+   {
+    "course": "Stanford CS109",
+    "done": 3,
+    "total": 29,
+    "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv"
+   },
+   {
+    "course": "Linear Algebra Lectures, MIT",
+    "done": 9,
+    "total": 34,
+    "url": "https://www.youtube.com/playlist?list=PL49CF3715CB9EF31D"
+   },
+   {
+    "course": "Essence of Calculus, 3Blue1Brown",
+    "done": 5,
+    "total": 12,
+    "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr"
+   },
+   {
+    "course": "Computer Science Crash Course, CrashCourse",
+    "done": 8,
+    "total": 40,
+    "url": "https://youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo&si=fI6kr9sJD6At8iTM"
+   },
+   {
+    "course": "Calculus, Khan Academy",
+    "done": 4,
+    "total": 199,
+    "url": "https://www.youtube.com/playlist?list=PL19E79A0638C8D449"
+   },
+   {
+    "course": "CS229: Machine Learning, Andrew Ng",
+    "done": 2,
+    "total": 20,
+    "url": "https://youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU&si=GOS-nM9CmsX8bIje"
+   },
+   {
+    "course": "Machine Learning Specialization, Andrew NG",
+    "done": 2,
+    "total": 4,
+    "url": "https://www.youtube.com/playlist?list=PLkDaE6sCZn6FNC6YRfRQc_FbeQrF8BwGI"
+   },
+   {
+    "course": "Stanford CS230: Deep Learning",
+    "done": 5,
+    "total": 10,
+    "url": "https://www.youtube.com/playlist?list=PLoROMvodv4rNRRGdS0rBbXOUGA0wjdh1X"
+   },
+   {
+    "course": "Generative AI for Developers, Google Cloud",
+    "done": 3,
+    "total": 12,
+    "url": "https://www.cloudskillsboost.google/paths/183"
+   }
+  ]
  }
 }

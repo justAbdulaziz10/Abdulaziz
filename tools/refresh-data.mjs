@@ -263,32 +263,37 @@ const LEARN_REPO = 'justAbdulaziz10/To-infinity-and-AI';
 const progressRow = line => {
   if (!line.trim().startsWith('|')) return null;
   const cells = line.split('|').slice(1, -1).map(c => c.trim());
-  const st = cells.map(c => c.match(/🟨\s*(\d+)\s*\/\s*(\d+)/)).find(Boolean);
+  // 🟨 n / m is in progress; ⏳ n / m is in progress at a slower pace
+  const st = cells.map(c => c.match(/(?:🟨|⏳)\s*(\d+)\s*\/\s*(\d+)/)).find(Boolean);
   if (!st || !cells[0]) return null;
   const links = [...line.matchAll(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g)];
   return { name: cells[0], by: cells[1] && !cells[1].includes('](') ? cells[1] : '', done: Number(st[1]), total: Number(st[2]), linkText: links[0]?.[1] ?? '', url: links[0]?.[2] ?? null };
 };
 
+const courseTitle = row => {
+  const code = /\b[A-Z]{2,}\s?\d{2,}\b/;
+  const title = (!code.test(row.name) && code.test(row.linkText) ? row.linkText : row.name).replace(/\s*\(.*?\)\s*$/, '');
+  const by = row.by.replace(/\s*\(.*\)$/, '');
+  return by && !title.toLowerCase().includes(by.toLowerCase()) ? `${title}, ${by}` : title;
+};
+
+// Every course in progress, the ones most recently touched in the README's history first.
 export function parseLearning(readme, patches = []) {
   const rows = readme.split('\n').map(progressRow).filter(Boolean);
-  if (!rows.length) throw new Error('no course in progress');
-  let pick = null;
+  const touched = [];
   for (const patch of patches) {
     for (const line of patch.split('\n')) {
       const r = line.startsWith('+') ? progressRow(line.slice(1)) : null;
-      if (r) pick = rows.find(x => x.name === r.name);
-      if (pick) break;
+      const row = r && rows.find(x => x.name === r.name);
+      if (row && !touched.includes(row)) touched.push(row);
     }
-    if (pick) break;
   }
-  pick ??= rows[0];
-  const code = /\b[A-Z]{2,}\s?\d{2,}\b/;
-  const title = !code.test(pick.name) && code.test(pick.linkText) ? pick.linkText : pick.name;
-  const by = pick.by.replace(/\s*\(.*\)$/, '');
-  return {
-    course: by && !title.toLowerCase().includes(by.toLowerCase()) ? `${title}, ${by}` : title,
-    done: pick.done, total: pick.total, url: pick.url,
-  };
+  // a course with nothing watched yet is on the list, not in progress
+  const courses = [...touched, ...rows.filter(r => !touched.includes(r))]
+    .filter(r => r.done > 0)
+    .map(r => ({ course: courseTitle(r), done: r.done, total: r.total, url: r.url }));
+  if (!courses.length) throw new Error('no course in progress');
+  return { ...courses[0], courses };
 }
 
 async function learning() {

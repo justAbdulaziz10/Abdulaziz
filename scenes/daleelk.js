@@ -51,13 +51,13 @@ const LAYOUTS = {
   wide: {
     w: 1320, h: 1040,
     map: { x: 270, y: 34, s: 0.78 },
-    font: 15.5, nodeH: 50, r: 13,
-    q: { x: 660, y: 628, w: 296 },
-    mid: [{ x: 460, y: 762, w: 232, label: 'OpenAI API' }, { x: 860, y: 762, w: 232, label: 'Local knowledge base' }],
+    font: 23, nodeH: 64, r: 16,
+    q: { x: 660, y: 628, w: 392 },
+    mid: [{ x: 460, y: 762, w: 310, label: 'OpenAI API' }, { x: 860, y: 762, w: 310, label: 'Local knowledge base' }],
     jY: 846,
-    out: [{ x: 460, y: 930, w: 232, label: 'Trip plan' }, { x: 860, y: 930, w: 232, label: 'Traveler safety' }],
+    out: [{ x: 460, y: 930, w: 310, label: 'Trip plan' }, { x: 860, y: 930, w: 310, label: 'Traveler safety' }],
     credit: { x: 318, y: 548 },
-    hint: { x: 488, y: 628, anchor: 'end' },
+    hint: { x: 440, y: 628, anchor: 'end' },
   },
   narrow: {
     w: 350, h: 640,

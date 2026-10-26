@@ -434,9 +434,6 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .race__name { color: var(--fg); font-weight: 600; }
 .race__clock { font-family: var(--mono); font-size: .86em; color: var(--fg); padding: .15em .5em; border: 1px solid var(--rule-c); border-radius: 4px; }
 .race.is-live .race__clock { color: var(--bg); background: var(--kerb-red); border-color: var(--kerb-red); }
-.off__latest { margin-top: var(--s-3); color: var(--fg-2); }
-.off__latest[hidden] { display: none; }
-.off__stars { color: var(--accent); letter-spacing: .08em; }
 
 /* easter egg: the Konami code turns the paper sections to night */
 html.is-switching body { transition: background-color var(--t-switch) var(--ease), color var(--t-switch) var(--ease); }

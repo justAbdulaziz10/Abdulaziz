@@ -3,7 +3,7 @@
 .notes__title { margin-bottom: var(--s-3); }
 .notes__groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
   gap: var(--s-4) var(--s-3);
 }
 .notes__group h3 {

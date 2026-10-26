@@ -89,10 +89,26 @@ p, dd, li { text-wrap: pretty; }
 /* the bar stays one line from 761px (iPad portrait included) up */
 .top > *, .top__nav a { white-space: nowrap; }
 @media (max-width: 860px) { .top__nav { gap: .9rem; } }
+.top__menu { display: none; }
+/* phones: the sections fold into a panel under the bar, opened by Menu */
 @media (max-width: 760px) {
-  .top__nav { display: none; }
   .top__name { font-size: .9rem; }
+  /* first in the source so Tab goes from Menu into its links; drawn at the end of the bar */
+  .top__menu { order: 5; display: inline-flex; align-items: center; min-height: 44px; padding: 0 0 0 .5rem; border: 0; background: none; color: var(--fg); font: inherit; font-size: var(--step--1); font-weight: 620; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .top__nav {
+    position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column; gap: 0; padding: 0 var(--gutter) 1rem;
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
+    backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    font-size: var(--step-2); font-weight: 640; font-stretch: 108%; letter-spacing: -.015em;
+    visibility: hidden; opacity: 0; transform: translateY(-.4rem);
+    transition: opacity var(--t-state) var(--ease), transform var(--t-state) var(--ease), visibility 0s linear var(--t-state);
+  }
+  .top.is-open .top__nav { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+  .top__nav a { padding-block: .6rem; border-top: 1px solid var(--rule-c); color: var(--fg); }
+  .top.is-open::before { opacity: 1; }
 }
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) { .top__nav { transform: none; transition: visibility 0s linear var(--t-state); } }
 
 /* the global line */
 .thread { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 0; overflow: visible; }

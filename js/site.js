@@ -35,11 +35,26 @@ const navLinks = [...document.querySelectorAll('.top__nav a')];
 const navTargets = navLinks.map(a => document.querySelector(a.getAttribute('href')));
 let navTargetTops = navTargets.map(() => Infinity);
 let headerHalf = 34;
+
+// phones: Menu opens the section links under the bar; a pick, a tap outside or Escape closes it
+const menuBtn = top.querySelector('.top__menu');
+function setMenu(open) {
+  top.classList.toggle('is-open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.textContent = open ? 'Close' : 'Menu';
+}
+menuBtn.addEventListener('click', () => setMenu(!top.classList.contains('is-open')));
+navLinks.forEach(a => a.addEventListener('click', () => setMenu(false)));
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && top.classList.contains('is-open')) { setMenu(false); menuBtn.focus(); }
+});
+addEventListener('pointerdown', e => { if (top.classList.contains('is-open') && !top.contains(e.target)) setMenu(false); });
+matchMedia('(min-width: 761px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
 function onScrollHeader() {
   const y = scrollY;
   top.toggleAttribute('data-scrolled', y > 24);
   const goingDown = y > lastY && y > 400;
-  top.toggleAttribute('data-hidden', goingDown && !top.contains(document.activeElement));
+  top.toggleAttribute('data-hidden', goingDown && !top.contains(document.activeElement) && !top.classList.contains('is-open'));
   lastY = y;
   // the header takes the colours of the section right under it, not the one in the middle of the screen
   const under = y + headerHalf;

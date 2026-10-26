@@ -19,14 +19,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="preload" href="fonts/mona-sans.woff2" as="font" type="font/woff2" crossorigin>
-<!-- the first two scenes and their data start loading with the page, not after site.js asks for them -->
-<link rel="modulepreload" href="js/site.js">
-<link rel="modulepreload" href="scenes/flow.js">
-<link rel="modulepreload" href="scenes/year.js">
-<link rel="preload" href="assets/data/weeks.json" as="fetch" crossorigin>
-<link rel="preload" href="scenes/flow.css" as="style">
-<link rel="preload" href="scenes/year.css" as="style">
+<!-- no font or module preloads: on a slow phone they take bandwidth from the stylesheets and hold back the first paint
+     (measured 904ms with them, 604ms without; the 98KB font lands after the first paint either way) -->
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/tools.css">
@@ -41,7 +35,8 @@
 
 <header class="top">
   <a class="top__name" href="#hero" aria-label="Abdulaziz Alkhlaiwe, back to top">Abdulaziz Alkhlaiwe</a>
-  <nav class="top__nav" aria-label="Sections">
+  <button class="top__menu" type="button" aria-expanded="false" aria-controls="top-nav">Menu</button>
+  <nav class="top__nav" id="top-nav" aria-label="Sections">
     <a href="#work">Work</a>
     <a href="#experience">Experience</a>
     <a href="#offclock">Off the clock</a>

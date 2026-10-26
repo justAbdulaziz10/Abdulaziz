@@ -65,14 +65,14 @@
   text-align: left;
   cursor: pointer;
   pointer-events: auto;
-  visibility: hidden;
   white-space: nowrap;
   opacity: 0;
   translate: 0 6px;
   transition: opacity var(--t-layout) var(--ease), translate var(--t-layout) var(--ease), background-color var(--t-state) var(--ease);
   -webkit-tap-highlight-color: transparent;
 }
-.scene--tube .tb-stn.is-on { opacity: 1; translate: 0 0; visibility: visible; }
+.scene--tube .tb-stn:not(.is-on) { pointer-events: none; }
+.scene--tube .tb-stn.is-on, .scene--tube .tb-stn:focus-visible { opacity: 1; translate: 0 0; }
 .scene--tube .tb-stn--above { transform: translate(-0.4rem, -100%); }
 .scene--tube .tb-stn--below { transform: translate(-0.4rem, 0); }
 .scene--tube .tb-stn--above.tb-stn--end { transform: translate(calc(-100% + 0.4rem), -100%); justify-items: end; text-align: right; }

@@ -122,7 +122,7 @@ export function mount(root, { reduced = false } = {}) {
   const keys = document.createElement('p');
   keys.className = 'echo__sr';
   keys.id = 'echo-keys';
-  keys.textContent = 'Use the left and right arrow keys to move through the cards. Press Enter to bring a card to the front.';
+  keys.textContent = 'Use the left and right arrow keys to bring the previous or next card to the front. Enter, like a click on the front card, deals the next one.';
   const live = document.createElement('p');
   live.className = 'echo__sr';
   live.setAttribute('aria-live', 'polite');

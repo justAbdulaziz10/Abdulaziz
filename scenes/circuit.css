@@ -198,9 +198,9 @@
 .scene--circuit .c-chip {
   display: grid;
   gap: 5px;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.08em;
-  color: var(--c-ink-2);
+  color: var(--c-ink);
 }
 .scene--circuit .c-chip i {
   display: block;
@@ -291,9 +291,9 @@
 .scene--circuit .c-hint {
   display: grid;
   gap: 4px;
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: 0.06em;
-  color: var(--c-ink-2);
+  color: var(--c-ink);
 }
 .scene--circuit .c-hint span { transition: opacity var(--t-focal) var(--ease); }
 

@@ -86,6 +86,9 @@ p, dd, li { text-wrap: pretty; }
 .top__nav { display: flex; gap: clamp(1rem, 2.4vw, 2.2rem); font-size: var(--step--1); font-weight: 540; }
 .top__nav a { text-decoration: none; color: var(--fg-2); transition: color var(--t-fast) var(--ease); padding-block: .5rem; }
 .top__nav a:hover, .top__nav a[aria-current] { color: var(--fg); }
+/* the bar stays one line from 761px (iPad portrait included) up */
+.top > *, .top__nav a { white-space: nowrap; }
+@media (max-width: 860px) { .top__nav { gap: .9rem; } }
 @media (max-width: 760px) {
   .top__nav { display: none; }
   .top__name { font-size: .9rem; }
@@ -182,6 +185,7 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .project__facts strong { font-weight: 700; font-variant-numeric: tabular-nums; }
 .project__links { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: var(--s-3); }
 .shot { margin-top: var(--s-5); border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .12); }
+.shot picture { display: block; }
 .shot img { width: 100%; }
 .js .shot { clip-path: inset(8% 6% 8% 6% round var(--radius)); transform: scale(.98); transition: clip-path var(--t-reveal) var(--ease), transform var(--t-reveal) var(--ease); }
 .js .shot.is-in { clip-path: inset(0 0 0 0 round var(--radius)); transform: none; }
@@ -430,7 +434,7 @@ html.is-pm .pm-switch__track::after { background: var(--bg); transform: translat
 .last-race__row { display: grid; grid-template-columns: 2.3rem minmax(0, 1fr) auto; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid var(--rule-c); }
 .last-race__position, .last-race__code, .last-race__time { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .last-race__position { color: var(--fg-3); font-size: .72em; }
-.last-race__position.is-p1 { color: var(--kerb-red); }
+.last-race__position.is-p1 { color: #ff5a4e; } /* kerb red lifted to 4.5:1 on asphalt */
 .last-race__driver { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .45rem; min-width: 0; }
 .last-race__name { color: var(--fg); font-weight: 560; }
 .last-race__code { color: var(--fg-3); font-size: .64em; letter-spacing: .04em; }
@@ -504,13 +508,15 @@ main [data-world]::before {
 }
 main [data-world] > * { position: relative; z-index: 2; }
 main [data-world] > .hero__sign { position: absolute; z-index: 1; }
+/* opacity only: the content stays in the tab order and the accessibility tree while its world floods in */
 .js main [data-world]:not([data-world="paper"]) > * {
   opacity: var(--world-content-opacity, 1);
-  visibility: var(--world-content-visibility, visible);
   transition: opacity 160ms var(--ease);
 }
+.js main [data-world]:not([data-world="paper"]):focus-within::before { clip-path: none; }
+.js main [data-world]:not([data-world="paper"]):focus-within > * { opacity: 1; }
 html.is-night main [data-world="paper"]::before { clip-path: none !important; }
-html.is-night main [data-world="paper"] > * { opacity: 1 !important; visibility: visible !important; }
+html.is-night main [data-world="paper"] > * { opacity: 1 !important; }
 html.is-night body[data-world="paper"], html.is-night body:not([data-world]), html.is-night main [data-world="paper"] { --line: #f3efe4; }
 html.is-switching main [data-world]::before { transition: background-color var(--t-switch) var(--ease); }
 
@@ -534,5 +540,5 @@ html.is-switching main [data-world]::before { transition: background-color var(-
 
 @media (prefers-reduced-motion: reduce) {
   main [data-world]::before { clip-path: none !important; }
-  main [data-world]:not([data-world="paper"]) > * { opacity: 1 !important; visibility: visible !important; }
+  main [data-world]:not([data-world="paper"]) > * { opacity: 1 !important; }
 }

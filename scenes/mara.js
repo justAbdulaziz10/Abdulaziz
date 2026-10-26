@@ -105,10 +105,10 @@ export function mount(root, { reduced = false } = {}) {
         <div class="mara__screen">
           <img class="mara__img mara__img--home" alt="Mara home screen: body map with recovery score and health cards"
             src="${IMG}screen-mara-home.webp" srcset="${IMG}screen-mara-home-m.webp 552w, ${IMG}screen-mara-home.webp 773w"
-            sizes="(max-width: 640px) 60vw, 300px" width="773" height="1680" decoding="async">
+            sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async">
           <img class="mara__img mara__img--chat" alt="Mara chat screen: How can I help?"
             src="${IMG}screen-mara-chat.webp" srcset="${IMG}screen-mara-chat-m.webp 552w, ${IMG}screen-mara-chat.webp 773w"
-            sizes="(max-width: 640px) 60vw, 300px" width="773" height="1680" decoding="async" loading="lazy">
+            sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async" loading="lazy">
           <div class="mara__island" aria-hidden="true"></div>
           <div class="mara__glass" aria-hidden="true"></div>
           <button class="mara__tap" type="button" aria-label="Show the Mara chat screen"></button>
@@ -139,7 +139,7 @@ export function mount(root, { reduced = false } = {}) {
       <span class="mara__bpm"><span class="mara__bpm-n">64</span> bpm</span>
       <span class="mara__hr-label">Heart rate: your scroll speed</span>
     </div>
-    <p class="mara__hint">Tap the phone</p>`;
+    <p class="mara__hint">${matchMedia('(hover: hover) and (pointer: fine)').matches ? 'Click' : 'Tap'} the phone</p>`;
   stage.append(glow, pulse, ring, svg, device, hud);
   const run = hud.querySelector('.mara__strip-run');
   const dot = hud.querySelector('.mara__strip-dot');

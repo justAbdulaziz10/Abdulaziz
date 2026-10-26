@@ -322,8 +322,7 @@
   font-family: var(--font);
   font-size: var(--step--1);
   font-weight: 500;
-  color: var(--mara);
-  filter: brightness(0.82);
+  color: #086c96; /* Mara blue, deep enough for 4.5:1 on the pale sky */
   transition: opacity var(--t-state) var(--ease);
 }
 .scene--mara .mara__hint.is-used { opacity: 0; }

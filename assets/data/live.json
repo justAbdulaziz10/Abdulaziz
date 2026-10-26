@@ -147,13 +147,13 @@
   "course": "Stanford CS109",
   "done": 3,
   "total": 29,
-  "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv",
+  "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg",
   "courses": [
    {
     "course": "Stanford CS109",
     "done": 3,
     "total": 29,
-    "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg&si=JrmF4xlxCWa0Jqgv"
+    "url": "https://youtube.com/playlist?list=PLoROMvodv4rOpr_A7B9SriE_iZmkanvUg"
    },
    {
     "course": "Linear Algebra Lectures, MIT",
@@ -171,7 +171,7 @@
     "course": "Computer Science Crash Course, CrashCourse",
     "done": 8,
     "total": 40,
-    "url": "https://youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo&si=fI6kr9sJD6At8iTM"
+    "url": "https://youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo"
    },
    {
     "course": "Calculus, Khan Academy",
@@ -183,7 +183,7 @@
     "course": "CS229: Machine Learning, Andrew Ng",
     "done": 2,
     "total": 20,
-    "url": "https://youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU&si=GOS-nM9CmsX8bIje"
+    "url": "https://youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU"
    },
    {
     "course": "Machine Learning Specialization, Andrew NG",

@@ -12,9 +12,21 @@
 <meta property="og:description" content="I turn user and business problems into requirements, system workflows, API integrations and shipped products.">
 <meta property="og:url" content="https://justabdulaziz10.github.io/Abdulaziz/">
 <meta property="og:image" content="https://justabdulaziz10.github.io/Abdulaziz/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Abdulaziz Alkhlaiwe, AI Product &amp; Systems">
+<meta property="og:site_name" content="Abdulaziz Alkhlaiwe">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="fonts/mona-sans.woff2" as="font" type="font/woff2" crossorigin>
+<!-- the first two scenes and their data start loading with the page, not after site.js asks for them -->
+<link rel="modulepreload" href="js/site.js">
+<link rel="modulepreload" href="scenes/flow.js">
+<link rel="modulepreload" href="scenes/year.js">
+<link rel="preload" href="assets/data/weeks.json" as="fetch" crossorigin>
+<link rel="preload" href="scenes/flow.css" as="style">
+<link rel="preload" href="scenes/year.css" as="style">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/tools.css">
@@ -87,8 +99,8 @@
   <!-- THE YEAR -->
   <section class="year" id="year" data-world="paper" aria-labelledby="year-title">
     <div class="wrap">
-      <h2 class="year__title" id="year-title"><span class="num" data-count="6341" data-live="github.total">6,341</span> contributions in the last year</h2>
-      <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">25 October 2026</span>. <span data-live="github.activeDays">298</span> active days, and a run of <span data-live="github.streak">76</span> days in a row that is still going.</p>
+      <h2 class="year__title" id="year-title"><span class="num" data-count="6371" data-live="github.total">6,371</span> contributions in the last year</h2>
+      <p class="year__sub">Every point is a week on GitHub, from <span data-live="github.from" data-fmt="date">26 October 2025</span> to <span data-live="github.to" data-fmt="date">26 October 2026</span>. <span data-live="github.activeDays">299</span> active days, and a run of <span data-live="github.streak">77</span> days in a row that is still going.</p>
       <p class="year__week" data-week hidden><span class="year__week-label">This week:</span> <span class="year__week-items" data-week-items></span></p>
       <div class="scene-slot" data-scene="year"></div>
     </div>
@@ -101,7 +113,7 @@
     <section class="project project--mara" id="mara" data-world="mara" aria-labelledby="mara-title">
       <div class="wrap project__grid">
         <div class="project__text">
-          <img class="project__icon" src="assets/img/icon-mara.webp" width="512" height="512" alt="" loading="lazy" decoding="async">
+          <img class="project__icon" src="assets/img/icon-mara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">
           <h2 class="project__name" id="mara-title">Mara</h2>
           <p class="project__kind">An AI-powered health and wellness platform.</p>
           <dl class="project__facts">
@@ -126,12 +138,12 @@
     <section class="project project--echo project--flip" id="echo" data-world="echo" aria-labelledby="echo-title">
       <div class="wrap project__grid">
         <div class="project__text">
-          <img class="project__icon" src="assets/img/icon-echo.webp" width="512" height="512" alt="" loading="lazy" decoding="async">
+          <img class="project__icon" src="assets/img/icon-echo.webp" width="192" height="192" alt="" loading="lazy" decoding="async">
           <h2 class="project__name" id="echo-title">Echo</h2>
           <p class="project__kind">A 0-to-1, privacy-first photo-memory app for iPhone.</p>
           <dl class="project__facts">
             <div><dt>What I did</dt><dd>Product development, UX, monetization, analytics and release management.</dd></div>
-            <div><dt>Outcome</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,159</strong> active users in the last 28 days. Rated <strong data-live="apps.echo.rating">4.8</strong> on the App Store, in <strong data-live="apps.echo.languages">37</strong> languages, now on version <span data-live="apps.echo.version">1.44</span>.</dd></div>
+            <div><dt>Outcome</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,168</strong> active users in the last 28 days. Rated <strong data-live="apps.echo.rating">4.8</strong> on the App Store, in <strong data-live="apps.echo.languages">37</strong> languages, now on version <span data-live="apps.echo.version">1.45</span>.</dd></div>
           </dl>
           <div class="pm" data-pm hidden>
             <div class="pm__inner">
@@ -139,7 +151,7 @@
                 <div><dt>Requirement</dt><dd>People with years of photos rarely look back at them. Surface one photo a day from their own library, processed on the device and never uploaded.</dd></div>
                 <div><dt>Flow</dt><dd><ol class="pm__flow"><li>Open Today</li><li>See a photo from your camera roll</li><li>Keep it</li><li>Add words or a voice note, if you want</li><li>Save, and Today moves on</li><li>The saved photo stays off Today, even after relaunch</li></ol></dd></div>
                 <div><dt>Decision</dt><dd>Start from photos people already have.<span class="pm__why">Over a blank journal page or an upload service. No account and no server copy of anyone's photos.</span></dd></div>
-                <div><dt>Result</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,159</strong> active users in the last 28 days. In a simulated library of about 2,700 photos, 40 picks in a row had no two from within three days.</dd></div>
+                <div><dt>Result</dt><dd><strong data-live="revenuecat.echo.activeUsers">1,168</strong> active users in the last 28 days. In a simulated library of about 2,700 photos, 40 picks in a row had no two from within three days.</dd></div>
               </dl>
             </div>
           </div>
@@ -197,7 +209,10 @@
       </div>
       <div class="wrap">
         <figure class="shot shot--rassah">
-          <img src="assets/img/rassah-live-desktop.webp" width="2400" height="1500" alt="Rassah's live landing page in Arabic, with an orange carton packed in 3D" loading="lazy" decoding="async">
+          <picture>
+            <source media="(max-width: 600px)" srcset="assets/img/rassah-live-phone.webp" width="780" height="1040">
+            <img src="assets/img/rassah-live-desktop.webp" width="2400" height="1500" alt="Rassah's live landing page in Arabic" loading="lazy" decoding="async">
+          </picture>
         </figure>
       </div>
     </section>
@@ -224,20 +239,23 @@
         </div>
         <div class="project__live">
           <p class="race" data-race hidden aria-live="off"><span class="race__label">Next race</span> <span class="race__name"></span> <time class="race__clock"></time> <a class="race__follow link" href="https://f1-xi-weld.vercel.app/live" target="_blank" rel="noopener noreferrer" hidden>Follow it live on Pit Lane Hub</a></p>
-          <div class="last-race" data-last-race hidden aria-labelledby="last-race-title">
+          <section class="last-race" data-last-race hidden aria-labelledby="last-race-title">
             <div class="last-race__heading">
               <h3 class="last-race__label" id="last-race-title">Last race</h3>
               <p class="last-race__event"><span data-last-race-name></span>, <time data-last-race-date></time></p>
             </div>
             <ol class="last-race__podium" data-last-race-podium aria-label="Podium"></ol>
             <p class="last-race__fastest" data-last-race-fastest hidden></p>
-          </div>
+          </section>
         </div>
         <div class="project__scene project__scene--wide"><div class="scene-slot" data-scene="circuit"></div></div>
       </div>
       <div class="wrap">
         <figure class="shot shot--pitlane">
-          <img src="assets/img/pit-lane-hub-live-desktop.webp" width="2400" height="1500" alt="Pit Lane Hub's live dashboard with timing and standings" loading="lazy" decoding="async">
+          <picture>
+            <source media="(max-width: 600px)" srcset="assets/img/pit-lane-hub-live-phone.webp" width="780" height="1040">
+            <img src="assets/img/pit-lane-hub-live-desktop.webp" width="2400" height="1500" alt="Pit Lane Hub's live site" loading="lazy" decoding="async">
+          </picture>
         </figure>
       </div>
     </section>
@@ -256,17 +274,17 @@
           <div class="side">
             <h3 class="side__name" id="side-a">Side A</h3>
             <ol class="more__list tracks" aria-labelledby="side-a">
-              <li><a class="track" href="#mara" data-track="A1" data-tone="mara"><span class="track__no" aria-hidden="true">A1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-mara.webp" width="512" height="512" alt="" loading="lazy" decoding="async">Mara</span><span class="track__year">2025</span><span class="track__desc">An AI-powered health and wellness platform.</span></a></li>
-              <li><a class="track" href="#echo" data-track="A2" data-tone="echo"><span class="track__no" aria-hidden="true">A2</span><span class="track__name"><img class="track__icon" src="assets/img/icon-echo.webp" width="512" height="512" alt="" loading="lazy" decoding="async">Echo</span><span class="track__year">2026</span><span class="track__desc">A 0-to-1, privacy-first photo-memory app for iPhone.</span></a></li>
-              <li><a class="track" href="#daleelk" data-track="A3" data-tone="daleelk"><span class="track__no" aria-hidden="true">A3</span><span class="track__name">Daleelk</span><span class="track__desc">An AI-powered travel platform for the Gulf.</span></a></li>
+              <li><a class="track" href="#mara" data-track="A1" data-tone="mara"><span class="track__no" aria-hidden="true">A1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-mara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">Mara</span><span class="track__year">2025</span><span class="track__desc">An AI-powered health and wellness platform.</span></a></li>
+              <li><a class="track" href="#echo" data-track="A2" data-tone="echo"><span class="track__no" aria-hidden="true">A2</span><span class="track__name"><img class="track__icon" src="assets/img/icon-echo.webp" width="192" height="192" alt="" loading="lazy" decoding="async">Echo</span><span class="track__year">2026</span><span class="track__desc">A 0-to-1, privacy-first photo-memory app for iPhone.</span></a></li>
+              <li><a class="track" href="#daleelk" data-track="A3" data-tone="daleelk"><span class="track__no" aria-hidden="true">A3</span><span class="track__name">Daleelk</span><span class="track__year">2025</span><span class="track__desc">An AI-powered travel platform for the Gulf.</span></a></li>
               <li><a class="track" href="#rassah" data-track="A4" data-tone="rassah"><span class="track__no" aria-hidden="true">A4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-rassah.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Rassah</span><span class="track__year">2026</span><span class="track__desc">An AI packing assistant for Saudi online stores.</span></a></li>
-              <li><a class="track" href="#pitlane" data-track="A5" data-tone="pitlane"><span class="track__no" aria-hidden="true">A5</span><span class="track__name"><img class="track__icon" src="assets/img/icon-pit-lane-hub.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Pit Lane Hub</span><span class="track__desc">Live Formula 1, F2 and F3 data. Free and open source.</span></a></li>
+              <li><a class="track" href="#pitlane" data-track="A5" data-tone="pitlane"><span class="track__no" aria-hidden="true">A5</span><span class="track__name"><img class="track__icon" src="assets/img/icon-pit-lane-hub.svg" width="64" height="64" alt="" loading="lazy" decoding="async">Pit Lane Hub</span><span class="track__year">2026</span><span class="track__desc">Live Formula 1, F2 and F3 data. Free and open source.</span></a></li>
             </ol>
           </div>
           <div class="side">
             <h3 class="side__name" id="side-b">Side B</h3>
             <ol class="more__list tracks" aria-labelledby="side-b">
-              <li><a class="track" href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer" data-track="B1"><span class="track__no" aria-hidden="true">B1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-docmara.webp" width="512" height="512" alt="" loading="lazy" decoding="async">DocMara</span><span class="track__year">2026</span><span class="track__desc">Scan, compress, convert, organise and sign files on device, in Arabic and English. iPhone, iPad and Mac. Rated 4.2.</span></a></li>
+              <li><a class="track" href="https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627" target="_blank" rel="noopener noreferrer" data-track="B1"><span class="track__no" aria-hidden="true">B1</span><span class="track__name"><img class="track__icon" src="assets/img/icon-docmara.webp" width="192" height="192" alt="" loading="lazy" decoding="async">DocMara</span><span class="track__year">2026</span><span class="track__desc">Scan, compress, convert, organise and sign files on device, in Arabic and English. iPhone, iPad and Mac. Rated <span data-live="apps.docmara.rating">4.2</span>.</span></a></li>
               <li><a class="track" href="https://github.com/justAbdulaziz10/Halo" target="_blank" rel="noopener noreferrer" data-track="B2"><span class="track__no" aria-hidden="true">B2</span><span class="track__name">Halo</span><span class="track__year">2026</span><span class="track__desc">An open-source AI inbox agent: a morning briefing, replies drafted in your tone and rules that act on their own.</span></a></li>
               <li><a class="track" href="https://github.com/justAbdulaziz10/ObsessionSystem" target="_blank" rel="noopener noreferrer" data-track="B3"><span class="track__no" aria-hidden="true">B3</span><span class="track__name">ObsessionSystem</span><span class="track__year">2026</span><span class="track__desc">Rules, skills and a delivery gate that make an AI coding agent prove its work before anything ships.</span></a></li>
               <li><a class="track" href="https://github.com/justAbdulaziz10/Deadware-Risk-Scanner" target="_blank" rel="noopener noreferrer" data-track="B4"><span class="track__no" aria-hidden="true">B4</span><span class="track__name"><img class="track__icon" src="assets/img/icon-deadware.svg" width="32" height="32" alt="" loading="lazy" decoding="async">Deadware Risk Scanner</span><span class="track__year">2026</span><span class="track__desc">Finds abandoned and unmaintained open-source packages in dependency files before they break a build.</span></a></li>
@@ -276,7 +294,7 @@
         </div>
       </div>
     </div>
-    <div class="wrap notes" aria-labelledby="tools-title">
+    <div class="wrap notes" role="region" aria-labelledby="tools-title">
       <h2 class="section-title notes__title" id="tools-title">Liner notes</h2>
       <div class="notes__groups">
         <section class="notes__group" aria-labelledby="notes-apps-title">

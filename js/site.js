@@ -132,7 +132,6 @@ if (!reduced) for (const rec of worldRecords) {
   if (rec.world === 'paper') continue;
   rec.el.style.setProperty('--world-radius', '0px');
   rec.el.style.setProperty('--world-content-opacity', '0');
-  rec.el.style.setProperty('--world-content-visibility', 'hidden');
 }
 
 async function mountScene(slot) {
@@ -385,7 +384,6 @@ function updateWorldState(rec, y, viewportHeight, force = false) {
   const ready = progress >= 1;
   if (rec.world !== 'paper' && ready !== rec.lastReady) {
     rec.el.style.setProperty('--world-content-opacity', ready ? '1' : '0');
-    rec.el.style.setProperty('--world-content-visibility', ready ? 'visible' : 'hidden');
     rec.lastReady = ready;
   }
 }

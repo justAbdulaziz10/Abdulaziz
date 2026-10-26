@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = new URL('../', import.meta.url);
 const LIVE = new URL('assets/data/live.json', ROOT);
 const WEEKS = new URL('assets/data/weeks.json', ROOT);
+const PAGE = new URL('index.html', ROOT);
 const UA = { 'user-agent': 'Mozilla/5.0 (portfolio data refresh; github.com/justAbdulaziz10/Abdulaziz)' };
 
 const get = async (url, type = 'text', headers = {}) => {
@@ -260,6 +261,14 @@ async function week(apps) {
 // What he is learning: the course tables in his To-infinity-and-AI README. A row in progress reads "🟨 8 / 40".
 // The course shown is the in-progress row his latest README edits touched; with no such edit, the first one.
 const LEARN_REPO = 'justAbdulaziz10/To-infinity-and-AI';
+// share links carry tracking (YouTube's si=); the page links to the plain address
+const cleanUrl = href => {
+  if (!href) return null;
+  const u = new URL(href);
+  u.searchParams.delete('si');
+  return u.href;
+};
+
 const progressRow = line => {
   if (!line.trim().startsWith('|')) return null;
   const cells = line.split('|').slice(1, -1).map(c => c.trim());
@@ -267,7 +276,7 @@ const progressRow = line => {
   const st = cells.map(c => c.match(/(?:🟨|⏳)\s*(\d+)\s*\/\s*(\d+)/)).find(Boolean);
   if (!st || !cells[0]) return null;
   const links = [...line.matchAll(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g)];
-  return { name: cells[0], by: cells[1] && !cells[1].includes('](') ? cells[1] : '', done: Number(st[1]), total: Number(st[2]), linkText: links[0]?.[1] ?? '', url: links[0]?.[2] ?? null };
+  return { name: cells[0], by: cells[1] && !cells[1].includes('](') ? cells[1] : '', done: Number(st[1]), total: Number(st[2]), linkText: links[0]?.[1] ?? '', url: cleanUrl(links[0]?.[2]) };
 };
 
 const courseTitle = row => {
@@ -333,6 +342,29 @@ async function revenuecat(prev = {}) {
   return out;
 }
 
+// The page ships with the numbers written in, for crawlers, link previews, print and visitors without
+// JavaScript. Rewrite those copies from the data so they never disagree with what live.js fills in.
+const nfmt = new Intl.NumberFormat('en-US');
+const dfmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export function bakeFallbacks(html, data) {
+  const dig = path => path.split('.').reduce((v, k) => (v == null ? v : v[k]), data);
+  html = html.replace(/(<(\w+)\b([^>]*?)\sdata-live="([^"]+)"([^>]*)>)([^<]*)(<\/\2>)/g, (all, open, tag, a, key, b, text, close) => {
+    const v = dig(key);
+    if (v == null || v === '') return all;
+    const fmt = /data-fmt="date"/.test(open) ? 'date' : '';
+    const out = fmt ? dfmt.format(new Date(`${v}T00:00:00Z`)) : typeof v === 'number' ? nfmt.format(v) : String(v);
+    const opened = typeof v === 'number' ? open.replace(/data-count="[^"]*"/, `data-count="${v}"`) : open;
+    return opened + esc(out) + close;
+  });
+  const courses = Array.isArray(data.learning?.courses) ? data.learning.courses.filter(c => c?.course && c.total > 0).slice(0, 5) : [];
+  if (courses.length) {
+    html = html.replace(/(<ul class="progress">)[\s\S]*?(\n\s*<\/ul>)/, (all, open, close) => open + courses.map(c =>
+      `\n            <li style="--v:${Math.min(c.done / c.total, 1).toFixed(3)}"><span class="progress__name">${esc(c.course)}</span><span class="progress__val">${c.done} / ${c.total}</span><span class="progress__bar" aria-hidden="true"></span></li>`).join('') + close);
+  }
+  return html;
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
@@ -352,4 +384,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     next.updated = new Date().toISOString();
     await writeFile(LIVE, JSON.stringify(next, null, 1) + '\n');
   }
+  const page = await readFile(PAGE, 'utf8');
+  const baked = bakeFallbacks(page, next);
+  if (baked !== page) await writeFile(PAGE, baked);
 }

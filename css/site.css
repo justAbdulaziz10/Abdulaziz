@@ -21,16 +21,17 @@ body {
   scrollbar-color: var(--fg-3) var(--bg);
 }
 
-/* worlds: the header follows body[data-world]; sections own their surfaces */
-body, body[data-world="paper"], main [data-world="paper"], .top[data-world="paper"] { --bg: var(--paper); --fg: var(--ink); --fg-2: var(--ink-2); --fg-3: var(--ink-3); --rule-c: var(--rule); --accent: var(--ink); --line: var(--ink); }
-body[data-world="mara"], main [data-world="mara"], .top[data-world="mara"] { --bg: var(--mara-soft); --fg: #0c2733; --fg-2: #2f5566; --fg-3: #4a6977; --rule-c: rgba(12, 39, 51, .14); --accent: #0b7fb0; --line: var(--mara); }
-body[data-world="echo"], main [data-world="echo"], .top[data-world="echo"] { --bg: var(--echo-deep); --fg: #fbeee6; --fg-2: #e2c3b4; --fg-3: #b9958a; --rule-c: rgba(251, 238, 230, .16); --accent: var(--echo); --line: var(--echo); }
-body[data-world="daleelk"], main [data-world="daleelk"], .top[data-world="daleelk"] { --bg: var(--daleelk-soft); --fg: #2b210f; --fg-2: #5d4d2f; --fg-3: #6e5f3e; --rule-c: rgba(43, 33, 15, .14); --accent: #8a5f17; --line: var(--daleelk); }
-body[data-world="rassah"], main [data-world="rassah"], .top[data-world="rassah"] { --bg: var(--rassah); --fg: var(--rassah-ink); --fg-2: #b9d2ca; --fg-3: #a3c4b9; --rule-c: rgba(233, 241, 238, .16); --accent: var(--carton); --line: var(--rassah-ink); }
-body[data-world="asphalt"], main [data-world="asphalt"], .top[data-world="asphalt"] { --bg: var(--asphalt); --fg: var(--kerb-white); --fg-2: #c3c6cc; --fg-3: #8d929b; --rule-c: rgba(244, 244, 242, .14); --accent: var(--kerb-red); --line: var(--kerb-white); }
-body[data-world="sleeve"], main [data-world="sleeve"], .top[data-world="sleeve"] { --bg: var(--sleeve); --fg: var(--sleeve-ink); --fg-2: #47390f; --fg-3: #574616; --rule-c: rgba(28, 22, 8, .2); --accent: var(--sleeve-ink); --line: var(--sleeve-ink); }
-body[data-world="map"], main [data-world="map"], .top[data-world="map"] { --bg: var(--map); --fg: #17142a; --fg-2: #423d5c; --fg-3: #554f70; --rule-c: rgba(23, 20, 42, .14); --accent: #17142a; --line: #17142a; }
-body[data-world="night"], main [data-world="night"], .top[data-world="night"], html.is-night .top[data-world="paper"], html.is-night body[data-world="paper"], html.is-night body:not([data-world]), html.is-night main [data-world="paper"] { --bg: var(--night); --fg: #f3efe4; --fg-2: #c9c3b3; --fg-3: #8f8a7e; --rule-c: rgba(243, 239, 228, .14); --accent: var(--window-warm); --line: var(--zebra); }
+/* worlds: sections and the header own their surfaces; body[data-thread] only recolours the thread. It is not
+   data-world on purpose: rules like `[data-world] > *` made every change of a body data-world restyle the whole page */
+body, main [data-world="paper"], .top[data-world="paper"] { --bg: var(--paper); --fg: var(--ink); --fg-2: var(--ink-2); --fg-3: var(--ink-3); --rule-c: var(--rule); --accent: var(--ink); --line: var(--ink); }
+body[data-thread="mara"] .thread, body[data-thread="mara"] .thread__interaction, main [data-world="mara"], .top[data-world="mara"] { --bg: var(--mara-soft); --fg: #0c2733; --fg-2: #2f5566; --fg-3: #4a6977; --rule-c: rgba(12, 39, 51, .14); --accent: #0b7fb0; --line: var(--mara); }
+body[data-thread="echo"] .thread, body[data-thread="echo"] .thread__interaction, main [data-world="echo"], .top[data-world="echo"] { --bg: var(--echo-deep); --fg: #fbeee6; --fg-2: #e2c3b4; --fg-3: #b9958a; --rule-c: rgba(251, 238, 230, .16); --accent: var(--echo); --line: var(--echo); }
+body[data-thread="daleelk"] .thread, body[data-thread="daleelk"] .thread__interaction, main [data-world="daleelk"], .top[data-world="daleelk"] { --bg: var(--daleelk-soft); --fg: #2b210f; --fg-2: #5d4d2f; --fg-3: #6e5f3e; --rule-c: rgba(43, 33, 15, .14); --accent: #8a5f17; --line: var(--daleelk); }
+body[data-thread="rassah"] .thread, body[data-thread="rassah"] .thread__interaction, main [data-world="rassah"], .top[data-world="rassah"] { --bg: var(--rassah); --fg: var(--rassah-ink); --fg-2: #b9d2ca; --fg-3: #a3c4b9; --rule-c: rgba(233, 241, 238, .16); --accent: var(--carton); --line: var(--rassah-ink); }
+body[data-thread="asphalt"] .thread, body[data-thread="asphalt"] .thread__interaction, main [data-world="asphalt"], .top[data-world="asphalt"] { --bg: var(--asphalt); --fg: var(--kerb-white); --fg-2: #c3c6cc; --fg-3: #8d929b; --rule-c: rgba(244, 244, 242, .14); --accent: var(--kerb-red); --line: var(--kerb-white); }
+body[data-thread="sleeve"] .thread, body[data-thread="sleeve"] .thread__interaction, main [data-world="sleeve"], .top[data-world="sleeve"] { --bg: var(--sleeve); --fg: var(--sleeve-ink); --fg-2: #47390f; --fg-3: #574616; --rule-c: rgba(28, 22, 8, .2); --accent: var(--sleeve-ink); --line: var(--sleeve-ink); }
+body[data-thread="map"] .thread, body[data-thread="map"] .thread__interaction, main [data-world="map"], .top[data-world="map"] { --bg: var(--map); --fg: #17142a; --fg-2: #423d5c; --fg-3: #554f70; --rule-c: rgba(23, 20, 42, .14); --accent: #17142a; --line: #17142a; }
+body[data-thread="night"] .thread, body[data-thread="night"] .thread__interaction, main [data-world="night"], .top[data-world="night"], html.is-night .top[data-world="paper"], html.is-night body, html.is-night main [data-world="paper"] { --bg: var(--night); --fg: #f3efe4; --fg-2: #c9c3b3; --fg-3: #8f8a7e; --rule-c: rgba(243, 239, 228, .14); --accent: var(--window-warm); --line: var(--zebra); }
 
 ::selection { background: var(--accent); color: var(--bg); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
@@ -113,7 +114,7 @@ p, dd, li { text-wrap: pretty; }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { .top__nav { transform: none; transition: visibility 0s linear var(--t-state); } }
 
 /* the global line */
-.thread { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+.thread { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 0; overflow: visible; will-change: transform; } /* own layer: drawing the line repaints only the line, not the page under it */
 .thread path { fill: none; stroke: var(--line); stroke-width: var(--line-w); stroke-linecap: round; stroke-linejoin: round; transition: stroke var(--t-world) var(--ease); }
 .thread__interaction { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 2; overflow: visible; }
 .thread__interaction path { fill: none; stroke: var(--line); stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
@@ -669,13 +670,22 @@ main [data-world]::before {
   clip-path: none;
   pointer-events: none;
 }
+/* the flood values change every frame while a world floods in; registered as non-inherited, a change restyles the
+   section and its ::before only, instead of every element inside it (a 4-15ms style pass per frame on wide screens) */
+@property --world-radius { syntax: "<length>"; inherits: false; initial-value: 9999px; }
+@property --world-x { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
+@property --world-y { syntax: "<length-percentage>"; inherits: false; initial-value: 0px; }
+@property --world-content-opacity { syntax: "<number>"; inherits: false; initial-value: 1; }
 .js main [data-world]::before {
+  --world-radius: inherit; --world-x: inherit; --world-y: inherit;
   clip-path: circle(var(--world-radius, 9999px) at var(--world-x, 50%) var(--world-y, 0px));
 }
+.js main [data-world].is-flooding::before { will-change: transform; }
 main [data-world] > * { position: relative; z-index: 2; }
 main [data-world] > .hero__sign { position: absolute; z-index: 1; }
 /* opacity only: the content stays in the tab order and the accessibility tree while its world floods in */
 .js main [data-world]:not([data-world="paper"]) > * {
+  --world-content-opacity: inherit;
   opacity: var(--world-content-opacity, 1);
   transition: opacity 160ms var(--ease);
 }
@@ -683,7 +693,7 @@ main [data-world] > .hero__sign { position: absolute; z-index: 1; }
 .js main [data-world]:not([data-world="paper"]):focus-within > * { opacity: 1; }
 html.is-night main [data-world="paper"]::before { clip-path: none !important; }
 html.is-night main [data-world="paper"] > * { opacity: 1 !important; }
-html.is-night body[data-world="paper"], html.is-night body:not([data-world]), html.is-night main [data-world="paper"] { --line: #f3efe4; }
+html.is-night body, html.is-night main [data-world="paper"] { --line: #f3efe4; }
 html.is-switching main [data-world]::before { transition: background-color var(--t-switch) var(--ease); }
 
 .project__name {

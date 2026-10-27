@@ -21,13 +21,23 @@ const worldRecords = worldSections.map(el => ({
   firstEntry: null, entry: null, radius: 0, lastRadius: NaN, lastReady: null,
 }));
 const worldRecordOf = new Map(worldRecords.map(rec => [rec.el, rec]));
-const worldIO = new IntersectionObserver((entries) => {
-  for (const e of entries) if (e.isIntersecting) body.dataset.world = e.target.dataset.world;
-}, { rootMargin: '-50% 0px -50% 0px' });
-worldSections.forEach(s => worldIO.observe(s));
 const themeMeta = document.querySelector('meta[name="theme-color"]');
-new MutationObserver(() => { themeMeta.content = getComputedStyle(body).getPropertyValue('--bg').trim() || '#f2f3ee'; })
-  .observe(body, { attributes: true, attributeFilter: ['data-world'] });
+// each section's colour is read once and cached: reading computed style mid-scroll forced a style pass of
+// 10-15ms on every world change, a visible hitch on a 120Hz laptop screen
+const worldBg = new Map();
+const worldColour = el => {
+  const key = el.dataset.world + (root.classList.contains('is-night') ? ':night' : '');
+  if (!worldBg.has(key)) worldBg.set(key, getComputedStyle(el).getPropertyValue('--bg').trim() || '#f2f3ee');
+  return worldBg.get(key);
+};
+const worldIO = new IntersectionObserver((entries) => {
+  for (const e of entries) if (e.isIntersecting) {
+    body.dataset.thread = e.target.dataset.world;
+    themeMeta.content = worldColour(e.target);
+  }
+}, { rootMargin: '-50% 0px -50% 0px' });
+window.requestIdleCallback?.(() => worldSections.forEach(worldColour));
+worldSections.forEach(s => worldIO.observe(s));
 
 /* ---------- header ---------- */
 const top = document.querySelector('.top');
@@ -244,7 +254,10 @@ threadStatus.className = 'thread__status';
 threadStatus.setAttribute('role', 'status');
 threadStatus.setAttribute('aria-live', 'polite');
 document.querySelector('main').prepend(threadStatus);
-let connectors = []; // { path, length, y0, y1 }
+let connectors = []; // { path, length, y0, y1, costs, lens }
+// how much scroll a sideways run of the thread costs, relative to a vertical one: wide screens have long
+// horizontal legs, and drawing by plain length made the tip lag far behind (or race ahead of) the scroll
+const SIDEWAYS_COST = 0.25;
 let lastNibPoint = null;
 let oldThreadGroup = null;
 let hasBuiltThread = false;
@@ -296,9 +309,20 @@ function anchorsOf(rec) {
   if (flow) return flow;
   const r = rec.el.getBoundingClientRect();
   const a = rec.api.anchors ? rec.api.anchors() : null;
+  const sy = scrollY;
+  // no declared anchors: meet the scene's own drawn line where it starts and ends, not the box centre
+  // (wide layouts shift the art off-centre, so the box centre can sit 100px+ from the line)
+  if (!a) {
+    const ends = sceneThreadPaths(rec).map(path => pathPageSamples(path)).filter(p => p.length > 1)
+      .map(p => (p[0].y <= p.at(-1).y ? [p[0], p.at(-1)] : [p.at(-1), p[0]]));
+    if (ends.length) {
+      const entry = ends.reduce((m, e) => (e[0].y < m.y ? e[0] : m), ends[0][0]);
+      const exit = ends.reduce((m, e) => (e[1].y > m.y ? e[1] : m), ends[0][1]);
+      if (exit.y > entry.y) return { entry: { x: entry.x, y: entry.y }, exit: { x: exit.x, y: exit.y } };
+    }
+  }
   const en = a?.entry ?? { x: 0.5, y: 0 };
   const ex = a?.exit ?? { x: 0.5, y: 1 };
-  const sy = scrollY;
   return {
     entry: { x: r.left + r.width * en.x, y: r.top + sy + r.height * en.y },
     exit: { x: r.left + r.width * ex.x, y: r.top + sy + r.height * ex.y },
@@ -337,7 +361,14 @@ function route(E, N, rects, laneX) {
   const rr = Math.max(4, Math.min(40, (N.y - E.y) / 6, Math.abs(N.x - laneX) / 2 || 40, Math.abs(laneX - E.x) / 2 || 40));
   let y1 = E.y + Math.min(56, (N.y - E.y) / 5), y2 = N.y - Math.min(56, (N.y - E.y) / 5), q;
   for (let i = 0; i < 6 && (q = hHit(y1, E.x, laneX)); i++) y1 = Math.max(E.y + 4, q.t - CLEAR);
+  const y2Start = y2;
   for (let i = 0; i < 6 && (q = hHit(y2, laneX, N.x)); i++) y2 = Math.min(N.y - 4, q.b + CLEAR);
+  // no room below the text (a title sitting level with the target): cross above it instead
+  if (hHit(y2, laneX, N.x)) {
+    let up = y2Start;
+    for (let i = 0; i < 6 && (q = hHit(up, laneX, N.x)); i++) up = q.t - CLEAR;
+    if (up > y1 + 8 && !hHit(up, laneX, N.x) && !blocked(N.x, up, N.y, rects)) y2 = up;
+  }
   // a leg squeezed into a short gap keeps its distance from the text and takes a tighter bend instead
   const r1 = Math.max(4, Math.min(rr, y1 - E.y)), r2 = Math.max(4, Math.min(rr, N.y - y2));
   const d1 = Math.sign(laneX - E.x) || -1, d2 = Math.sign(N.x - laneX) || 1;
@@ -445,6 +476,9 @@ function updateWorldState(rec, y, viewportHeight, force = false) {
     rec.el.style.setProperty('--world-radius', `${radius.toFixed(1)}px`);
     rec.lastRadius = radius;
   }
+  // its own layer while the circle grows, so each frame repaints a flat fill rather than the text and art on top
+  const flooding = progress > 0 && progress < 1;
+  if (flooding !== rec.lastFlooding) { rec.el.classList.toggle('is-flooding', flooding); rec.lastFlooding = flooding; }
   const ready = progress >= 1;
   if (rec.world !== 'paper' && ready !== rec.lastReady) {
     rec.el.style.setProperty('--world-content-opacity', ready ? '1' : '0');
@@ -1017,7 +1051,16 @@ function buildThread() {
     }
     thread.append(path);
     const length = path.getTotalLength();
-    connectors.push({ path, length, y0, y1 });
+    const steps = Math.max(2, Math.ceil(length / 12));
+    const costs = [0], lens = [0];
+    let prev = path.getPointAtLength(0);
+    for (let k = 1; k <= steps; k++) {
+      const len = length * k / steps, pt = path.getPointAtLength(len);
+      costs.push(costs[k - 1] + Math.abs(pt.y - prev.y) + SIDEWAYS_COST * Math.abs(pt.x - prev.x));
+      lens.push(len);
+      prev = pt;
+    }
+    connectors.push({ path, length, y0, y1, costs, lens });
     appendThreadSamples(path);
     // where the routed line crosses each section's top edge becomes that section's flood origin
     recordFloodCrossings(path, { y: y0 }, { y: y1 });
@@ -1101,6 +1144,17 @@ function threadAnchor(y, viewportHeight) {
   return y + viewportHeight * (0.62 + 0.38 * near);
 }
 
+// scroll progress through a connector's height -> fraction of its length drawn, weighting sideways runs lightly
+function drawnFraction(c, progress) {
+  if (progress <= 0 || progress >= 1 || !c.costs) return progress;
+  const { costs, lens } = c, target = progress * costs.at(-1);
+  let lo = 0, hi = costs.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (costs[mid] < target) lo = mid; else hi = mid; }
+  const span = costs[hi] - costs[lo];
+  const len = lens[lo] + (span > 0 ? (target - costs[lo]) / span : 0) * (lens[hi] - lens[lo]);
+  return len / c.length;
+}
+
 function hideThreadNib() {
   lastNibPoint = null;
   nib.classList.remove('is-moving');
@@ -1112,8 +1166,8 @@ function drawThread(y = smoothY, viewportHeight = cachedViewportHeight) {
   const anchor = threadAnchor(y, viewportHeight);
   let tip = null;
   for (const c of connectors) {
-    const t = clamp((anchor - c.y0) / (c.y1 - c.y0));
-    c.path.style.strokeDashoffset = String(1 - t);
+    const t = drawnFraction(c, clamp((anchor - c.y0) / (c.y1 - c.y0)));
+    if (t !== c.lastT) { c.path.style.strokeDashoffset = String(1 - t); c.lastT = t; }
     if (!tip && t > 0 && t < 1) tip = { connector: c, t };
   }
   if (tip) {

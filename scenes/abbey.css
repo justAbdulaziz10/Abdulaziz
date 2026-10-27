@@ -9,6 +9,9 @@
   height: auto;
   overflow: visible;
 }
+/* the street is drawn once underneath; the moving parts get their own layer on top */
+.scene--abbey .ab-back { position: absolute; top: 0; left: 0; pointer-events: none; }
+.scene--abbey .ab-front { position: relative; will-change: transform; }
 
 /* sky + ground */
 .scene--abbey .ab-sky0 { stop-color: var(--sky); }

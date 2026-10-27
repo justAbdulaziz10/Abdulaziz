@@ -295,11 +295,14 @@ function buildScene(root, L) {
   // ---- figures
   const figSvg = CAST.map((c, n) => figureMarkup(c, n, id)).join('');
 
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
-  svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Four figures walking in single file across a zebra crossing on a street of terraced houses, a white Beetle parked at the kerb — an homage to the Abbey Road cover.');
-  svg.innerHTML = `
+  // Two stacked layers: the street never changes while scrolling, so it is drawn once in its own SVG; the moving
+  // parts (stripes, line, Beetle, figures) sit in a second SVG on its own layer, and redrawing them every frame no
+  // longer redraws the houses and the masked line copy together.
+  const back = document.createElementNS(NS, 'svg');
+  back.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
+  back.setAttribute('aria-hidden', 'true');
+  back.classList.add('ab-back');
+  back.innerHTML = `
   <defs>
     <linearGradient id="${id}-sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" class="ab-sky0"/><stop offset="1" class="ab-sky1"/>
@@ -307,6 +310,25 @@ function buildScene(root, L) {
     <linearGradient id="${id}-road" gradientUnits="userSpaceOnUse" x1="0" y1="${H}" x2="0" y2="${yF}">
       <stop offset="0" class="ab-road0"/><stop offset="1" class="ab-road1"/>
     </linearGradient>
+    <clipPath id="${id}-bplate"><rect x="${px0}" y="${py0}" width="${px1 - px0}" height="${py1 - py0}"/></clipPath>
+  </defs>
+  <g clip-path="url(#${id}-bplate)">
+    <rect class="ab-skyrect" x="${px0}" y="${py0}" width="${px1 - px0}" height="${H - py0 + 1}" fill="url(#${id}-sky)"/>
+
+    <rect class="ab-ground" x="${px0}" y="${H}" width="${px1 - px0}" height="${py1 - H}"/>
+    <g>${houseSvg}</g>
+    <polygon class="ab-wall" points="${wall(-1)}"/><polygon class="ab-wall" points="${wall(1)}"/>
+    <polygon class="ab-road" points="${road}" fill="url(#${id}-road)"/>
+    <polygon class="ab-kerb" points="${kerb(-1)}"/><polygon class="ab-kerb" points="${kerb(1)}"/>
+  </g>`;
+
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${Ht}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Four figures walking in single file across a zebra crossing on a street of terraced houses, a white Beetle parked at the kerb — an homage to the Abbey Road cover.');
+  svg.classList.add('ab-front');
+  svg.innerHTML = `
+  <defs>
     <clipPath id="${id}-plate"><rect x="${px0}" y="${py0}" width="${px1 - px0}" height="${py1 - py0}"/></clipPath>
     ${stripes.map((st) => `<clipPath id="${id}-r${st.i}"><rect data-r="${st.i}" x="${f1(st.x0)}" y="${yF - 1}" width="${f1(st.x1 - st.x0)}" height="${yN - yF + 2}"/></clipPath>`).join('')}
     <g id="${id}-stripes">${stripes.map((st) => `<polygon class="ab-stripe" style="fill:var(--ab-sf)" clip-path="url(#${id}-r${st.i})" points="${st.pts}"/>`).join('')}</g>
@@ -319,13 +341,6 @@ function buildScene(root, L) {
     </mask>
   </defs>
   <g clip-path="url(#${id}-plate)">
-    <rect class="ab-skyrect" x="${px0}" y="${py0}" width="${px1 - px0}" height="${H - py0 + 1}" fill="url(#${id}-sky)"/>
-
-    <rect class="ab-ground" x="${px0}" y="${H}" width="${px1 - px0}" height="${py1 - H}"/>
-    <g aria-hidden="true">${houseSvg}</g>
-    <polygon class="ab-wall" points="${wall(-1)}"/><polygon class="ab-wall" points="${wall(1)}"/>
-    <polygon class="ab-road" points="${road}" fill="url(#${id}-road)"/>
-    <polygon class="ab-kerb" points="${kerb(-1)}"/><polygon class="ab-kerb" points="${kerb(1)}"/>
     <use href="#${id}-stripes"/>
     <g aria-hidden="true">${beetle}</g>
     <g aria-hidden="true">${beacons}</g>
@@ -335,7 +350,7 @@ function buildScene(root, L) {
   <g clip-path="url(#${id}-plate)">
     <g id="${id}-figs" class="ab-figs">${figSvg}</g>
   </g>`;
-  root.append(svg);
+  root.append(back, svg);
 
   // ---- refs
   const lines = [...svg.querySelectorAll(`#${id}-lines .ab-line`)];

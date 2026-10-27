@@ -154,6 +154,8 @@ const titles = [...document.querySelectorAll('.project__name')].map(el => ({
   el, section: el.closest('section'), world: worldRecordOf.get(el.closest('section')),
   kind: el.closest('section')?.id, lastT: NaN, lastStyle: '',
 }));
+// scenes load with this file's own stamp, which tools/stamp.mjs hashes over the scenes as well
+const SCENE_STAMP = new URL(import.meta.url).search;
 const timeline = document.querySelector('.timeline');
 let cachedDocumentHeight = document.documentElement.scrollHeight;
 let cachedViewportHeight = innerHeight;
@@ -178,11 +180,11 @@ async function mountScene(slot) {
   slot.append(el);
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = `scenes/${id}.css`;
+  css.href = `scenes/${id}.css${SCENE_STAMP}`;
   const cssReady = new Promise(r => { css.onload = r; css.onerror = r; });
   document.head.append(css);
   try {
-    const [mod] = await Promise.all([import(`../scenes/${id}.js`), cssReady]);
+    const [mod] = await Promise.all([import(`../scenes/${id}.js${SCENE_STAMP}`), cssReady]);
     const api = mod.mount(el, { reduced });
     const rec = { slot, el, api, visible: false, p: -1, section: null, top: 0, height: 0 };
     scenes.push(rec);
@@ -608,20 +610,93 @@ function finishWorldLayout(y) {
   }
 }
 
-function pathPageSamples(path) {
-  let length, matrix;
-  try {
-    length = path.getTotalLength();
-    matrix = path.getScreenCTM();
-  } catch { return []; }
-  if (!length || !matrix) return [];
-  const steps = Math.max(1, Math.ceil(length / 10));
+// Points every `gap` units along a path, in its own coordinates. A long path is split into its segments and each
+// one is measured on its own, so a sample costs the same at the end of the path as at its start.
+const scratchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+function pathSegments(d) {
+  const tokens = d.match(/[a-z]|[-+]?(?:\d*\.\d+|\d+\.?)(?:e[-+]?\d+)?/gi);
+  if (!tokens) return null;
+  const counts = { M: 2, L: 2, H: 1, V: 1, C: 6, Q: 4, A: 7, Z: 0 };
+  const segments = [];
+  let i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
+  const num = () => Number(tokens[i++]);
+  while (i < tokens.length) {
+    if (/[a-z]/i.test(tokens[i])) cmd = tokens[i++];
+    else if (!cmd || /z/i.test(cmd)) return null;
+    const up = cmd.toUpperCase(), rel = cmd !== up;
+    if (!(up in counts)) return null;
+    if (up === 'Z') {
+      if (x !== sx || y !== sy) segments.push(`M${x} ${y}L${sx} ${sy}`);
+      x = sx; y = sy;
+      continue;
+    }
+    if (i + counts[up] > tokens.length) return null;
+    const ox = rel ? x : 0, oy = rel ? y : 0;
+    let seg, nx, ny;
+    if (up === 'M') {
+      x = sx = num() + ox; y = sy = num() + oy;
+      cmd = rel ? 'l' : 'L';
+      continue;
+    } else if (up === 'H') { nx = num() + ox; ny = y; seg = `L${nx} ${ny}`; }
+    else if (up === 'V') { nx = x; ny = num() + oy; seg = `L${nx} ${ny}`; }
+    else if (up === 'L') { nx = num() + ox; ny = num() + oy; seg = `L${nx} ${ny}`; }
+    else if (up === 'C' || up === 'Q') {
+      const v = [];
+      for (let k = 0; k < counts[up]; k += 2) v.push(num() + ox, num() + oy);
+      nx = v.at(-2); ny = v.at(-1); seg = up + v.join(' ');
+    } else {
+      const v = [num(), num(), num(), num(), num()];
+      nx = num() + ox; ny = num() + oy; seg = `A${v.join(' ')} ${nx} ${ny}`;
+    }
+    segments.push(`M${x} ${y}${seg}`);
+    x = nx; y = ny;
+  }
+  return segments;
+}
+function localSamples(path, gap) {
+  const segments = pathSegments(path.getAttribute('d') || '');
+  if (!segments) {
+    const length = path.getTotalLength();
+    if (!length) return [];
+    const steps = Math.max(1, Math.ceil(length / gap));
+    return Array.from({ length: steps + 1 }, (_, i) => path.getPointAtLength(length * i / steps));
+  }
+  const lengths = segments.map(d => { scratchPath.setAttribute('d', d); return scratchPath.getTotalLength(); });
+  const total = lengths.reduce((sum, l) => sum + l, 0);
+  if (!total) return [];
+  const steps = Math.max(1, Math.ceil(total / gap));
   const points = [];
+  let k = 0, start = 0;
+  scratchPath.setAttribute('d', segments[0]);
   for (let i = 0; i <= steps; i++) {
-    const local = path.getPointAtLength(length * i / steps);
+    const at = total * i / steps;
+    while (k < segments.length - 1 && at > start + lengths[k]) {
+      start += lengths[k++];
+      scratchPath.setAttribute('d', segments[k]);
+    }
+    points.push(scratchPath.getPointAtLength(Math.min(lengths[k], at - start)));
+  }
+  return points;
+}
+
+// The line is built three or four times while the page loads; samples are kept per path and reused while its
+// shape and its place on the page are unchanged.
+const pathSampleCache = new WeakMap();
+function pathPageSamples(path) {
+  let matrix;
+  try { matrix = path.getScreenCTM(); } catch { return []; }
+  if (!matrix) return [];
+  const key = `${path.getAttribute('d')}|${matrix.a},${matrix.b},${matrix.c},${matrix.d},${matrix.e + scrollX},${matrix.f + scrollY}`;
+  const cached = pathSampleCache.get(path);
+  if (cached?.key === key) return cached.points.map(p => ({ ...p }));
+  let locals;
+  try { locals = localSamples(path, 10); } catch { return []; }
+  const points = [];
+  for (const local of locals) {
     const screen = new DOMPoint(local.x, local.y).matrixTransform(matrix);
     points.push({ x: screen.x + scrollX, y: screen.y + scrollY });
   }
+  pathSampleCache.set(path, { key, points: points.map(p => ({ ...p })) });
   return points;
 }
 
@@ -955,6 +1030,9 @@ void updateHeartbeat();
 function buildThread() {
   clearHeartbeat();
   heartbeatReady = false;
+  // Measure the page without the line's own layers: they are as tall as the page, so a height taken while the page
+  // was briefly taller during load would otherwise keep that blank space below the footer for good.
+  thread.style.height = threadInteraction.style.height = '0px';
   const docH = document.documentElement.scrollHeight;
   thread.setAttribute('width', innerWidth);
   thread.setAttribute('height', docH);

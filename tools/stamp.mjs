@@ -6,14 +6,17 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
 const ROOT = new URL('../', import.meta.url);
-const PAGE = new URL('index.html', ROOT);
-const html = await readFile(PAGE, 'utf8');
-let out = html;
-for (const m of html.matchAll(/(href|src)="((?:css|js)\/[\w-]+\.(?:css|js))(?:\?v=[\da-f]+)?"/g)) {
-  const [all, attr, file] = m;
-  if (file === 'js/eggs.js') continue;
-  const hash = createHash('sha1').update(await readFile(new URL(file, ROOT))).digest('hex').slice(0, 8);
-  out = out.replace(all, `${attr}="${file}?v=${hash}"`);
+let stamped = false;
+for (const name of ['index.html', '404.html']) { // the 404 page shares site.css, so it needs the same stamp
+  const page = new URL(name, ROOT);
+  const html = await readFile(page, 'utf8');
+  let out = html;
+  for (const m of html.matchAll(/(href|src)="((?:css|js)\/[\w-]+\.(?:css|js))(?:\?v=[\da-f]+)?"/g)) {
+    const [all, attr, file] = m;
+    if (file === 'js/eggs.js') continue;
+    const hash = createHash('sha1').update(await readFile(new URL(file, ROOT))).digest('hex').slice(0, 8);
+    out = out.replace(all, `${attr}="${file}?v=${hash}"`);
+  }
+  if (out !== html) { await writeFile(page, out); stamped = true; }
 }
-if (out !== html) await writeFile(PAGE, out);
-console.log(out !== html ? 'stamped' : 'stamps current');
+console.log(stamped ? 'stamped' : 'stamps current');

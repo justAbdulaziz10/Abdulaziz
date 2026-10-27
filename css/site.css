@@ -653,8 +653,8 @@ html.is-pm .project__scene { opacity: .4; }
 
 @media (prefers-reduced-motion: reduce) {
   .project__scene { transition: none; }
-  .foot__sign-path { stroke-dashoffset: 0 !important; }
-  .foot__sign-dot { opacity: 1; }
+  html:not(.js) .foot__sign-path { stroke-dashoffset: 0 !important; }
+  html:not(.js) .foot__sign-dot { opacity: 1; }
 }
 
 /* round 4: colour follows the line, moving titles */
@@ -717,4 +717,7 @@ html.is-switching main [data-world]::before { transition: background-color var(-
 @media (prefers-reduced-motion: reduce) {
   main [data-world]::before { clip-path: none !important; }
   main [data-world]:not([data-world="paper"]) > * { opacity: 1 !important; }
+  /* no flood: each section's content simply fades in once it is on screen */
+  .js main [data-world] > :not(.hero__sign) { opacity: 0 !important; transition: opacity 600ms ease !important; }
+  .js main [data-world].is-seen > *, .js main [data-world]:focus-within > * { opacity: 1 !important; }
 }

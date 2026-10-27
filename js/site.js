@@ -3,6 +3,8 @@ import './tools.js';
 import { signature, toD } from '../scenes/sign.js';
 import { activateAudio, getAudioContext, getAudioOutput, isOn } from './sound.js';
 
+// Reduce motion keeps the calm motion: the line still draws with the scroll, sections fade in and numbers
+// count up. What it drops is movement across the screen: the colour floods, moving titles, the pulse, scenes.
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const body = document.body;
@@ -95,11 +97,18 @@ function updateArrivalReveals(anchor) {
     if (!rec.el.classList.contains('is-in') && anchor >= rec.top + rec.height * 0.12) rec.el.classList.add('is-in');
   }
 }
-if (reduced) revealElements.forEach(el => revealIO.observe(el));
+if (reduced) {
+  revealElements.forEach(el => revealIO.observe(el));
+  const seenIO = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-seen'); seenIO.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -12% 0px' });
+  worldSections.forEach(el => seenIO.observe(el));
+  addEventListener('beforeprint', () => worldSections.forEach(el => el.classList.add('is-seen')));
+}
 
 /* count-up for the year number */
 const counter = document.querySelector('[data-count]');
-if (counter && !reduced) {
+if (counter) {
   const fmt = new Intl.NumberFormat('en-US');
   const io = new IntersectionObserver(([e]) => {
     if (!e.isIntersecting) return;
@@ -211,10 +220,10 @@ if (footSignSvg && footSignature) {
   footSignPath.setAttribute('d', toD(footSignature.segs, p => ({ x: p.x - footSignature.box.x0, y: p.y - footSignature.box.y0 })));
   footSignPath.setAttribute('pathLength', '1');
   footSignPath.style.strokeDasharray = '1';
-  footSignPath.style.strokeDashoffset = reduced ? '0' : '1';
+  footSignPath.style.strokeDashoffset = '1';
   footSignDot.setAttribute('cx', (footSignature.dot.x - footSignature.box.x0).toFixed(2));
   footSignDot.setAttribute('cy', (footSignature.dot.y - footSignature.box.y0).toFixed(2));
-  footSignDot.style.opacity = reduced ? '1' : '0';
+  footSignDot.style.opacity = '0';
 }
 const thread = document.createElementNS(NS, 'svg');
 thread.classList.add('thread');
@@ -908,62 +917,28 @@ if (canPullThread) {
   addEventListener('pointercancel', event => releaseThreadPull(event, false), { passive: false });
 }
 
-const GITHUB_EVENTS_URL = 'https://api.github.com/users/justAbdulaziz10/events/public?per_page=100';
-const GITHUB_CACHE_KEY = 'one-github-events-v1';
-const GITHUB_CACHE_AGE = 10 * 60 * 1000;
 const DAY = 24 * 60 * 60 * 1000;
 
-function cachedGitHubEvents() {
-  try {
-    const cached = JSON.parse(sessionStorage.getItem(GITHUB_CACHE_KEY) || 'null');
-    const age = cached ? Date.now() - cached.savedAt : -1;
-    return cached && age >= 0 && age < GITHUB_CACHE_AGE && Array.isArray(cached.events) ? cached.events : null;
-  } catch { return null; }
-}
-
-async function fetchGitHubEvents() {
-  const cached = cachedGitHubEvents();
-  if (cached) return cached;
-  const response = await fetch(GITHUB_EVENTS_URL, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
-  if (!response.ok) throw new Error('GitHub activity is unavailable');
-  const events = await response.json();
-  if (!Array.isArray(events)) throw new Error('GitHub activity is unavailable');
-  const compact = events.map(event => ({ type: event.type, created_at: event.created_at }));
-  try { sessionStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), events: compact })); }
-  catch { /* The live count still works when session storage is full. */ }
-  return compact;
-}
-
-function countRecentPushEvents(events, now = Date.now()) {
-  const cutoff = now - DAY;
-  return events.filter(event => {
-    if (event.type !== 'PushEvent') return false;
-    const created = Date.parse(event.created_at);
-    return Number.isFinite(created) && created >= cutoff && created <= now;
-  }).length;
-}
-
-async function localPushCount(now = Date.now()) {
-  const response = await fetch(new URL('../assets/data/live.json', import.meta.url));
-  if (!response.ok) throw new Error('Local activity is unavailable');
-  const data = await response.json();
-  const cutoff = now - DAY;
-  return (data.week?.items || []).reduce((sum, item) => {
-    if (item.kind !== 'push') return sum;
-    const created = Date.parse(item.date);
-    if (!Number.isFinite(created) || created < cutoff || created > now) return sum;
-    return sum + Math.max(0, Math.floor(Number(item.count) || 0));
-  }, 0); // these are commit counts, not pushes
-}
-
+// Push times come from live.json, which the hourly job refreshes. Asking GitHub from every visitor ran into its
+// 60-calls-an-hour limit and cost a 26KB download on each visit.
 async function updateHeartbeat() {
+  let data;
+  try {
+    const response = await fetch(new URL('../assets/data/live.json', import.meta.url), { cache: 'no-cache' });
+    if (!response.ok) return;
+    data = await response.json();
+  } catch { return; } // activity is optional; keep errors silent
+  const now = Date.now(), cutoff = now - DAY;
   let count = null, unit = ['push', 'pushes'];
-  try { count = countRecentPushEvents(await fetchGitHubEvents()); }
-  catch {
-    try { count = await localPushCount(); unit = ['commit', 'commits']; }
-    catch { /* Activity is optional; keep errors silent. */ }
+  if (Array.isArray(data.pulse?.pushes)) {
+    count = data.pulse.pushes.filter(at => { const t = Date.parse(at); return t >= cutoff && t <= now; }).length;
+  } else {
+    unit = ['commit', 'commits'];
+    count = (data.week?.items || []).reduce((sum, item) => {
+      const t = Date.parse(item.date);
+      return item.kind === 'push' && t >= cutoff && t <= now ? sum + Math.max(0, Math.floor(Number(item.count) || 0)) : sum;
+    }, 0);
   }
-  if (count === null) return;
   heartbeatCount = count;
   threadStatus.textContent = `${count} ${unit[count === 1 ? 0 : 1]} to GitHub in the last 24 hours`;
   if (heartbeatReady) scheduleHeartbeat(0);
@@ -1044,7 +1019,7 @@ function buildThread() {
     path.setAttribute('d', d);
     path.setAttribute('pathLength', '1');
     path.style.strokeDasharray = '1';
-    path.style.strokeDashoffset = reduced ? '0' : '1';
+    path.style.strokeDashoffset = '1';
     if (crossfade) {
       path.classList.add('thread__new');
       newPaths.push(path);
@@ -1162,7 +1137,6 @@ function hideThreadNib() {
 }
 
 function drawThread(y = smoothY, viewportHeight = cachedViewportHeight) {
-  if (reduced) { hideThreadNib(); return; }
   const anchor = threadAnchor(y, viewportHeight);
   let tip = null;
   for (const c of connectors) {
@@ -1170,7 +1144,7 @@ function drawThread(y = smoothY, viewportHeight = cachedViewportHeight) {
     if (t !== c.lastT) { c.path.style.strokeDashoffset = String(1 - t); c.lastT = t; }
     if (!tip && t > 0 && t < 1) tip = { connector: c, t };
   }
-  if (tip) {
+  if (tip && !reduced) { // no travelling dot under Reduce motion
     const point = tip.connector.path.getPointAtLength(tip.t * tip.connector.length);
     if (point.x >= 0 && point.x <= cachedViewportWidth && point.y >= y && point.y <= y + viewportHeight) {
       nib.setAttribute('cx', point.x.toFixed(2));

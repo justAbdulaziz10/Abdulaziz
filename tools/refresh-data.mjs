@@ -450,6 +450,16 @@ export function parseWeek(events, apps, now = new Date(), counts = {}) {
   return { items: items.slice(0, 6) }; // no window stamps, so an unchanged week doesn't rewrite the file
 }
 
+// Push times from the last two days, for the thread's heartbeat. Visitors read them from live.json instead of
+// asking GitHub themselves (60 unauthenticated calls an hour per address, so busy networks got refused).
+async function pulse() {
+  const gh = url => get(url, 'json', process.env.GITHUB_TOKEN ? { authorization: `bearer ${process.env.GITHUB_TOKEN}` } : {});
+  const events = await gh('https://api.github.com/users/justAbdulaziz10/events/public?per_page=100');
+  if (!Array.isArray(events)) throw new Error('no events');
+  const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000;
+  return { pushes: events.filter(e => e.type === 'PushEvent' && Date.parse(e.created_at) >= cutoff).map(e => e.created_at).sort().reverse() };
+}
+
 async function week(apps) {
   const gh = url => get(url, 'json', process.env.GITHUB_TOKEN ? { authorization: `bearer ${process.env.GITHUB_TOKEN}` } : {});
   const events = await gh('https://api.github.com/users/justAbdulaziz10/events/public?per_page=100');
@@ -721,7 +731,7 @@ export async function x(prev = {}, { request = curl } = {}) {
     for (const [i, m] of list.entries()) {
       // one photo shows large, a grid of two to four shows each one small
       const file = `${post.id}-${i + 1}.jpg`;
-      if (!m.remote || !(m.w > 0) || !(m.h > 0) || !await saveImage(`${m.remote}?format=jpg&name=${list.length === 1 ? 'medium' : 'small'}`, file)) continue;
+      if (!m.remote || !(m.w > 0) || !(m.h > 0) || !await saveImage(`${m.remote}?format=jpg&name=small`, file)) continue;
       keep.add(file);
       post.media.push({ src: `assets/img/x/${file}`, w: m.w, h: m.h, type: m.type, alt: m.alt });
     }
@@ -826,7 +836,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.warn(`keep f1lap: ${e.message}`);
     }
   }
-  const sources = { github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab, x: () => x(next.x) };
+  const sources = { github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab, x: () => x(next.x), pulse };
   for (const [key, fn] of Object.entries(sources).filter(([key]) => !only.length || only.includes(key))) {
     try {
       next[key] = await fn();

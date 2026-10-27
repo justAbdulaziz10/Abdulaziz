@@ -48,7 +48,11 @@ async function start() {
     return img;
   };
 
-  let cur = -1, pan = 0;
+  // the neighbours (about 240KB each) load once someone reaches for the scrubber, not on every visit
+  let cur = -1, pan = 0, engaged = false;
+  const warm = (i) => { if (engaged && !reduced) [i - 1, i + 1].forEach(n => { if (n >= 0 && n < versions.length) imgFor(n); }); };
+  const engage = () => { if (!engaged) { engaged = true; warm(cur); } };
+  for (const type of ['pointerenter', 'focusin', 'touchstart']) $('[data-rewind-scrub]').addEventListener(type, engage, { passive: true });
   const place = () => {
     const vw = view.clientWidth, vh = view.clientHeight;
     for (const [i, img] of imgs) {
@@ -64,7 +68,7 @@ async function start() {
     if (reduced) { for (const [k, other] of imgs) if (k !== i) { other.remove(); imgs.delete(k); } }
     img.classList.remove('is-gone');
     if (prev && prev !== img) prev.classList.add('is-gone');
-    [i - 1, i + 1].forEach(n => { if (!reduced && n >= 0 && n < versions.length) imgFor(n); });
+    warm(i);
     [...strip.children].forEach((li, k) => li.classList.toggle('is-on', k === i));
     whenEl.textContent = `Version ${i + 1} of ${versions.length}, ${when(v.date)}`;
     whatEl.textContent = v.subject;

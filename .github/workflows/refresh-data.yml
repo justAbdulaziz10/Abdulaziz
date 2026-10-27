@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch GitHub, GitLab, Letterboxd, OpenF1, App Store and RevenueCat data
+      - name: Fetch GitHub, GitLab, Letterboxd, OpenF1, App Store, RevenueCat and X data
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REVENUECAT_ECHO_KEY: ${{ secrets.REVENUECAT_ECHO_KEY }}
@@ -34,10 +34,11 @@ jobs:
         run: node tools/og.mjs
       - name: Commit if anything changed
         run: |
-          if git diff --quiet -- assets/data index.html assets/og.png && [ -z "$(git ls-files --others --exclude-standard -- assets/data/f1lap.json)" ]; then exit 0; fi
+          if git diff --quiet -- assets/data index.html assets/og.png && [ -z "$(git ls-files --others --exclude-standard -- assets/data/f1lap.json)" ] && [ -z "$(git status --porcelain -- assets/img/x)" ]; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/data index.html assets/og.png
           if [ -f assets/data/f1lap.json ]; then git add -- assets/data/f1lap.json; fi
+          if [ -d assets/img/x ]; then git add -A assets/img/x; fi
           git commit -m "Refresh live data"
           git push

@@ -1,4 +1,4 @@
-// Refreshes the site's live numbers: GitHub year, Letterboxd, F1, App Store and RevenueCat data.
+// Refreshes the site's live numbers: GitHub year, Letterboxd, F1, App Store, RevenueCat data and the latest posts on X.
 // Run daily by .github/workflows/refresh-data.yml. Each source is independent: if one fails, its last good
 // value is kept, so the page never shows an empty or broken number.
 import { readFile, writeFile } from 'node:fs/promises';
@@ -612,6 +612,47 @@ export async function gitlab() {
   return { pushes: days.reduce((s, d) => s + d[1], 0), activeDays: days.length, first: days[0][0] };
 }
 
+// The latest three posts on X, without replies or reposts, from the public timeline X serves to its own
+// embed widget (no key needed). Their first photo is saved next to the page so visitors never load from X.
+const X_USER = 'AlkhlaiweA';
+const X_IMG = new URL('assets/img/x/', ROOT);
+export async function x({ request = get } = {}) {
+  const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`, 'text', { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36' });
+  const data = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
+  if (!data) throw new Error('timeline data not found');
+  const entries = JSON.parse(data).props?.pageProps?.timeline?.entries;
+  if (!Array.isArray(entries)) throw new Error('unexpected timeline');
+  const posts = entries.map(e => e?.content?.tweet).filter(t => t?.id_str && t.user?.screen_name === X_USER
+    && !t.in_reply_to_status_id_str && !t.retweeted_status && !/^RT @/.test(t.full_text ?? '') && !t.possibly_sensitive)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 3);
+  if (!posts.length) throw new Error('no posts found');
+  const { mkdir, readdir, unlink } = await import('node:fs/promises');
+  await mkdir(X_IMG, { recursive: true });
+  const out = [];
+  for (const t of posts) {
+    let text = t.full_text ?? '';
+    for (const m of t.entities?.media ?? []) text = text.split(m.url).join('');
+    for (const u of t.entities?.urls ?? []) text = text.split(u.url).join(u.display_url ?? u.expanded_url ?? '');
+    const post = { id: t.id_str, date: new Date(t.created_at).toISOString(), text: decodeXml(text).replace(/\n{2,}/g, '\n').trim(), lang: t.lang };
+    const m = (t.extended_entities?.media ?? t.entities?.media ?? [])[0];
+    if (m?.media_url_https) {
+      const file = `${t.id_str}.jpg`;
+      try {
+        await readFile(new URL(file, X_IMG));
+      } catch {
+        const r = await fetch(`${m.media_url_https}?format=jpg&name=medium`, { headers: UA, signal: AbortSignal.timeout(20000) });
+        if (r.ok) await writeFile(new URL(file, X_IMG), Buffer.from(await r.arrayBuffer()));
+      }
+      const size = m.sizes?.medium;
+      if (size?.w) Object.assign(post, { img: `assets/img/x/${file}`, w: size.w, h: size.h, alt: m.ext_alt_text ?? '' });
+    }
+    out.push(post);
+  }
+  const keep = new Set(out.map(p => `${p.id}.jpg`));
+  for (const f of await readdir(X_IMG)) if (!keep.has(f)) await unlink(new URL(f, X_IMG));
+  return { user: X_USER, posts: out };
+}
+
 // The page ships with the numbers written in, for crawlers, link previews, print and visitors without
 // JavaScript. Rewrite those copies from the data so they never disagree with what live.js fills in.
 const nfmt = new Intl.NumberFormat('en-US');
@@ -647,6 +688,17 @@ export function bakeFallbacks(html, data) {
       html = html.replace(/(<p class="last-race__fastest" data-last-race-fastest[^>]*>)[\s\S]*?(<\/p>)/, `$1<span class="last-race__fastest-label">Fastest lap</span><span class="last-race__fastest-value">${esc(fl.driver)}, <span class="last-race__time">${esc(fl.time)}</span></span>$2`);
     }
   }
+  const posts = Array.isArray(data.x?.posts) ? data.x.posts.filter(p => /^\d+$/.test(p?.id) && Number.isFinite(Date.parse(p.date))) : [];
+  if (posts.length) {
+    const attr = t => esc(t).replace(/"/g, '&quot;');
+    const day = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Riyadh' });
+    const iso = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
+    html = html.replace(/(<ol class="posts__list" data-x-posts>)[\s\S]*?(\n\s*<\/ol>)/, (all, open, close) => open + posts.map(p =>
+      `\n          <li class="post"><a class="post__link" href="https://x.com/${attr(data.x.user)}/status/${p.id}" target="_blank" rel="noopener noreferrer">`
+      + (p.img ? `<img class="post__img" src="${attr(p.img)}" alt="${attr(p.alt ?? '')}" width="${+p.w}" height="${+p.h}" loading="lazy" decoding="async">` : '')
+      + (p.text ? `<span class="post__text"${p.lang && /^[a-z]{2}$/.test(p.lang) ? ` lang="${p.lang}"` : ''} dir="auto">${esc(p.text)}</span>` : '')
+      + `<time class="post__date" datetime="${iso(p.date)}">${day.format(new Date(p.date))}</time></a></li>`).join('') + close);
+  }
   const courses = Array.isArray(data.learning?.courses) ? data.learning.courses.filter(c => c?.course && c.total > 0).slice(0, 5) : [];
   if (courses.length) {
     html = html.replace(/(<ul class="progress">)[\s\S]*?(\n\s*<\/ul>)/, (all, open, close) => open + courses.map(c =>
@@ -659,13 +711,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
-  try {
-    await refreshF1Lap();
-    console.log('ok   f1lap');
-  } catch (e) {
-    console.warn(`keep f1lap: ${e.message}`);
+  // `node tools/refresh-data.mjs x` refreshes only the named sources (the X job runs every two hours)
+  const only = process.argv.slice(2);
+  if (!only.length) {
+    try {
+      await refreshF1Lap();
+      console.log('ok   f1lap');
+    } catch (e) {
+      console.warn(`keep f1lap: ${e.message}`);
+    }
   }
-  for (const [key, fn] of Object.entries({ github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab })) {
+  const sources = { github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab, x: () => x() };
+  for (const [key, fn] of Object.entries(sources).filter(([key]) => !only.length || only.includes(key))) {
     try {
       next[key] = await fn();
       changed = true;

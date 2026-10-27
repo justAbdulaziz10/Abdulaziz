@@ -1,0 +1,35 @@
+name: Refresh posts on X
+
+on:
+  schedule:
+    - cron: "41 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch the latest posts on X
+        run: node tools/refresh-data.mjs x
+      - name: Commit if anything changed
+        run: |
+          if git diff --quiet -- assets/data index.html && [ -z "$(git status --porcelain -- assets/img/x)" ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/data index.html
+          git add -A assets/img/x
+          git commit -m "Refresh posts on X"
+          git pull --rebase
+          git push

@@ -716,7 +716,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const prev = JSON.parse(await readFile(LIVE, 'utf8').catch(() => '{}'));
   const next = { ...prev };
   let changed = false;
-  // `node tools/refresh-data.mjs x` refreshes only the named sources (the X job runs every two hours)
+  // `node tools/refresh-data.mjs x` refreshes only the named sources (the X job runs hourly; X often refuses GitHub's shared runners, and a refused run keeps the last posts)
   const only = process.argv.slice(2);
   if (!only.length) {
     try {

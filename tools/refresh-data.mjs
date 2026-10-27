@@ -616,8 +616,13 @@ export async function gitlab() {
 // embed widget (no key needed). Their first photo is saved next to the page so visitors never load from X.
 const X_USER = 'AlkhlaiweA';
 const X_IMG = new URL('assets/img/x/', ROOT);
-export async function x({ request = get } = {}) {
-  const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`, 'text', { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36' });
+// X answers Node's fetch with 429 but curl with the page, so this one request goes through curl.
+const curl = async url => {
+  const { execFile } = await import('node:child_process');
+  return new Promise((resolve, reject) => execFile('curl', ['-sS', '--fail-with-body', '--max-time', '20', '-A', 'Mozilla/5.0', url], { maxBuffer: 8e6 }, (err, out) => err ? reject(new Error(`${url} → ${err.message.split('\n')[0]}`)) : resolve(out)));
+};
+export async function x({ request = curl } = {}) {
+  const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`);
   const data = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
   if (!data) throw new Error('timeline data not found');
   const entries = JSON.parse(data).props?.pageProps?.timeline?.entries;

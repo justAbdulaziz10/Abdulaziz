@@ -613,13 +613,35 @@ export async function gitlab() {
 }
 
 // The latest three posts on X, without replies or reposts, from the public timeline X serves to its own
-// embed widget (no key needed). Their first photo is saved next to the page so visitors never load from X.
+// embed widget (no key needed). Photos and the avatar are saved next to the page so visitors never load from X.
 const X_USER = 'AlkhlaiweA';
 const X_IMG = new URL('assets/img/x/', ROOT);
 // X answers Node's fetch with 429 but curl with the page, so this one request goes through curl.
 const curl = async url => {
   const { execFile } = await import('node:child_process');
   return new Promise((resolve, reject) => execFile('curl', ['-sS', '--fail-with-body', '--max-time', '20', '-A', 'Mozilla/5.0', url], { maxBuffer: 8e6 }, (err, out, stderr) => err ? reject(new Error(`${url} → ${String(stderr || err.message).trim().split('\n')[0]}`)) : resolve(out)));
+};
+// Post text as X shows it: media links dropped, t.co links shown as their real address and kept for linking.
+const xText = t => {
+  let text = t.full_text ?? t.text ?? '';
+  for (const m of t.entities?.media ?? []) text = text.split(m.url).join('');
+  const links = [];
+  for (const u of t.entities?.urls ?? []) {
+    const shown = u.display_url ?? u.expanded_url ?? '';
+    text = text.split(u.url).join(shown);
+    if (shown && u.expanded_url) links.push({ text: shown, href: u.expanded_url });
+  }
+  return { text: decodeXml(text).trim(), links };
+};
+const saveImage = async (src, file) => {
+  try {
+    await readFile(new URL(file, X_IMG));
+    return true;
+  } catch {}
+  const r = await fetch(src, { headers: UA, signal: AbortSignal.timeout(20000) });
+  if (!r.ok) return false;
+  await writeFile(new URL(file, X_IMG), Buffer.from(await r.arrayBuffer()));
+  return true;
 };
 export async function x({ request = curl } = {}) {
   const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`);
@@ -633,29 +655,33 @@ export async function x({ request = curl } = {}) {
   if (!posts.length) throw new Error('no posts found');
   const { mkdir, readdir, unlink } = await import('node:fs/promises');
   await mkdir(X_IMG, { recursive: true });
+  const keep = new Set();
+  let avatar = null;
+  const pic = posts[0].user.profile_image_url_https ?? '';
+  const picId = pic.match(/profile_images\/(\d+)\//)?.[1];
+  if (picId && await saveImage(pic.replace('_normal', '_200x200'), `avatar-${picId}.jpg`)) {
+    avatar = `assets/img/x/avatar-${picId}.jpg`;
+    keep.add(`avatar-${picId}.jpg`);
+  }
   const out = [];
   for (const t of posts) {
-    let text = t.full_text ?? '';
-    for (const m of t.entities?.media ?? []) text = text.split(m.url).join('');
-    for (const u of t.entities?.urls ?? []) text = text.split(u.url).join(u.display_url ?? u.expanded_url ?? '');
-    const post = { id: t.id_str, date: new Date(t.created_at).toISOString(), text: decodeXml(text).replace(/\n{2,}/g, '\n').trim(), lang: t.lang };
-    const m = (t.extended_entities?.media ?? t.entities?.media ?? [])[0];
-    if (m?.media_url_https) {
-      const file = `${t.id_str}.jpg`;
-      try {
-        await readFile(new URL(file, X_IMG));
-      } catch {
-        const r = await fetch(`${m.media_url_https}?format=jpg&name=medium`, { headers: UA, signal: AbortSignal.timeout(20000) });
-        if (r.ok) await writeFile(new URL(file, X_IMG), Buffer.from(await r.arrayBuffer()));
-      }
-      const size = m.sizes?.medium;
-      if (size?.w) Object.assign(post, { img: `assets/img/x/${file}`, w: size.w, h: size.h, alt: m.ext_alt_text ?? '' });
+    const post = { id: t.id_str, date: new Date(t.created_at).toISOString(), ...xText(t), lang: t.lang, replies: t.reply_count ?? 0, reposts: t.retweet_count ?? 0, likes: t.favorite_count ?? 0, media: [] };
+    const media = (t.extended_entities?.media ?? t.entities?.media ?? []).slice(0, 4);
+    for (const [i, m] of media.entries()) {
+      // one photo shows large, a grid of two to four shows each one small
+      const name = media.length === 1 ? 'medium' : 'small';
+      const size = m.sizes?.[name], file = `${t.id_str}-${i + 1}.jpg`;
+      if (!m.media_url_https || !size?.w || !await saveImage(`${m.media_url_https}?format=jpg&name=${name}`, file)) continue;
+      keep.add(file);
+      post.media.push({ src: `assets/img/x/${file}`, w: size.w, h: size.h, type: m.type, alt: m.ext_alt_text ?? '' });
     }
+    const q = t.quoted_status;
+    if (q?.id_str && q.user?.screen_name) post.quote = { id: q.id_str, name: q.user.name, handle: q.user.screen_name, lang: q.lang, text: xText(q).text };
     out.push(post);
   }
-  const keep = new Set(out.map(p => `${p.id}.jpg`));
   for (const f of await readdir(X_IMG)) if (!keep.has(f)) await unlink(new URL(f, X_IMG));
-  return { user: X_USER, posts: out };
+  // the display name on X is in Arabic; the site uses the English one
+  return { user: X_USER, name: 'Abdulaziz Alkhlaiwe', avatar, posts: out };
 }
 
 // The page ships with the numbers written in, for crawlers, link previews, print and visitors without
@@ -693,16 +719,42 @@ export function bakeFallbacks(html, data) {
       html = html.replace(/(<p class="last-race__fastest" data-last-race-fastest[^>]*>)[\s\S]*?(<\/p>)/, `$1<span class="last-race__fastest-label">Fastest lap</span><span class="last-race__fastest-value">${esc(fl.driver)}, <span class="last-race__time">${esc(fl.time)}</span></span>$2`);
     }
   }
-  const posts = Array.isArray(data.x?.posts) ? data.x.posts.filter(p => /^\d+$/.test(p?.id) && Number.isFinite(Date.parse(p.date))) : [];
-  if (posts.length) {
+  const xd = data.x, posts = Array.isArray(xd?.posts) ? xd.posts.filter(p => /^\d+$/.test(p?.id) && Number.isFinite(Date.parse(p.date))) : [];
+  if (posts.length && /^\w{1,15}$/.test(xd.user)) {
     const attr = t => esc(t).replace(/"/g, '&quot;');
-    const day = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Riyadh' });
-    const iso = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
-    html = html.replace(/(<ol class="posts__list" data-x-posts>)[\s\S]*?(\n\s*<\/ol>)/, (all, open, close) => open + posts.map(p =>
-      `\n          <li class="post"><a class="post__link" href="https://x.com/${attr(data.x.user)}/status/${p.id}" target="_blank" rel="noopener noreferrer">`
-      + (p.img ? `<img class="post__img" src="${attr(p.img)}" alt="${attr(p.alt ?? '')}" width="${+p.w}" height="${+p.h}" loading="lazy" decoding="async">` : '')
-      + (p.text ? `<span class="post__text"${p.lang && /^[a-z]{2}$/.test(p.lang) ? ` lang="${p.lang}"` : ''} dir="auto">${esc(p.text)}</span>` : '')
-      + `<time class="post__date" datetime="${iso(p.date)}">${day.format(new Date(p.date))}</time></a></li>`).join('') + close);
+    const out = 'target="_blank" rel="noopener noreferrer"';
+    const clock = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Riyadh' });
+    const day = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Riyadh' });
+    const count = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+    const lang = l => (/^[a-z]{2}$/.test(l ?? '') ? ` lang="${l}"` : '');
+    // links, mentions and hashtags in X's blue; links are swapped for placeholders first so their text isn't touched
+    const rich = (text, links = []) => {
+      const slots = [];
+      let h = esc(text);
+      for (const l of links) h = h.split(esc(l.text)).join(`\u0000${slots.push(`<a class="tweet__ent" href="${attr(l.href)}" ${out}>${esc(l.text)}</a>`) - 1}\u0000`);
+      h = h.replace(/(^|[^\w&])@(\w{1,15})/g, (m, pre, u) => `${pre}<a class="tweet__ent" href="https://x.com/${u}" ${out}>@${u}</a>`)
+        .replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, (m, pre, tag) => `${pre}<a class="tweet__ent" href="https://x.com/hashtag/${encodeURIComponent(tag)}" ${out}>#${tag}</a>`);
+      return h.replace(/\u0000(\d+)\u0000/g, (m, i) => slots[+i]);
+    };
+    const icon = (id, n, label) => `<span class="tweet__stat"><svg aria-hidden="true"><use href="#tw-${id}"/></svg>${n ? count.format(n) : ''}<span class="sr-only"> ${n} ${label}</span></span>`;
+    const media = list => {
+      const items = (list ?? []).filter(m => m?.src && m.w > 0 && m.h > 0);
+      if (!items.length) return '';
+      const one = items.length === 1 ? ` style="aspect-ratio: ${Math.max(items[0].w / items[0].h, 0.8).toFixed(3)}"` : '';
+      return `<div class="tweet__media tweet__media--${items.length}"${one}>` + items.map(m => `<span class="tweet__m"><img src="${attr(m.src)}" alt="${attr(m.alt ?? '')}" width="${+m.w}" height="${+m.h}" loading="lazy" decoding="async">${m.type === 'video' || m.type === 'animated_gif' ? `<span class="tweet__play" aria-hidden="true">${m.type === 'video' ? '<svg><use href="#tw-play"/></svg>' : 'GIF'}</span>` : ''}</span>`).join('') + '</div>';
+    };
+    const who = xd.avatar ? `<img class="tweet__avatar" src="${attr(xd.avatar)}" alt="" width="48" height="48">` : `<span class="tweet__avatar" aria-hidden="true"></span>`;
+    html = html.replace(/(<ol class="posts__list" data-x-posts>)[\s\S]*?(\n\s*<\/ol>)/, (all, open, close) => open + posts.map(p => {
+      const d = new Date(p.date), q = p.quote;
+      return `\n          <li class="post"><article class="tweet">`
+        + `<header class="tweet__head">${who}<span class="tweet__who"><span class="tweet__name">${esc(xd.name ?? xd.user)}</span><span class="tweet__handle">@${xd.user}</span></span><svg class="tweet__logo" aria-hidden="true"><use href="#tw-x"/></svg></header>`
+        + (p.text ? `<p class="tweet__text"${lang(p.lang)} dir="auto">${rich(p.text, p.links)}</p>` : '')
+        + media(p.media)
+        + (q && /^\d+$/.test(q.id) && /^\w{1,15}$/.test(q.handle) ? `<a class="tweet__quote" href="https://x.com/${q.handle}/status/${q.id}" ${out}><span class="tweet__qwho">${q.handle === xd.user && xd.avatar ? `<img class="tweet__qavatar" src="${attr(xd.avatar)}" alt="" width="20" height="20">` : ''}<span class="tweet__name" dir="auto">${esc(q.handle === xd.user ? xd.name ?? q.handle : q.name ?? q.handle)}</span> <span class="tweet__handle">@${q.handle}</span></span><span class="tweet__qtext"${lang(q.lang)} dir="auto">${esc(q.text ?? '')}</span></a>` : '')
+        + `<a class="tweet__time" href="https://x.com/${xd.user}/status/${p.id}" ${out}><time datetime="${d.toISOString()}">${clock.format(d)} · ${day.format(d)}</time><span class="sr-only">, open this post on X</span></a>`
+        + `<footer class="tweet__stats">${icon('reply', p.replies ?? 0, 'replies')}${icon('repost', p.reposts ?? 0, 'reposts')}${icon('like', p.likes ?? 0, 'likes')}</footer>`
+        + `</article></li>`;
+    }).join('') + close);
   }
   const courses = Array.isArray(data.learning?.courses) ? data.learning.courses.filter(c => c?.course && c.total > 0).slice(0, 5) : [];
   if (courses.length) {

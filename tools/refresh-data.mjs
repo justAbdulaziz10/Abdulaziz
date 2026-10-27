@@ -736,18 +736,18 @@ export function bakeFallbacks(html, data) {
         .replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, (m, pre, tag) => `${pre}<a class="tweet__ent" href="https://x.com/hashtag/${encodeURIComponent(tag)}" ${out}>#${tag}</a>`);
       return h.replace(/\u0000(\d+)\u0000/g, (m, i) => slots[+i]);
     };
-    const icon = (id, n, label) => `<span class="tweet__stat"><svg aria-hidden="true"><use href="#tw-${id}"/></svg>${n ? count.format(n) : ''}<span class="sr-only"> ${n} ${label}</span></span>`;
+    const icon = (id, n, label) => `<span class="tweet__stat"><svg width="19" height="19" aria-hidden="true"><use href="#tw-${id}"/></svg>${n ? count.format(n) : ''}<span class="sr-only"> ${n} ${label}</span></span>`;
     const media = list => {
       const items = (list ?? []).filter(m => m?.src && m.w > 0 && m.h > 0);
       if (!items.length) return '';
       const one = items.length === 1 ? ` style="aspect-ratio: ${Math.max(items[0].w / items[0].h, 0.8).toFixed(3)}"` : '';
-      return `<div class="tweet__media tweet__media--${items.length}"${one}>` + items.map(m => `<span class="tweet__m"><img src="${attr(m.src)}" alt="${attr(m.alt ?? '')}" width="${+m.w}" height="${+m.h}" loading="lazy" decoding="async">${m.type === 'video' || m.type === 'animated_gif' ? `<span class="tweet__play" aria-hidden="true">${m.type === 'video' ? '<svg><use href="#tw-play"/></svg>' : 'GIF'}</span>` : ''}</span>`).join('') + '</div>';
+      return `<div class="tweet__media tweet__media--${items.length}"${one}>` + items.map(m => `<span class="tweet__m"><img src="${attr(m.src)}" alt="${attr(m.alt ?? '')}" width="${+m.w}" height="${+m.h}" loading="lazy" decoding="async">${m.type === 'video' || m.type === 'animated_gif' ? `<span class="tweet__play" aria-hidden="true">${m.type === 'video' ? '<svg width="26" height="26"><use href="#tw-play"/></svg>' : 'GIF'}</span>` : ''}</span>`).join('') + '</div>';
     };
     const who = xd.avatar ? `<img class="tweet__avatar" src="${attr(xd.avatar)}" alt="" width="48" height="48">` : `<span class="tweet__avatar" aria-hidden="true"></span>`;
     html = html.replace(/(<ol class="posts__list" data-x-posts>)[\s\S]*?(\n\s*<\/ol>)/, (all, open, close) => open + posts.map(p => {
       const d = new Date(p.date), q = p.quote;
       return `\n          <li class="post"><article class="tweet">`
-        + `<header class="tweet__head">${who}<span class="tweet__who"><span class="tweet__name">${esc(xd.name ?? xd.user)}</span><span class="tweet__handle">@${xd.user}</span></span><svg class="tweet__logo" aria-hidden="true"><use href="#tw-x"/></svg></header>`
+        + `<header class="tweet__head">${who}<span class="tweet__who"><span class="tweet__name">${esc(xd.name ?? xd.user)}</span><span class="tweet__handle">@${xd.user}</span></span><svg class="tweet__logo" width="23" height="23" aria-hidden="true"><use href="#tw-x"/></svg></header>`
         + (p.text ? `<p class="tweet__text"${lang(p.lang)} dir="auto">${rich(p.text, p.links)}</p>` : '')
         + media(p.media)
         + (q && /^\d+$/.test(q.id) && /^\w{1,15}$/.test(q.handle) ? `<a class="tweet__quote" href="https://x.com/${q.handle}/status/${q.id}" ${out}><span class="tweet__qwho">${q.handle === xd.user && xd.avatar ? `<img class="tweet__qavatar" src="${attr(xd.avatar)}" alt="" width="20" height="20">` : ''}<span class="tweet__name" dir="auto">${esc(q.handle === xd.user ? xd.name ?? q.handle : q.name ?? q.handle)}</span> <span class="tweet__handle">@${q.handle}</span></span><span class="tweet__qtext"${lang(q.lang)} dir="auto">${esc(q.text ?? '')}</span></a>` : '')

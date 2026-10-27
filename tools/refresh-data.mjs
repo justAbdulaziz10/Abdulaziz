@@ -612,22 +612,23 @@ export async function gitlab() {
   return { pushes: days.reduce((s, d) => s + d[1], 0), activeDays: days.length, first: days[0][0] };
 }
 
-// The latest three posts on X, without replies or reposts, from the public timeline X serves to its own
-// embed widget (no key needed). Photos and the avatar are saved next to the page so visitors never load from X.
+// The latest three posts on X, without replies or reposts. With X_BEARER_TOKEN set they come from the official
+// API (paid per post read, so the hourly job only asks for posts newer than the last one, which costs nothing
+// when there are none); without it, from the public timeline X serves its embed widget, which is X's own
+// selection rather than the latest posts. Photos and the avatar are saved next to the page.
 const X_USER = 'AlkhlaiweA';
+const X_ID = '1573757763754369027';
 const X_IMG = new URL('assets/img/x/', ROOT);
-// X answers Node's fetch with 429 but curl with the page, so this one request goes through curl.
+// X answers Node's fetch with 429 but curl with the page, so the widget request goes through curl.
 const curl = async url => {
   const { execFile } = await import('node:child_process');
   return new Promise((resolve, reject) => execFile('curl', ['-sS', '--fail-with-body', '--max-time', '20', '-A', 'Mozilla/5.0', url], { maxBuffer: 8e6 }, (err, out, stderr) => err ? reject(new Error(`${url} → ${String(stderr || err.message).trim().split('\n')[0]}`)) : resolve(out)));
 };
 // Post text as X shows it: media links dropped, t.co links shown as their real address and kept for linking.
-const xText = t => {
-  let text = t.full_text ?? t.text ?? '';
-  for (const m of t.entities?.media ?? []) text = text.split(m.url).join('');
+const xText = (text, urls = []) => {
   const links = [];
-  for (const u of t.entities?.urls ?? []) {
-    const shown = u.display_url ?? u.expanded_url ?? '';
+  for (const u of urls) {
+    const shown = u.media_key || /\/(photo|video)\/\d+$/.test(u.expanded_url ?? '') ? '' : u.display_url ?? u.expanded_url ?? '';
     text = text.split(u.url).join(shown);
     if (shown && u.expanded_url) links.push({ text: shown, href: u.expanded_url });
   }
@@ -643,45 +644,92 @@ const saveImage = async (src, file) => {
   await writeFile(new URL(file, X_IMG), Buffer.from(await r.arrayBuffer()));
   return true;
 };
-export async function x({ request = curl } = {}) {
+
+async function xFromApi(token, prev) {
+  const api = path => get(`https://api.x.com/2/${path}`, 'json', { authorization: `Bearer ${token}` });
+  const newest = prev?.source === 'api' ? prev.posts?.[0]?.id : null;
+  if (newest && process.env.X_ONLY_NEW) {
+    const check = await api(`users/${X_ID}/tweets?max_results=5&exclude=replies,retweets&since_id=${newest}`);
+    if (!check?.meta?.result_count) return null;
+  }
+  const q = new URLSearchParams({
+    max_results: '5', exclude: 'replies,retweets',
+    'tweet.fields': 'created_at,lang,entities,note_tweet,public_metrics,possibly_sensitive,referenced_tweets,attachments,author_id',
+    expansions: 'attachments.media_keys,referenced_tweets.id,referenced_tweets.id.author_id',
+    'media.fields': 'type,url,preview_image_url,width,height,alt_text',
+    'user.fields': 'name,username',
+  });
+  const r = await api(`users/${X_ID}/tweets?${q}`);
+  if (!Array.isArray(r?.data)) throw new Error(r?.errors?.[0]?.detail ?? 'no posts returned');
+  const media = new Map((r.includes?.media ?? []).map(m => [m.media_key, m]));
+  const tweets = new Map((r.includes?.tweets ?? []).map(t => [t.id, t]));
+  const users = new Map((r.includes?.users ?? []).map(u => [u.id, u]));
+  const body = t => xText(t.note_tweet?.text ?? t.text ?? '', (t.note_tweet ?? t).entities?.urls);
+  return r.data.filter(t => !t.possibly_sensitive).slice(0, 3).map(t => {
+    const quoted = tweets.get(t.referenced_tweets?.find(ref => ref.type === 'quoted')?.id);
+    const author = quoted && users.get(quoted.author_id);
+    return {
+      id: t.id, date: new Date(t.created_at).toISOString(), ...body(t), lang: t.lang,
+      replies: t.public_metrics?.reply_count ?? 0, reposts: t.public_metrics?.retweet_count ?? 0, likes: t.public_metrics?.like_count ?? 0,
+      media: (t.attachments?.media_keys ?? []).map(k => media.get(k)).filter(Boolean).map(m => ({ remote: m.url ?? m.preview_image_url, w: m.width, h: m.height, type: m.type, alt: m.alt_text ?? '' })),
+      quote: author ? { id: quoted.id, name: author.name, handle: author.username, lang: quoted.lang, text: body(quoted).text } : undefined,
+    };
+  });
+}
+
+async function xFromWidget(request) {
   const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`);
   const data = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
   if (!data) throw new Error('timeline data not found');
   const entries = JSON.parse(data).props?.pageProps?.timeline?.entries;
   if (!Array.isArray(entries)) throw new Error('unexpected timeline');
-  const posts = entries.map(e => e?.content?.tweet).filter(t => t?.id_str && t.user?.screen_name === X_USER
+  const tweets = entries.map(e => e?.content?.tweet).filter(t => t?.id_str && t.user?.screen_name === X_USER
     && !t.in_reply_to_status_id_str && !t.retweeted_status && !/^RT @/.test(t.full_text ?? '') && !t.possibly_sensitive)
     .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 3);
+  const urls = t => [...(t.entities?.urls ?? []), ...(t.entities?.media ?? []).map(m => ({ ...m, media_key: m.media_key ?? 'media' }))];
+  const posts = tweets.map(t => {
+    const q = t.quoted_status;
+    return {
+      id: t.id_str, date: new Date(t.created_at).toISOString(), ...xText(t.full_text ?? '', urls(t)), lang: t.lang,
+      replies: t.reply_count ?? 0, reposts: t.retweet_count ?? 0, likes: t.favorite_count ?? 0,
+      media: (t.extended_entities?.media ?? t.entities?.media ?? []).map(m => ({ remote: m.media_url_https, w: m.original_info?.width, h: m.original_info?.height, type: m.type, alt: m.ext_alt_text ?? '' })),
+      quote: q?.id_str && q.user?.screen_name ? { id: q.id_str, name: q.user.name, handle: q.user.screen_name, lang: q.lang, text: xText(q.full_text ?? '', urls(q)).text } : undefined,
+    };
+  });
+  return { posts, avatar: tweets[0]?.user?.profile_image_url_https };
+}
+
+export async function x(prev = {}, { request = curl } = {}) {
+  const token = process.env.X_BEARER_TOKEN;
+  let posts, avatarUrl;
+  if (token) {
+    posts = await xFromApi(token, prev);
+    if (!posts) return prev; // nothing new since the last run
+  } else ({ posts, avatar: avatarUrl } = await xFromWidget(request));
   if (!posts.length) throw new Error('no posts found');
   const { mkdir, readdir, unlink } = await import('node:fs/promises');
   await mkdir(X_IMG, { recursive: true });
   const keep = new Set();
-  let avatar = null;
-  const pic = posts[0].user.profile_image_url_https ?? '';
-  const picId = pic.match(/profile_images\/(\d+)\//)?.[1];
-  if (picId && await saveImage(pic.replace('_normal', '_200x200'), `avatar-${picId}.jpg`)) {
-    avatar = `assets/img/x/avatar-${picId}.jpg`;
-    keep.add(`avatar-${picId}.jpg`);
-  }
-  const out = [];
-  for (const t of posts) {
-    const post = { id: t.id_str, date: new Date(t.created_at).toISOString(), ...xText(t), lang: t.lang, replies: t.reply_count ?? 0, reposts: t.retweet_count ?? 0, likes: t.favorite_count ?? 0, media: [] };
-    const media = (t.extended_entities?.media ?? t.entities?.media ?? []).slice(0, 4);
-    for (const [i, m] of media.entries()) {
+  // the API run doesn't pay for a profile lookup, so it keeps the avatar the widget run saved
+  let avatar = prev?.avatar ?? null;
+  const picId = avatarUrl?.match(/profile_images\/(\d+)\//)?.[1];
+  if (picId && await saveImage(avatarUrl.replace('_normal', '_200x200'), `avatar-${picId}.jpg`)) avatar = `assets/img/x/avatar-${picId}.jpg`;
+  if (avatar) keep.add(avatar.split('/').pop());
+  for (const post of posts) {
+    const list = post.media.slice(0, 4);
+    post.media = [];
+    for (const [i, m] of list.entries()) {
       // one photo shows large, a grid of two to four shows each one small
-      const name = media.length === 1 ? 'medium' : 'small';
-      const size = m.sizes?.[name], file = `${t.id_str}-${i + 1}.jpg`;
-      if (!m.media_url_https || !size?.w || !await saveImage(`${m.media_url_https}?format=jpg&name=${name}`, file)) continue;
+      const file = `${post.id}-${i + 1}.jpg`;
+      if (!m.remote || !(m.w > 0) || !(m.h > 0) || !await saveImage(`${m.remote}?format=jpg&name=${list.length === 1 ? 'medium' : 'small'}`, file)) continue;
       keep.add(file);
-      post.media.push({ src: `assets/img/x/${file}`, w: size.w, h: size.h, type: m.type, alt: m.ext_alt_text ?? '' });
+      post.media.push({ src: `assets/img/x/${file}`, w: m.w, h: m.h, type: m.type, alt: m.alt });
     }
-    const q = t.quoted_status;
-    if (q?.id_str && q.user?.screen_name) post.quote = { id: q.id_str, name: q.user.name, handle: q.user.screen_name, lang: q.lang, text: xText(q).text };
-    out.push(post);
+    if (!post.quote) delete post.quote;
   }
   for (const f of await readdir(X_IMG)) if (!keep.has(f)) await unlink(new URL(f, X_IMG));
   // the display name on X is in Arabic; the site uses the English one
-  return { user: X_USER, name: 'Abdulaziz Alkhlaiwe', avatar, posts: out };
+  return { user: X_USER, name: 'Abdulaziz Alkhlaiwe', avatar, source: token ? 'api' : 'widget', posts };
 }
 
 // The page ships with the numbers written in, for crawlers, link previews, print and visitors without
@@ -778,7 +826,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.warn(`keep f1lap: ${e.message}`);
     }
   }
-  const sources = { github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab, x: () => x() };
+  const sources = { github: () => github(next.github), letterboxd: () => letterboxd(next.letterboxd), f1, apps: () => apps(next.apps), f1Result, week: () => week(next.apps), learning, revenuecat: () => revenuecat(next.revenuecat), work: () => work(next.work), gitlab, x: () => x(next.x) };
   for (const [key, fn] of Object.entries(sources).filter(([key]) => !only.length || only.includes(key))) {
     try {
       next[key] = await fn();

@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-10-26T11:27:58.964Z",
+ "updated": "2026-10-27T08:29:14.848Z",
  "f1Result": {
   "raceName": "United States Grand Prix",
   "round": 18,
@@ -219,6 +219,7 @@
   "user": "AlkhlaiweA",
   "name": "Abdulaziz Alkhlaiwe",
   "avatar": "assets/img/x/avatar-2078610031960850432.jpg",
+  "source": "widget",
   "posts": [
    {
     "id": "2107230218381590626",
@@ -232,15 +233,15 @@
     "media": [
      {
       "src": "assets/img/x/2107230218381590626-1.jpg",
-      "w": 313,
-      "h": 680,
+      "w": 942,
+      "h": 2048,
       "type": "photo",
       "alt": ""
      },
      {
       "src": "assets/img/x/2107230218381590626-2.jpg",
-      "w": 313,
-      "h": 680,
+      "w": 943,
+      "h": 2048,
       "type": "photo",
       "alt": ""
      }
@@ -265,15 +266,15 @@
     "media": [
      {
       "src": "assets/img/x/1928194564373856291-1.jpg",
-      "w": 680,
-      "h": 661,
+      "w": 1320,
+      "h": 1283,
       "type": "photo",
       "alt": ""
      },
      {
       "src": "assets/img/x/1928194564373856291-2.jpg",
-      "w": 680,
-      "h": 641,
+      "w": 1320,
+      "h": 1245,
       "type": "photo",
       "alt": ""
      }

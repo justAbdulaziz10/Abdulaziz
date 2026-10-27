@@ -22,6 +22,11 @@ jobs:
         with:
           node-version: 22
       - name: Fetch the latest posts on X
+        env:
+          # official API key (paid per post read); unset, the job falls back to X's free embed timeline
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          # hourly runs only ask for posts newer than the last one; the daily job refreshes the counts
+          X_ONLY_NEW: "1"
         run: node tools/refresh-data.mjs x
       - name: Commit if anything changed
         run: |

@@ -148,5 +148,11 @@
   "date": "2026-10-27T11:15:00+03:00",
   "subject": "Lately on X: cards that look like posts on X (avatar, text, photo grid, quotes, counts)",
   "height": 17441
+ },
+ {
+  "sha": "20361e4",
+  "date": "2026-10-27T11:19:33+03:00",
+  "subject": "Stamp CSS and script links with file hashes; fixed sizes on post icons",
+  "height": 17585
  }
 ]

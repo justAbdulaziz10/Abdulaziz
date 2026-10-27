@@ -619,7 +619,7 @@ const X_IMG = new URL('assets/img/x/', ROOT);
 // X answers Node's fetch with 429 but curl with the page, so this one request goes through curl.
 const curl = async url => {
   const { execFile } = await import('node:child_process');
-  return new Promise((resolve, reject) => execFile('curl', ['-sS', '--fail-with-body', '--max-time', '20', '-A', 'Mozilla/5.0', url], { maxBuffer: 8e6 }, (err, out) => err ? reject(new Error(`${url} → ${err.message.split('\n')[0]}`)) : resolve(out)));
+  return new Promise((resolve, reject) => execFile('curl', ['-sS', '--fail-with-body', '--max-time', '20', '-A', 'Mozilla/5.0', url], { maxBuffer: 8e6 }, (err, out, stderr) => err ? reject(new Error(`${url} → ${String(stderr || err.message).trim().split('\n')[0]}`)) : resolve(out)));
 };
 export async function x({ request = curl } = {}) {
   const html = await request(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${X_USER}`);

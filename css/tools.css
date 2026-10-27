@@ -66,7 +66,12 @@
   color: inherit;
   text-decoration-thickness: 1px;
   text-underline-offset: .18em;
+  /* forty tools each with underlined projects read as a wall of rules; the underline stays faint until its tool is in hand */
+  text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+  transition: color var(--t-fast) var(--ease), text-decoration-color var(--t-fast) var(--ease);
 }
+.tool:hover .tool__projects a,
+.tool:focus-within .tool__projects a { text-decoration-color: currentColor; }
 .tool__projects a:hover,
 .tool__projects a:focus-visible { color: var(--fg); }
 .tool.is-lit,

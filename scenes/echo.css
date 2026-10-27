@@ -200,6 +200,14 @@
   background: var(--echo);
 }
 .scene--echo .echo__hint.is-used { opacity: 0 !important; }
+/* on a phone the hint sits on the sun's pale glow; a dark chip keeps it readable */
+.scene--echo[data-layout="narrow"] .echo__hint {
+  padding: 0.45em 0.8em 0.45em 0.7em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--echo-deep) 84%, transparent);
+  color: #fbeee6;
+}
+.scene--echo[data-layout="narrow"] .echo__hint::before { width: 1.1em; margin-right: 0.5em; }
 
 .scene--echo .echo__sr {
   position: absolute;

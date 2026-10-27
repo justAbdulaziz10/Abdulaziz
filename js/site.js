@@ -134,16 +134,18 @@ document.querySelectorAll('[data-copy]').forEach(btn => {
   const status = document.querySelector('[data-copy-status]');
   const label = btn.textContent;
   btn.addEventListener('click', async () => {
+    btn.style.minWidth = `${btn.offsetWidth}px`; // the shorter label would shrink the button under the pointer
     try {
       await navigator.clipboard.writeText(btn.dataset.copy);
-      btn.textContent = 'Copied';
+      btn.innerHTML = '<svg class="btn__check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" pathLength="1"/></svg>Copied';
       btn.setAttribute('data-copied', '');
       status.textContent = 'Email address copied to the clipboard';
     } catch {
       btn.textContent = 'Select and copy above';
       status.textContent = 'Copy failed. The address is shown above.';
     }
-    setTimeout(() => { btn.textContent = label; btn.removeAttribute('data-copied'); status.textContent = ''; }, 2200);
+    clearTimeout(btn.resetTimer);
+    btn.resetTimer = setTimeout(() => { btn.textContent = label; btn.removeAttribute('data-copied'); btn.style.minWidth = ''; status.textContent = ''; }, 2200);
   });
 });
 
@@ -490,7 +492,13 @@ function updateWorldState(rec, y, viewportHeight, force = false) {
   // its own layer while the circle grows, so each frame repaints a flat fill rather than the text and art on top
   const flooding = progress > 0 && progress < 1;
   if (flooding !== rec.lastFlooding) { rec.el.classList.toggle('is-flooding', flooding); rec.lastFlooding = flooding; }
-  const ready = progress >= 1;
+  // the content shows once the colour covers every part of the section that is on screen, not only once the whole
+  // section is flooded: waiting for that left a band of bare colour above the title
+  const v0 = Math.max(0, y - rec.top), v1 = Math.min(rec.height, y + viewportHeight - rec.top);
+  const ready = progress >= 1 || (!!rec.entry && v1 > v0 && radius >= Math.hypot(
+    Math.max(rec.entry.x, rec.width - rec.entry.x),
+    Math.max(Math.abs(v0 - rec.entry.y), Math.abs(v1 - rec.entry.y)),
+  ));
   if (rec.world !== 'paper' && ready !== rec.lastReady) {
     rec.el.style.setProperty('--world-content-opacity', ready ? '1' : '0');
     rec.lastReady = ready;

@@ -53,8 +53,9 @@ async function start() {
   const warm = (i) => { if (engaged && !reduced) [i - 1, i + 1].forEach(n => { if (n >= 0 && n < versions.length) imgFor(n); }); };
   const engage = () => { if (!engaged) { engaged = true; warm(cur); } };
   for (const type of ['pointerenter', 'focusin', 'touchstart']) $('[data-rewind-scrub]').addEventListener(type, engage, { passive: true });
+  // the stage's size is cached: measuring it in every pan frame, after the last frame's writes, forced a layout
+  let vw = view.clientWidth, vh = view.clientHeight;
   const place = () => {
-    const vw = view.clientWidth, vh = view.clientHeight;
     for (const [i, img] of imgs) {
       const h = vw * versions[i].height / PAGE_W;
       img.style.setProperty('--y', `${(-pan * Math.max(0, h - vh)).toFixed(1)}px`);
@@ -99,7 +100,7 @@ async function start() {
   view.addEventListener('pointerenter', () => { held = true; });
   view.addEventListener('pointerleave', () => { held = false; run(); });
   document.addEventListener('visibilitychange', run);
-  addEventListener('resize', place, { passive: true });
+  new ResizeObserver(() => { vw = view.clientWidth; vh = view.clientHeight; place(); }).observe(view);
 }
 
 if (root) {

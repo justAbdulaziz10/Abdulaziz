@@ -489,7 +489,7 @@ export function mount(root, { reduced = false } = {}) {
   function tile(p, text, voice, fresh) {
     const li = document.createElement('li');
     li.className = `echo__tile${fresh ? ' is-arriving' : ''}`;
-    li.innerHTML = `<img src="${IMG}${p.file}.webp" width="420" height="600" alt="" decoding="async">${voice ? `<span class="echo__tile-voice">${ICON.play}</span>` : ''}`;
+    li.innerHTML = `<img src="${IMG}${p.file}.webp" width="420" height="600" alt="" decoding="async" loading="lazy">${voice ? `<span class="echo__tile-voice">${ICON.play}</span>` : ''}`;
     if (text) make('span', 'echo__tile-note', text, li);
     li.setAttribute('aria-label', `${p.alt}${text ? `: ${text}` : ''}${voice ? ', with a voice note' : ''}`);
     return li;

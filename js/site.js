@@ -263,7 +263,7 @@ threadStatus.className = 'thread__status';
 threadStatus.setAttribute('role', 'status');
 threadStatus.setAttribute('aria-live', 'polite');
 document.querySelector('main').prepend(threadStatus);
-let connectors = []; // { path, length, y0, y1, costs, lens }
+let connectors = []; // { path, length, y0, y1, costs, lens, xs, ys }
 // how much scroll a sideways run of the thread costs, relative to a vertical one: wide screens have long
 // horizontal legs, and drawing by plain length made the tip lag far behind (or race ahead of) the scroll
 const SIDEWAYS_COST = 0.25;
@@ -1026,16 +1026,17 @@ function buildThread() {
     }
     thread.append(path);
     const length = path.getTotalLength();
-    const steps = Math.max(2, Math.ceil(length / 12));
-    const costs = [0], lens = [0];
+    // sampled once here, so scrolling never asks the path for geometry (that forced a style pass every frame)
+    const steps = Math.max(2, Math.ceil(length / 6));
     let prev = path.getPointAtLength(0);
+    const costs = [0], lens = [0], xs = [prev.x], ys = [prev.y];
     for (let k = 1; k <= steps; k++) {
       const len = length * k / steps, pt = path.getPointAtLength(len);
       costs.push(costs[k - 1] + Math.abs(pt.y - prev.y) + SIDEWAYS_COST * Math.abs(pt.x - prev.x));
-      lens.push(len);
+      lens.push(len); xs.push(pt.x); ys.push(pt.y);
       prev = pt;
     }
-    connectors.push({ path, length, y0, y1, costs, lens });
+    connectors.push({ path, length, y0, y1, costs, lens, xs, ys });
     appendThreadSamples(path);
     // where the routed line crosses each section's top edge becomes that section's flood origin
     recordFloodCrossings(path, { y: y0 }, { y: y1 });
@@ -1130,6 +1131,11 @@ function drawnFraction(c, progress) {
   return len / c.length;
 }
 
+function pointOn(c, t) {
+  const k = clamp(t) * (c.lens.length - 1), i = Math.min(c.lens.length - 2, Math.floor(k)), f = k - i;
+  return { x: c.xs[i] + (c.xs[i + 1] - c.xs[i]) * f, y: c.ys[i] + (c.ys[i + 1] - c.ys[i]) * f };
+}
+
 function hideThreadNib() {
   lastNibPoint = null;
   nib.classList.remove('is-moving');
@@ -1145,7 +1151,7 @@ function drawThread(y = smoothY, viewportHeight = cachedViewportHeight) {
     if (!tip && t > 0 && t < 1) tip = { connector: c, t };
   }
   if (tip && !reduced) { // no travelling dot under Reduce motion
-    const point = tip.connector.path.getPointAtLength(tip.t * tip.connector.length);
+    const point = pointOn(tip.connector, tip.t);
     if (point.x >= 0 && point.x <= cachedViewportWidth && point.y >= y && point.y <= y + viewportHeight) {
       nib.setAttribute('cx', point.x.toFixed(2));
       nib.setAttribute('cy', point.y.toFixed(2));
@@ -1217,7 +1223,7 @@ function frame(now) {
   if (!reduced && (Math.abs(y - smoothY) > 0.5 || maraPulse > 0 || nib.classList.contains('is-moving') || (pullState && !pullState.dragging))) queue();
 }
 addEventListener('scroll', () => {
-  if (!pullState?.dragging) body.classList.remove('thread-near');
+  if (!pullState?.dragging && body.classList.contains('thread-near')) body.classList.remove('thread-near'); // untouched otherwise: a class write on every scroll event dirtied style before each frame
   queue();
 }, { passive: true });
 

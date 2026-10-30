@@ -1,25 +1,25 @@
 {
  "github": {
-  "total": 6512,
-  "activeDays": 302,
-  "streak": 80,
-  "longestStreak": 80,
+  "total": 6671,
+  "activeDays": 303,
+  "streak": 81,
+  "longestStreak": 81,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-10-26",
-  "to": "2026-10-29"
+  "to": "2026-10-30"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Two Moon Junction",
-   "year": "1988",
-   "watched": "2026-10-27",
-   "rating": 1,
-   "url": "https://letterboxd.com/notabdulaziz/film/two-moon-junction/"
+   "title": "Backrooms",
+   "year": "2026",
+   "watched": "2026-10-30",
+   "rating": 3.5,
+   "url": "https://letterboxd.com/notabdulaziz/film/backrooms-2026/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-10-30T02:07:19.627Z",
+ "updated": "2026-10-30T09:59:52.228Z",
  "f1Result": {
   "raceName": "United States Grand Prix",
   "round": 18,
@@ -85,6 +85,14 @@
  },
  "week": {
   "items": [
+   {
+    "kind": "push",
+    "repo": "justAbdulaziz10/Rassah",
+    "label": "1 commit to Rassah",
+    "count": 1,
+    "date": "2026-10-27T22:44:21Z",
+    "url": "https://github.com/justAbdulaziz10/Rassah"
+   },
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Abdulaziz",
@@ -123,19 +131,12 @@
     "count": 1,
     "date": "2026-10-24T15:36:24Z",
     "url": "https://github.com/justAbdulaziz10/Linear_Algebra_notes"
-   },
-   {
-    "kind": "release",
-    "repo": "justAbdulaziz10/Rassah",
-    "label": "Rassah v1.0.0",
-    "date": "2026-10-22T10:03:32Z",
-    "url": "https://github.com/justAbdulaziz10/Rassah/releases/tag/v1.0.0"
    }
   ]
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1274,
+   "activeUsers": 1275,
    "period": "P28D"
   },
   "docmara": {
@@ -206,12 +207,12 @@
   ]
  },
  "work": {
-  "githubPrs": 1159,
+  "githubPrs": 1185,
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1596,
-  "activeDays": 66,
+  "pushes": 1678,
+  "activeDays": 68,
   "first": "2026-08-23"
  },
  "x": {

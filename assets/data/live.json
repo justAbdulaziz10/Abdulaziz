@@ -1,25 +1,25 @@
 {
  "github": {
-  "total": 6671,
-  "activeDays": 303,
-  "streak": 81,
-  "longestStreak": 81,
+  "total": 6702,
+  "activeDays": 304,
+  "streak": 82,
+  "longestStreak": 82,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-10-26",
-  "to": "2026-10-30"
+  "to": "2026-10-31"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Backrooms",
+   "title": "Sense and Sensibility",
    "year": "2026",
    "watched": "2026-10-30",
-   "rating": 3.5,
-   "url": "https://letterboxd.com/notabdulaziz/film/backrooms-2026/"
+   "rating": 4,
+   "url": "https://letterboxd.com/notabdulaziz/film/sense-and-sensibility-2026/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-10-31T00:59:59.556Z",
+ "updated": "2026-10-31T09:38:21.085Z",
  "f1Result": {
   "raceName": "United States Grand Prix",
   "round": 18,
@@ -85,6 +85,14 @@
  },
  "week": {
   "items": [
+   {
+    "kind": "push",
+    "repo": "Nadaalnashwan/HudhudMishwarak",
+    "label": "23 commits to HudhudMishwarak",
+    "count": 23,
+    "date": "2026-10-29T15:34:53Z",
+    "url": "https://github.com/Nadaalnashwan/HudhudMishwarak"
+   },
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Rassah",
@@ -123,20 +131,12 @@
     "count": 3,
     "date": "2026-10-25T22:12:43Z",
     "url": "https://github.com/justAbdulaziz10/abdulazizprotofoliopicker"
-   },
-   {
-    "kind": "push",
-    "repo": "justAbdulaziz10/Linear_Algebra_notes",
-    "label": "1 commit to Linear_Algebra_notes",
-    "count": 1,
-    "date": "2026-10-24T15:36:24Z",
-    "url": "https://github.com/justAbdulaziz10/Linear_Algebra_notes"
    }
   ]
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1275,
+   "activeUsers": 1274,
    "period": "P28D"
   },
   "docmara": {
@@ -207,12 +207,12 @@
   ]
  },
  "work": {
-  "githubPrs": 1185,
+  "githubPrs": 1198,
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1678,
-  "activeDays": 68,
+  "pushes": 1704,
+  "activeDays": 69,
   "first": "2026-08-23"
  },
  "x": {
@@ -288,7 +288,7 @@
     "lang": "ar",
     "replies": 6,
     "reposts": 2,
-    "likes": 142,
+    "likes": 143,
     "media": [
      {
       "src": "assets/img/x/1924830127554232736-1.jpg",

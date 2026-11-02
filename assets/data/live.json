@@ -1,35 +1,35 @@
 {
  "github": {
-  "total": 6733,
-  "activeDays": 299,
-  "streak": 83,
-  "longestStreak": 83,
+  "total": 6758,
+  "activeDays": 300,
+  "streak": 84,
+  "longestStreak": 84,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-02",
-  "to": "2026-11-01"
+  "to": "2026-11-02"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Crime 101",
+   "title": "The Invite",
    "year": "2026",
-   "watched": "2026-10-31",
-   "rating": null,
-   "url": "https://letterboxd.com/notabdulaziz/film/crime-101/"
+   "watched": "2026-11-01",
+   "rating": 3,
+   "url": "https://letterboxd.com/notabdulaziz/film/the-invite-2026/"
   }
  },
  "f1": {
   "season": "2026",
-  "round": 19,
-  "raceName": "Mexico City Grand Prix",
-  "circuit": "Autódromo Hermanos Rodríguez",
-  "locality": "Mexico City",
-  "country": "Mexico",
-  "start": "2026-11-01T20:00:00Z"
+  "round": 20,
+  "raceName": "Brazilian Grand Prix",
+  "circuit": "Autódromo José Carlos Pace",
+  "locality": "São Paulo",
+  "country": "Brazil",
+  "start": "2026-11-08T17:00:00Z"
  },
  "apps": {
   "echo": {
@@ -41,46 +41,46 @@
    "url": "https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634?uo=4"
   },
   "docmara": {
-   "rating": 4.2,
-   "ratings": 5,
+   "rating": 5,
+   "ratings": 4,
    "version": "1.3.0",
    "languages": 39,
    "currentVersionReleaseDate": "2026-10-22T00:31:46Z",
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-01T10:26:41.705Z",
+ "updated": "2026-11-02T11:03:54.905Z",
  "f1Result": {
-  "raceName": "United States Grand Prix",
-  "round": 18,
-  "date": "2026-10-25",
-  "circuit": "Circuit of the Americas",
+  "raceName": "Mexico City Grand Prix",
+  "round": 19,
+  "date": "2026-11-01",
+  "circuit": "Autódromo Hermanos Rodríguez",
   "podium": [
    {
     "pos": 1,
-    "driver": "Andrea Kimi Antonelli",
-    "code": "ANT",
-    "team": "Mercedes",
-    "time": "1:35:16.650"
-   },
-   {
-    "pos": 2,
-    "driver": "Charles Leclerc",
-    "code": "LEC",
-    "team": "Ferrari",
-    "time": "+13.078"
-   },
-   {
-    "pos": 3,
     "driver": "Max Verstappen",
     "code": "VER",
     "team": "Red Bull",
-    "time": "+17.485"
+    "time": "2:20:28.772"
+   },
+   {
+    "pos": 2,
+    "driver": "Lewis Hamilton",
+    "code": "HAM",
+    "team": "Ferrari",
+    "time": "+0.799"
+   },
+   {
+    "pos": 3,
+    "driver": "Andrea Kimi Antonelli",
+    "code": "ANT",
+    "team": "Mercedes",
+    "time": "+4.006"
    }
   ],
   "fastestLap": {
-   "driver": "Charles Leclerc",
-   "time": "1:37.976"
+   "driver": "Lewis Hamilton",
+   "time": "1:19.268"
   }
  },
  "week": {
@@ -98,7 +98,7 @@
     "repo": "Nadaalnashwan/HudhudMishwarak",
     "label": "23 commits to HudhudMishwarak",
     "count": 23,
-    "date": "2026-10-30T06:15:19Z",
+    "date": "2026-10-30T06:25:35Z",
     "url": "https://github.com/Nadaalnashwan/HudhudMishwarak"
    },
    {
@@ -112,8 +112,8 @@
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Abdulaziz",
-    "label": "52 commits to Abdulaziz",
-    "count": 52,
+    "label": "32 commits to Abdulaziz",
+    "count": 32,
     "date": "2026-10-27T19:05:27Z",
     "url": "https://github.com/justAbdulaziz10/Abdulaziz"
    },
@@ -123,24 +123,16 @@
     "label": "Echo 1.46 on the App Store",
     "date": "2026-10-27T13:37:11Z",
     "url": "https://apps.apple.com/sa/app/echo-photo-journal-memories/id6775021634?uo=4"
-   },
-   {
-    "kind": "push",
-    "repo": "justAbdulaziz10/To-infinity-and-AI",
-    "label": "2 commits to To-infinity-and-AI",
-    "count": 2,
-    "date": "2026-10-25T23:07:29Z",
-    "url": "https://github.com/justAbdulaziz10/To-infinity-and-AI"
    }
   ]
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1271,
+   "activeUsers": 1262,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 38,
+   "activeUsers": 37,
    "period": "P28D"
   }
  },
@@ -211,8 +203,8 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1711,
-  "activeDays": 69,
+  "pushes": 1712,
+  "activeDays": 70,
   "first": "2026-08-23"
  },
  "x": {

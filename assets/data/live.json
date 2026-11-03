@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-03T18:00:19.414Z",
+ "updated": "2026-11-03T23:38:03.909Z",
  "f1Result": {
   "raceName": "Mexico City Grand Prix",
   "round": 19,
@@ -303,10 +303,6 @@
   ]
  },
  "pulse": {
-  "pushes": [
-   "2026-11-01T19:53:17Z",
-   "2026-11-01T19:53:05Z",
-   "2026-11-01T18:05:08Z"
-  ]
+  "pushes": []
  }
 }

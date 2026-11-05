@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 6806,
-  "activeDays": 302,
-  "streak": 86,
-  "longestStreak": 86,
+  "total": 6873,
+  "activeDays": 303,
+  "streak": 87,
+  "longestStreak": 87,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-02",
-  "to": "2026-11-04"
+  "to": "2026-11-05"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-04T18:50:13.013Z",
+ "updated": "2026-11-05T10:54:30.713Z",
  "f1Result": {
   "raceName": "Mexico City Grand Prix",
   "round": 19,
@@ -90,7 +90,7 @@
     "repo": "justAbdulaziz10/faqqa",
     "label": "40 commits to faqqa",
     "count": 40,
-    "date": "2026-11-02T14:38:09Z",
+    "date": "2026-11-02T16:19:12Z",
     "url": "https://github.com/justAbdulaziz10/faqqa"
    },
    {
@@ -112,8 +112,8 @@
    {
     "kind": "push",
     "repo": "Nadaalnashwan/HudhudMishwarak",
-    "label": "23 commits to HudhudMishwarak",
-    "count": 23,
+    "label": "21 commits to HudhudMishwarak",
+    "count": 21,
     "date": "2026-10-30T06:25:35Z",
     "url": "https://github.com/Nadaalnashwan/HudhudMishwarak"
    }
@@ -121,11 +121,11 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1247,
+   "activeUsers": 1239,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 34,
+   "activeUsers": 32,
    "period": "P28D"
   }
  },
@@ -196,7 +196,7 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1723,
+  "pushes": 1726,
   "activeDays": 72,
   "first": "2026-08-23"
  },

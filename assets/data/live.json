@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 6899,
-  "activeDays": 304,
-  "streak": 88,
-  "longestStreak": 88,
+  "total": 6917,
+  "activeDays": 305,
+  "streak": 89,
+  "longestStreak": 89,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-02",
-  "to": "2026-11-06"
+  "to": "2026-11-07"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-06T18:22:22.816Z",
+ "updated": "2026-11-07T10:06:03.948Z",
  "f1Result": {
   "raceName": "Mexico City Grand Prix",
   "round": 19,
@@ -87,6 +87,14 @@
   "items": [
    {
     "kind": "push",
+    "repo": "justAbdulaziz10/Naqah",
+    "label": "41 commits to Naqah",
+    "count": 41,
+    "date": "2026-11-05T10:49:53Z",
+    "url": "https://github.com/justAbdulaziz10/Naqah"
+   },
+   {
+    "kind": "push",
     "repo": "justAbdulaziz10/faqqa",
     "label": "40 commits to faqqa",
     "count": 40,
@@ -105,7 +113,7 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1221,
+   "activeUsers": 1173,
    "period": "P28D"
   },
   "docmara": {
@@ -180,8 +188,8 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1734,
-  "activeDays": 74,
+  "pushes": 1739,
+  "activeDays": 75,
   "first": "2026-08-23"
  },
  "x": {

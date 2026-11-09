@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 6917,
-  "activeDays": 305,
-  "streak": 89,
-  "longestStreak": 89,
+  "total": 6932,
+  "activeDays": 303,
+  "streak": 91,
+  "longestStreak": 91,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
-  "from": "2025-11-02",
-  "to": "2026-11-07"
+  "from": "2025-11-09",
+  "to": "2026-11-09"
  },
  "letterboxd": {
   "films": 1657,
@@ -24,12 +24,12 @@
  },
  "f1": {
   "season": "2026",
-  "round": 20,
-  "raceName": "Brazilian Grand Prix",
-  "circuit": "Autódromo José Carlos Pace",
-  "locality": "São Paulo",
-  "country": "Brazil",
-  "start": "2026-11-08T17:00:00Z"
+  "round": 21,
+  "raceName": "Las Vegas Grand Prix",
+  "circuit": "Las Vegas Strip Street Circuit",
+  "locality": "Las Vegas",
+  "country": "USA",
+  "start": "2026-11-22T04:00:00Z"
  },
  "apps": {
   "echo": {
@@ -49,38 +49,38 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-08T10:20:44.788Z",
+ "updated": "2026-11-09T11:30:16.994Z",
  "f1Result": {
-  "raceName": "Mexico City Grand Prix",
-  "round": 19,
-  "date": "2026-11-01",
-  "circuit": "Autódromo Hermanos Rodríguez",
+  "raceName": "Brazilian Grand Prix",
+  "round": 20,
+  "date": "2026-11-08",
+  "circuit": "Autódromo José Carlos Pace",
   "podium": [
    {
     "pos": 1,
-    "driver": "Max Verstappen",
-    "code": "VER",
-    "team": "Red Bull",
-    "time": "2:20:28.772"
+    "driver": "Lando Norris",
+    "code": "NOR",
+    "team": "McLaren",
+    "time": "1:35:23.504"
    },
    {
     "pos": 2,
-    "driver": "Lewis Hamilton",
-    "code": "HAM",
-    "team": "Ferrari",
-    "time": "+0.799"
+    "driver": "Max Verstappen",
+    "code": "VER",
+    "team": "Red Bull",
+    "time": "+14.602"
    },
    {
     "pos": 3,
-    "driver": "Andrea Kimi Antonelli",
-    "code": "ANT",
-    "team": "Mercedes",
-    "time": "+4.006"
+    "driver": "Isack Hadjar",
+    "code": "HAD",
+    "team": "Red Bull",
+    "time": "+24.485"
    }
   ],
   "fastestLap": {
-   "driver": "Lewis Hamilton",
-   "time": "1:19.268"
+   "driver": "Andrea Kimi Antonelli",
+   "time": "1:12.689"
   }
  },
  "week": {
@@ -88,36 +88,28 @@
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Naqah",
-    "label": "41 commits to Naqah",
-    "count": 41,
+    "label": "42 commits to Naqah",
+    "count": 42,
     "date": "2026-11-05T10:49:53Z",
     "url": "https://github.com/justAbdulaziz10/Naqah"
    },
    {
     "kind": "push",
     "repo": "justAbdulaziz10/faqqa",
-    "label": "40 commits to faqqa",
-    "count": 40,
+    "label": "10 commits to faqqa",
+    "count": 10,
     "date": "2026-11-02T16:19:12Z",
     "url": "https://github.com/justAbdulaziz10/faqqa"
-   },
-   {
-    "kind": "push",
-    "repo": "mara-org/.github",
-    "label": "2 commits to .github",
-    "count": 2,
-    "date": "2026-11-01T19:53:17Z",
-    "url": "https://github.com/mara-org/.github"
    }
   ]
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 1132,
+   "activeUsers": 997,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 31,
+   "activeUsers": 29,
    "period": "P28D"
   }
  },
@@ -188,8 +180,8 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1741,
-  "activeDays": 75,
+  "pushes": 1747,
+  "activeDays": 77,
   "first": "2026-08-23"
  },
  "x": {

@@ -1,25 +1,25 @@
 {
  "github": {
-  "total": 6932,
-  "activeDays": 303,
-  "streak": 91,
-  "longestStreak": 91,
+  "total": 6983,
+  "activeDays": 304,
+  "streak": 92,
+  "longestStreak": 92,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-09",
-  "to": "2026-11-09"
+  "to": "2026-11-10"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Your Mother Your Mother Your Mother",
-   "year": "2026",
-   "watched": "2026-11-05",
-   "rating": 2,
-   "url": "https://letterboxd.com/notabdulaziz/film/your-mother-your-mother-your-mother/"
+   "title": "Phantom Thread",
+   "year": "2017",
+   "watched": "2026-11-09",
+   "rating": 4,
+   "url": "https://letterboxd.com/notabdulaziz/film/phantom-thread/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-09T22:39:52.523Z",
+ "updated": "2026-11-10T11:10:41.585Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -88,28 +88,20 @@
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Naqah",
-    "label": "42 commits to Naqah",
-    "count": 42,
-    "date": "2026-11-05T10:49:53Z",
+    "label": "57 commits to Naqah",
+    "count": 57,
+    "date": "2026-11-09T10:28:22Z",
     "url": "https://github.com/justAbdulaziz10/Naqah"
-   },
-   {
-    "kind": "push",
-    "repo": "justAbdulaziz10/faqqa",
-    "label": "10 commits to faqqa",
-    "count": 10,
-    "date": "2026-11-02T16:19:12Z",
-    "url": "https://github.com/justAbdulaziz10/faqqa"
    }
   ]
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 997,
+   "activeUsers": 851,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 29,
+   "activeUsers": 28,
    "period": "P28D"
   }
  },
@@ -180,8 +172,8 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1747,
-  "activeDays": 77,
+  "pushes": 1757,
+  "activeDays": 78,
   "first": "2026-08-23"
  },
  "x": {

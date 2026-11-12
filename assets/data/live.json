@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 6995,
-  "activeDays": 305,
-  "streak": 93,
-  "longestStreak": 93,
+  "total": 6999,
+  "activeDays": 306,
+  "streak": 94,
+  "longestStreak": 94,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-09",
-  "to": "2026-11-11"
+  "to": "2026-11-12"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-11T10:56:14.725Z",
+ "updated": "2026-11-12T11:06:09.892Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -88,8 +88,8 @@
    {
     "kind": "push",
     "repo": "justAbdulaziz10/Naqah",
-    "label": "57 commits to Naqah",
-    "count": 57,
+    "label": "16 commits to Naqah",
+    "count": 16,
     "date": "2026-11-09T10:28:22Z",
     "url": "https://github.com/justAbdulaziz10/Naqah"
    }
@@ -97,7 +97,7 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 756,
+   "activeUsers": 678,
    "period": "P28D"
   },
   "docmara": {
@@ -172,7 +172,7 @@
   "gitlabMrs": 48
  },
  "gitlab": {
-  "pushes": 1769,
+  "pushes": 1794,
   "activeDays": 79,
   "first": "2026-08-23"
  },

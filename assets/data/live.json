@@ -1,25 +1,25 @@
 {
  "github": {
-  "total": 7111,
-  "activeDays": 307,
-  "streak": 97,
-  "longestStreak": 97,
+  "total": 7223,
+  "activeDays": 308,
+  "streak": 98,
+  "longestStreak": 98,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-16",
-  "to": "2026-11-15"
+  "to": "2026-11-16"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Kill Bill: Vol. 2",
-   "year": "2004",
-   "watched": "2026-11-15",
+   "title": "Einstein and Eddington",
+   "year": "2008",
+   "watched": "2026-11-16",
    "rating": 3.5,
-   "url": "https://letterboxd.com/notabdulaziz/film/kill-bill-vol-2/"
+   "url": "https://letterboxd.com/notabdulaziz/film/einstein-and-eddington/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-15T10:51:25.566Z",
+ "updated": "2026-11-16T11:15:29.459Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -84,24 +84,15 @@
   }
  },
  "week": {
-  "items": [
-   {
-    "kind": "push",
-    "repo": "justAbdulaziz10/Naqah",
-    "label": "16 commits to Naqah",
-    "count": 16,
-    "date": "2026-11-09T10:28:22Z",
-    "url": "https://github.com/justAbdulaziz10/Naqah"
-   }
-  ]
+  "items": []
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 541,
+   "activeUsers": 443,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 30,
+   "activeUsers": 32,
    "period": "P28D"
   }
  },
@@ -168,12 +159,12 @@
   ]
  },
  "work": {
-  "githubPrs": 1202,
-  "gitlabMrs": 48
+  "githubPrs": 1222,
+  "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1802,
-  "activeDays": 81,
+  "pushes": 1817,
+  "activeDays": 82,
   "first": "2026-08-23"
  },
  "x": {

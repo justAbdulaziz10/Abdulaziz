@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-17T11:50:20.898Z",
+ "updated": "2026-11-17T23:07:02.742Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -263,8 +263,6 @@
   ]
  },
  "pulse": {
-  "pushes": [
-   "2026-11-15T20:37:50Z"
-  ]
+  "pushes": []
  }
 }

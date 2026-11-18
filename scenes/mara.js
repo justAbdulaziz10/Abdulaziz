@@ -104,11 +104,11 @@ export function mount(root, { reduced = false } = {}) {
       <div class="mara__frame">
         <div class="mara__screen">
           <img class="mara__img mara__img--home" alt="Mara home screen: body map with recovery score and health cards"
-            src="${IMG}screen-mara-home.webp" srcset="${IMG}screen-mara-home-s.webp 320w, ${IMG}screen-mara-home-m.webp 552w, ${IMG}screen-mara-home.webp 773w"
-            sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async">
+            src="${IMG}screen-mara-home.webp" srcset="${IMG}screen-mara-home-s.webp 320w, ${IMG}screen-mara-home-400.webp 400w, ${IMG}screen-mara-home-m.webp 552w, ${IMG}screen-mara-home.webp 773w"
+            sizes="(max-width: 760px) 45vw, (max-width: 1100px) 26vw, 125px" width="773" height="1680" decoding="async" loading="lazy">
           <img class="mara__img mara__img--chat" alt="Mara chat screen: a 30-minute workout plan based on recovery and sleep"
-            src="${IMG}screen-mara-chat.webp" srcset="${IMG}screen-mara-chat-s.webp 320w, ${IMG}screen-mara-chat-m.webp 552w, ${IMG}screen-mara-chat.webp 773w"
-            sizes="(max-width: 640px) 52vw, 150px" width="773" height="1680" decoding="async" loading="lazy">
+            src="${IMG}screen-mara-chat.webp" srcset="${IMG}screen-mara-chat-s.webp 320w, ${IMG}screen-mara-chat-400.webp 400w, ${IMG}screen-mara-chat-m.webp 552w, ${IMG}screen-mara-chat.webp 773w"
+            sizes="(max-width: 760px) 45vw, (max-width: 1100px) 26vw, 125px" width="773" height="1680" decoding="async" loading="lazy">
           <div class="mara__island" aria-hidden="true"></div>
           <div class="mara__glass" aria-hidden="true"></div>
           <button class="mara__tap" type="button" aria-label="Show the Mara chat screen"></button>

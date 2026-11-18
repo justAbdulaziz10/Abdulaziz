@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
+      - name: Test the parsers before trusting the new posts
+        run: node --test 'tools/*.test.mjs'
       - name: Fetch the latest posts on X and recent pushes
         env:
           # official API key (paid per post read); unset, the job falls back to X's free embed timeline

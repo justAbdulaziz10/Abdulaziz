@@ -213,11 +213,20 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .now { max-width: 46ch; line-height: 1.55; }
 .now__label { color: var(--fg-3); }
 .hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; }
+/* a thumb-sized target beside the 48px button, without changing the row's height */
+.hero__actions .link,
+.contact__links .link,
+.learn__link .link, .off__link .link, .rewind__link .link { display: inline-flex; align-items: center; min-height: 44px; }
+.top__name { display: inline-flex; align-items: center; min-height: 44px; }
 /* the statement stays visible from the first paint: it is the largest text on load */
-.js .hero__role, .js .hero__meta, .js .hero__proof { opacity: 0; transform: translateY(14px); transition: opacity var(--t-focal) var(--ease), transform var(--t-focal) var(--ease); }
-.js .hero.is-in .hero__role { opacity: 1; transform: none; transition-delay: 50ms; }
-.js .hero.is-in .hero__proof { opacity: 1; transform: none; transition-delay: 350ms; }
-.js .hero.is-in .hero__meta { opacity: 1; transform: none; transition-delay: 650ms; }
+/* the rest of the hero's copy rises from the first paint too: gated on site.js and the fonts, the buttons
+   finished appearing near 3s on a slow phone */
+.js .hero__role, .js .hero__proof, .js .hero__meta { animation: hero-rise 520ms var(--ease) both; }
+.js .hero__proof { animation-delay: 90ms; }
+.js .hero__meta { animation-delay: 180ms; }
+@keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes hero-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .js .hero__role, .js .hero__proof, .js .hero__meta { animation-name: hero-fade; } }
 @media (max-width: 760px) {
   .hero { padding-top: 6.5rem; }
   .hero__name { letter-spacing: -.03em; }

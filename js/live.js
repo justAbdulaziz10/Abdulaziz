@@ -118,8 +118,9 @@ function lastRace(result) {
   box.hidden = false;
 }
 
-// repo names as people read them: the portfolio repo is "this site", the design picker for it is left out
-const HIDDEN_REPOS = ['justAbdulaziz10/abdulazizprotofoliopicker'];
+// repo names as people read them: the portfolio repo is "this site"; the design picker for it and the profile
+// README repos are left out (a week of only README edits read "Now: building .github")
+const HIDDEN_REPOS = ['justAbdulaziz10/abdulazizprotofoliopicker', 'justAbdulaziz10/.github', 'mara-org/.github'];
 const repoName = repo => (repo === 'justAbdulaziz10/Abdulaziz' ? 'this site' : repo.split('/').at(-1).replace(/[_-]+/g, ' '));
 
 function week(data) {

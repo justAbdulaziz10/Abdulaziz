@@ -1178,7 +1178,7 @@ export function mount(root, options = {}) {
   let active = mountSuzuka(root, { reduced });
   let lastP = reduced ? 0.6 : 0;
   let destroyed = false;
-  fetch(new URL('../assets/data/f1lap.json', import.meta.url), { cache: 'no-cache' })
+  const loadLap = () => fetch(new URL('../assets/data/f1lap.json', import.meta.url), { cache: 'no-cache' })
     .then(response => response.ok ? response.json() : Promise.reject(response.status))
     .then(raw => {
       const data = normalizeLapData(raw);
@@ -1188,6 +1188,14 @@ export function mount(root, options = {}) {
       active.update(lastP);
     })
     .catch(() => { /* missing or incomplete data: keep the Suzuka fallback */ });
+  // the lap (about 30KB) waits until the reader is a screen and a half away; on a phone it was fetched with the
+  // first paint, far down the page, and shared the connection with the fonts
+  const near = new IntersectionObserver((entries) => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    near.disconnect();
+    loadLap();
+  }, { rootMargin: '150% 0px 150% 0px' });
+  near.observe(root);
   return {
     update(p) {
       lastP = reduced ? 0.6 : Math.max(0, Math.min(1, +p || 0));
@@ -1196,6 +1204,7 @@ export function mount(root, options = {}) {
     destroy() {
       if (!destroyed) {
         destroyed = true;
+        near.disconnect();
         active?.destroy();
         active = null;
       }

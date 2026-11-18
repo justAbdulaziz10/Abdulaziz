@@ -181,10 +181,28 @@ export function mount(root, { reduced = false } = {}) {
     rd += `C${r2(wl[0] - 10)} ${r2(wl[1] + (qTop - wl[1]) * 0.55)} ${cx} ${r2(qTop - (qTop - wl[1]) * 0.55)} ${cx} ${qTop}`;
     const route = mkLine(rd, gRoute, ...T.route, 'dk-line--route', true); // constant travel speed
     // waypoint fractions along the route
-    const total = route.getTotalLength();
+    // measured one leg at a time: asked of the whole route, every one of the 601 points walked it from the start
+    // (200ms of a phone's load). rd is absolute M, C and Q only.
+    const probe = document.createElementNS(NS, 'path');
+    const legs = [];
+    let pen = null;
+    for (const [, c, args] of rd.matchAll(/([MCQ])([^MCQ]*)/g)) {
+      const v = args.trim().split(/[\s,]+/).map(Number);
+      if (c !== 'M') legs.push({ d: `M${pen[0]} ${pen[1]}${c}${v.join(' ')}` });
+      pen = v.slice(-2);
+    }
+    for (const g of legs) { probe.setAttribute('d', g.d); g.len = probe.getTotalLength(); }
+    const total = legs.reduce((sum, g) => sum + g.len, 0);
     const N = 600;
     const samples = [];
-    for (let i = 0; i <= N; i++) { const q = route.getPointAtLength((total * i) / N); samples.push([q.x, q.y]); }
+    let k = 0, start = 0;
+    probe.setAttribute('d', legs[0].d);
+    for (let i = 0; i <= N; i++) {
+      const at = (total * i) / N;
+      while (k < legs.length - 1 && at > start + legs[k].len) { start += legs[k++].len; probe.setAttribute('d', legs[k].d); }
+      const q = probe.getPointAtLength(Math.min(legs[k].len, at - start));
+      samples.push([q.x, q.y]);
+    }
     const wpEls = wps.map(([x, y], i) => {
       let best = 0, bd = Infinity;
       samples.forEach(([sx, sy], k) => { const d = (sx - x) ** 2 + (sy - y) ** 2; if (d < bd) { bd = d; best = k; } });

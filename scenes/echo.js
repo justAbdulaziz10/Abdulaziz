@@ -85,13 +85,21 @@ function bars(seed, n = 22) {
   return `<svg class="echo__bars" viewBox="0 0 ${n * 4 - 2} 20" aria-hidden="true" preserveAspectRatio="xMinYMid meet">${out}</svg>`;
 }
 
+// widest each screenshot is painted, crop zoom and scroll scale included (measured from 360 to 1920px wide);
+// screen 07 is cropped tighter, so it is drawn about twice as wide as the others
+const CARD_SIZES = {
+  'echo-screen-07': '(max-width: 760px) 115vw, (max-width: 1100px) 66vw, 380px',
+  default: '(max-width: 760px) 66vw, (max-width: 1100px) 36vw, 200px',
+};
+
 function cardHTML(c, i) {
   const [x0, y0, x1] = c.crop;
   const wPct = (924 / (x1 - x0)) * 100;
   const tx = (x0 / 924) * 100, ty = (y0 / 2000) * 100;
   return `<div class="echo__card${c.k === 0 ? ' echo__card--hero' : ''}" style="--k:${c.k}" role="button" tabindex="${c.k === 0 ? 0 : -1}" aria-describedby="echo-keys">
     <div class="echo__photo">
-      <img src="${IMG}${c.file}.webp" alt="${c.alt}" width="1284" height="2778" decoding="async" ${c.k === 0 ? '' : 'loading="lazy"'}
+      <img src="${IMG}${c.file}.webp" srcset="${IMG}${c.file}-s.webp 240w, ${IMG}${c.file}-m.webp 480w, ${IMG}${c.file}.webp 642w"
+        sizes="${CARD_SIZES[c.file] ?? CARD_SIZES.default}" alt="${c.alt}" width="1284" height="2778" decoding="async" loading="lazy"
         style="width:${wPct.toFixed(3)}%;transform:translate(-${tx.toFixed(3)}%,-${ty.toFixed(3)}%)">
       <span class="echo__light" aria-hidden="true"></span>
     </div>
@@ -177,6 +185,7 @@ export function mount(root, { reduced = false } = {}) {
   todayImage.width = 420;
   todayImage.height = 600;
   todayImage.decoding = 'async';
+  todayImage.loading = 'lazy'; // far below the fold on load, like the cards above it
   const yearChip = make('span', 'echo__chip echo__chip--year', '', todayPhoto);
   const chips = make('span', 'echo__chips', undefined, todayPhoto);
   const dateChip = make('span', 'echo__chip', '', chips);

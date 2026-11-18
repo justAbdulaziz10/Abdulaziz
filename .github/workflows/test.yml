@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Data parsers and page fallbacks
+        run: node --test 'tools/*.test.mjs'
+      - name: Every script parses
+        run: for f in js/*.js scenes/*.js tools/*.mjs; do node --check "$f" || exit 1; done
+      - name: Asset stamps match the files
+        run: node tools/stamp.mjs | grep -qx 'stamps current' || { echo "run node tools/stamp.mjs and commit"; exit 1; }

@@ -14,7 +14,8 @@ const SCROLL_TAU = 90;
 /* ---------- hero entrance ---------- */
 const hero = document.querySelector('.hero');
 const startHero = () => requestAnimationFrame(() => hero.classList.add('is-in'));
-(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 900))]) : Promise.resolve()).then(startHero);
+// the name's stretch needs the variable font, but a slow phone shouldn't stare at an empty hero for it
+(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]) : Promise.resolve()).then(startHero);
 
 /* ---------- worlds ---------- */
 const worldSections = [...document.querySelectorAll('main [data-world]')];
@@ -175,6 +176,8 @@ if (!reduced) for (const rec of worldRecords) {
   rec.el.style.setProperty('--world-content-opacity', '0');
 }
 
+// Every scene's files are fetched at once, but each mount runs in a task of its own, so scenes whose files land
+// together don't build in one long task that holds up the first scroll on a phone.
 async function mountScene(slot) {
   const id = slot.dataset.scene;
   const el = document.createElement('div');
@@ -187,6 +190,7 @@ async function mountScene(slot) {
   document.head.append(css);
   try {
     const [mod] = await Promise.all([import(`../scenes/${id}.js${SCENE_STAMP}`), cssReady]);
+    await new Promise(r => setTimeout(r));
     const api = mod.mount(el, { reduced });
     const rec = { slot, el, api, visible: false, p: -1, section: null, top: 0, height: 0 };
     scenes.push(rec);
@@ -661,18 +665,19 @@ function pathSegments(d) {
   }
   return segments;
 }
-function localSamples(path, gap) {
+// evenly spaced points along a path, at most `gap` apart, with the path's length they were spaced over
+function uniformSamples(path, gap, minSteps = 1) {
   const segments = pathSegments(path.getAttribute('d') || '');
   if (!segments) {
     const length = path.getTotalLength();
-    if (!length) return [];
-    const steps = Math.max(1, Math.ceil(length / gap));
-    return Array.from({ length: steps + 1 }, (_, i) => path.getPointAtLength(length * i / steps));
+    if (!length) return { length: 0, points: [] };
+    const steps = Math.max(minSteps, Math.ceil(length / gap));
+    return { length, points: Array.from({ length: steps + 1 }, (_, i) => path.getPointAtLength(length * i / steps)) };
   }
   const lengths = segments.map(d => { scratchPath.setAttribute('d', d); return scratchPath.getTotalLength(); });
   const total = lengths.reduce((sum, l) => sum + l, 0);
-  if (!total) return [];
-  const steps = Math.max(1, Math.ceil(total / gap));
+  if (!total) return { length: 0, points: [] };
+  const steps = Math.max(minSteps, Math.ceil(total / gap));
   const points = [];
   let k = 0, start = 0;
   scratchPath.setAttribute('d', segments[0]);
@@ -684,8 +689,9 @@ function localSamples(path, gap) {
     }
     points.push(scratchPath.getPointAtLength(Math.min(lengths[k], at - start)));
   }
-  return points;
+  return { length: total, points };
 }
+const localSamples = (path, gap) => uniformSamples(path, gap).points;
 
 // The line is built three or four times while the page loads; samples are kept per path and reused while its
 // shape and its place on the page are unchanged.
@@ -1111,13 +1117,17 @@ function buildThread() {
       newPaths.push(path);
     }
     thread.append(path);
-    const length = path.getTotalLength();
-    // sampled once here, so scrolling never asks the path for geometry (that forced a style pass every frame)
-    const steps = Math.max(2, Math.ceil(length / 6));
-    let prev = path.getPointAtLength(0);
+    // sampled once here, so scrolling never asks the path for geometry (that forced a style pass every frame);
+    // segment by segment, since asking the page-long path for each point walked it from the start every time
+    // (two thirds of the load's script time on a phone)
+    const sampled = uniformSamples(path, 6, 2);
+    const { length } = sampled;
+    const samples = sampled.points.length ? sampled.points : Array(3).fill(path.getPointAtLength(0));
+    const steps = samples.length - 1;
+    let prev = samples[0];
     const costs = [0], lens = [0], xs = [prev.x], ys = [prev.y];
     for (let k = 1; k <= steps; k++) {
-      const len = length * k / steps, pt = path.getPointAtLength(len);
+      const len = length * k / steps, pt = samples[k];
       costs.push(costs[k - 1] + Math.abs(pt.y - prev.y) + SIDEWAYS_COST * Math.abs(pt.x - prev.x));
       lens.push(len); xs.push(pt.x); ys.push(pt.y);
       prev = pt;
@@ -1314,12 +1324,25 @@ addEventListener('scroll', () => {
 }, { passive: true });
 
 let rebuildTimer;
-function scheduleRebuild() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(buildThread, 120); }
+// Fonts landing, the load event and the first ResizeObserver call each asked for a rebuild, mostly of a page that
+// hadn't moved. The line depends only on where the scenes, their obstacles and the open flows sit, so a rebuild
+// is skipped while those boxes are unchanged since the last one.
+let builtLayout = '';
+function layoutKey() {
+  const box = el => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)} ${Math.round(r.top + scrollY)} ${Math.round(r.width)} ${Math.round(r.height)}`; };
+  return [innerWidth, document.documentElement.scrollHeight, root.classList.contains('is-pm'), document.querySelectorAll('.pm.is-open').length, scenes.length,
+    ...slots.map(box), ...[...document.querySelectorAll(obstacleSel)].map(box)].join('|');
+}
+function buildThreadNoted() { buildThread(); builtLayout = layoutKey(); }
+function scheduleRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => { if (layoutKey() !== builtLayout) buildThreadNoted(); }, 120);
+}
 addEventListener('resize', scheduleRebuild);
 new ResizeObserver(scheduleRebuild).observe(document.querySelector('main'));
 
 Promise.all(slots.map(mountScene)).then(() => {
-  buildThread();
+  buildThreadNoted();
   scenes.forEach(s => { s.p = sectionProgress(s.top, s.height, reduced ? scrollY : smoothY, cachedViewportHeight); s.api.update(reduced ? 0.6 : s.p); });
   root.dataset.ready = '1';
 });

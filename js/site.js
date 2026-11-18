@@ -28,6 +28,17 @@ const worldRecords = worldSections.map(el => ({
   firstEntry: null, entry: null, radius: 0, lastRadius: NaN, lastReady: null,
 }));
 const worldRecordOf = new Map(worldRecords.map(rec => [rec.el, rec]));
+// Each section's colour is a real element clipped from here, and its content shows through a class. Both used to
+// ride registered custom properties passed down with `inherit`; WebKit (every browser on an iPhone) read those once
+// and never again, so the colour never came and the content stayed at opacity 0.
+for (const rec of worldRecords) {
+  rec.fill = document.createElement('div');
+  rec.fill.className = 'world-fill';
+  rec.fill.setAttribute('aria-hidden', 'true');
+  rec.el.append(rec.fill);
+  rec.fx = '50%';
+  rec.fy = '0px';
+}
 const themeMeta = document.querySelector('meta[name="theme-color"]');
 // each section's colour is read once and cached: reading computed style mid-scroll forced a style pass of
 // 10-15ms on every world change, a visible hitch on a 120Hz laptop screen
@@ -174,10 +185,9 @@ let smoothY = scrollY;
 let maraBeatPhase = 0;
 let maraPulse = 0;
 
-if (!reduced) for (const rec of worldRecords) {
-  if (rec.world === 'paper') continue;
-  rec.el.style.setProperty('--world-radius', '0px');
-  rec.el.style.setProperty('--world-content-opacity', '0');
+if (!reduced) {
+  root.classList.add('world-gate'); // coloured sections hide their content until .is-ready
+  for (const rec of worldRecords) if (rec.world !== 'paper') rec.fill.style.clipPath = 'circle(0px at 50% 0px)';
 }
 
 // Every scene's files are fetched at once, but each mount runs in a task of its own, so scenes whose files land
@@ -494,7 +504,7 @@ function updateWorldState(rec, y, viewportHeight, force = false) {
   const progress = reduced || nightPaper ? 1 : smoothstep(clamp((viewportHeight - (rec.top - y)) / (viewportHeight * 0.15))); // floods within 15% of a screen: its content waits for it
   const radius = progress >= 1 ? rec.radius : rec.radius * progress;
   if (!(Math.abs(radius - rec.lastRadius) <= 0.5)) { // lastRadius starts as NaN, which must count as changed
-    rec.el.style.setProperty('--world-radius', `${radius.toFixed(1)}px`);
+    rec.fill.style.clipPath = `circle(${radius.toFixed(1)}px at ${rec.fx} ${rec.fy})`;
     rec.lastRadius = radius;
   }
   // its own layer while the circle grows, so each frame repaints a flat fill rather than the text and art on top
@@ -508,7 +518,7 @@ function updateWorldState(rec, y, viewportHeight, force = false) {
     Math.max(Math.abs(v0 - rec.entry.y), Math.abs(v1 - rec.entry.y)),
   ));
   if (rec.world !== 'paper' && ready !== rec.lastReady) {
-    rec.el.style.setProperty('--world-content-opacity', ready ? '1' : '0');
+    rec.el.classList.toggle('is-ready', ready);
     rec.lastReady = ready;
   }
 }
@@ -621,8 +631,8 @@ function finishWorldLayout(y) {
       Math.hypot(world.entry.x, world.height - world.entry.y),
       Math.hypot(world.width - world.entry.x, world.height - world.entry.y),
     ) + 2;
-    world.el.style.setProperty('--world-x', `${world.entry.x.toFixed(1)}px`);
-    world.el.style.setProperty('--world-y', `${world.entry.y.toFixed(1)}px`);
+    world.fx = `${world.entry.x.toFixed(1)}px`;
+    world.fy = `${world.entry.y.toFixed(1)}px`;
     world.lastRadius = NaN;
     world.lastReady = null;
     updateWorldState(world, y, cachedViewportHeight, true);

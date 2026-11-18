@@ -92,7 +92,8 @@
     opacity: 1 !important;
   }
 
-  main [data-world]::before {
+  main [data-world]::before,
+  main [data-world] > .world-fill {
     display: none !important;
   }
 

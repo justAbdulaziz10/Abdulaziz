@@ -698,31 +698,24 @@ main [data-world]::before {
   clip-path: none;
   pointer-events: none;
 }
-/* the flood values change every frame while a world floods in; registered as non-inherited, a change restyles the
-   section and its ::before only, instead of every element inside it (a 4-15ms style pass per frame on wide screens) */
-@property --world-radius { syntax: "<length>"; inherits: false; initial-value: 9999px; }
-@property --world-x { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
-@property --world-y { syntax: "<length-percentage>"; inherits: false; initial-value: 0px; }
-@property --world-content-opacity { syntax: "<number>"; inherits: false; initial-value: 1; }
-.js main [data-world]::before {
-  --world-radius: inherit; --world-x: inherit; --world-y: inherit;
-  clip-path: circle(var(--world-radius, 9999px) at var(--world-x, 50%) var(--world-y, 0px));
-}
-.js main [data-world].is-flooding::before { will-change: transform; }
+/* With scripts, the colour is a real .world-fill element that site.js clips every frame (an inline clip-path on
+   one element restyles only that element). The ::before above stays for visitors without scripts. The flood used
+   to be fed to the ::before through registered custom properties and `inherit`, which WebKit, and so every
+   browser on an iPhone, never re-read: the colour never arrived and the content stayed hidden. */
+.js main [data-world]::before { content: none; }
 main [data-world] > * { position: relative; z-index: 2; }
 main [data-world] > .hero__sign { position: absolute; z-index: 1; }
+main [data-world] > .world-fill { position: absolute; inset: 0; z-index: 0; background-color: var(--bg); pointer-events: none; }
+.js main [data-world].is-flooding > .world-fill { will-change: transform; }
 /* opacity only: the content stays in the tab order and the accessibility tree while its world floods in */
-.js main [data-world]:not([data-world="paper"]) > * {
-  --world-content-opacity: inherit;
-  opacity: var(--world-content-opacity, 1);
-  transition: opacity 160ms var(--ease);
-}
-.js main [data-world]:not([data-world="paper"]):focus-within::before { clip-path: none; }
-.js main [data-world]:not([data-world="paper"]):focus-within > * { opacity: 1; }
-html.is-night main [data-world="paper"]::before { clip-path: none !important; }
+.js main [data-world]:not([data-world="paper"]) > :not(.world-fill) { transition: opacity 160ms var(--ease); }
+.world-gate main [data-world]:not([data-world="paper"]):not(.is-ready) > :not(.world-fill) { opacity: 0; }
+.js main [data-world]:not([data-world="paper"]):focus-within > .world-fill { clip-path: none !important; }
+.js main [data-world]:not([data-world="paper"]):focus-within > :not(.world-fill) { opacity: 1; }
+html.is-night main [data-world="paper"] > .world-fill { clip-path: none !important; }
 html.is-night main [data-world="paper"] > * { opacity: 1 !important; }
 html.is-night body, html.is-night main [data-world="paper"] { --line: #f3efe4; }
-html.is-switching main [data-world]::before { transition: background-color var(--t-switch) var(--ease); }
+html.is-switching main [data-world] > .world-fill { transition: background-color var(--t-switch) var(--ease); }
 
 .project__name {
   inline-size: 100%;
@@ -743,9 +736,9 @@ html.is-switching main [data-world]::before { transition: background-color var(-
 @media (max-width: 900px) { .project--pitlane .project__name { inline-size: 100%; } }
 
 @media (prefers-reduced-motion: reduce) {
-  main [data-world]::before { clip-path: none !important; }
+  main [data-world]::before, main [data-world] > .world-fill { clip-path: none !important; }
   main [data-world]:not([data-world="paper"]) > * { opacity: 1 !important; }
   /* no flood: each section's content simply fades in once it is on screen */
-  .js main [data-world] > :not(.hero__sign) { opacity: 0 !important; transition: opacity 600ms ease !important; }
+  .js main [data-world] > :not(.hero__sign):not(.world-fill) { opacity: 0 !important; transition: opacity 600ms ease !important; }
   .js main [data-world].is-seen > *, .js main [data-world]:focus-within > * { opacity: 1 !important; }
 }

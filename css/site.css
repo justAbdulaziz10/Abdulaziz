@@ -26,6 +26,7 @@ body {
 body, main [data-world="paper"], .top[data-world="paper"] { --bg: var(--paper); --fg: var(--ink); --fg-2: var(--ink-2); --fg-3: var(--ink-3); --rule-c: var(--rule); --accent: var(--ink); --line: var(--ink); }
 body[data-thread="mara"] .thread, body[data-thread="mara"] .thread__interaction, main [data-world="mara"], .top[data-world="mara"] { --bg: var(--mara-soft); --fg: #0c2733; --fg-2: #2f5566; --fg-3: #4a6977; --rule-c: rgba(12, 39, 51, .14); --accent: #0b7fb0; --line: var(--mara); }
 body[data-thread="echo"] .thread, body[data-thread="echo"] .thread__interaction, main [data-world="echo"], .top[data-world="echo"] { --bg: var(--echo-deep); --fg: #fbeee6; --fg-2: #e2c3b4; --fg-3: #b9958a; --rule-c: rgba(251, 238, 230, .16); --accent: var(--echo); --line: var(--echo); }
+body[data-thread="faqqa"] .thread, body[data-thread="faqqa"] .thread__interaction, main [data-world="faqqa"], .top[data-world="faqqa"] { --bg: var(--faqqa); --fg: var(--faqqa-ink); --fg-2: #c9c1b0; --fg-3: #b0a998; --rule-c: rgba(239, 231, 214, .16); --accent: var(--faqqa-flash); --line: var(--faqqa-ink); }
 body[data-thread="daleelk"] .thread, body[data-thread="daleelk"] .thread__interaction, main [data-world="daleelk"], .top[data-world="daleelk"] { --bg: var(--daleelk-soft); --fg: #2b210f; --fg-2: #5d4d2f; --fg-3: #6e5f3e; --rule-c: rgba(43, 33, 15, .14); --accent: #8a5f17; --line: var(--daleelk); }
 body[data-thread="rassah"] .thread, body[data-thread="rassah"] .thread__interaction, main [data-world="rassah"], .top[data-world="rassah"] { --bg: var(--rassah); --fg: var(--rassah-ink); --fg-2: #b9d2ca; --fg-3: #a3c4b9; --rule-c: rgba(233, 241, 238, .16); --accent: var(--carton); --line: var(--rassah-ink); }
 body[data-thread="asphalt"] .thread, body[data-thread="asphalt"] .thread__interaction, main [data-world="asphalt"], .top[data-world="asphalt"] { --bg: var(--asphalt); --fg: var(--kerb-white); --fg-2: #c3c6cc; --fg-3: #8d929b; --rule-c: rgba(244, 244, 242, .14); --accent: var(--kerb-red); --line: var(--kerb-white); }
@@ -289,6 +290,9 @@ main > *, .foot > * { position: relative; z-index: 1; }
 .shot__bar::after { content: ""; width: 2.2rem; }
 .shot--rassah { --tilt: -3deg; margin-left: auto; }
 .shot--pitlane { --tilt: 3deg; }
+.shot--faqqa { --tilt: 2deg; }
+/* a screenshot standing in for a scene sits level with the text beside it */
+.project__scene > .shot { margin-top: 0; }
 .shot picture { display: block; }
 .shot img { width: 100%; }
 /* it swings in on a slight tilt and lands flat, so the screenshot text stays sharp */
@@ -345,6 +349,7 @@ main > *, .foot > * { position: relative; z-index: 1; }
 }
 .more .track[data-tone="mara"].is-current { --track-active: var(--mara); }
 .more .track[data-tone="echo"].is-current { --track-active: var(--echo); }
+.more .track[data-tone="faqqa"].is-current { --track-active: var(--faqqa); }
 .more .track[data-tone="daleelk"].is-current { --track-active: var(--daleelk); }
 .more .track[data-tone="rassah"].is-current { --track-active: var(--rassah); }
 .more .track[data-tone="pitlane"].is-current { --track-active: var(--kerb-red); }

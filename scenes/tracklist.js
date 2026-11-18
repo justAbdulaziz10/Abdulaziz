@@ -522,7 +522,7 @@ export function mount(root, { reduced = false } = {}) {
   const pen = (p) => {
     const sceneTop = vh - p * (secH + vh) + off;
     const D = Math.min(h, 0.12 * vh + 0.5 * h);
-    return clamp((0.62 * vh - sceneTop) / D);
+    return clamp((0.82 * vh - sceneTop) / D); // the pen line, as in site.js (PEN)
   };
   measure();
   const ro = new ResizeObserver(measure);

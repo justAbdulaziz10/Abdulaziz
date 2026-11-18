@@ -318,6 +318,7 @@
   #echo .project__facts > div:first-child,
   #daleelk .project__facts > div:first-child,
   #rassah .project__facts > div:nth-child(2),
+  #faqqa .project__facts > div:nth-child(2),
   #pitlane .project__facts > div:nth-child(2) {
     display: none;
   }

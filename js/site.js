@@ -9,7 +9,11 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const body = document.body;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-const SCROLL_TAU = 90;
+const SCROLL_TAU = 60; // was 90: a fast flick left the pen and the colour floods a third of a screen behind
+const touchScroll = matchMedia('(pointer: coarse)');
+// where the pen sits on screen: the line, the reveals and the drawn scenes (tube.js, tracklist.js) catch up to it.
+// At 62% the lower third of every screen waited, empty, for the pen; at 82% things draw as they come into view.
+const PEN = 0.82;
 
 /* ---------- hero entrance ---------- */
 const hero = document.querySelector('.hero');
@@ -487,7 +491,7 @@ function nearViewport(topY, height, y, viewportHeight) {
 function updateWorldState(rec, y, viewportHeight, force = false) {
   if (!force && !nearViewport(rec.top, rec.height, y, viewportHeight)) return;
   const nightPaper = root.classList.contains('is-night') && rec.world === 'paper';
-  const progress = reduced || nightPaper ? 1 : smoothstep(clamp((viewportHeight - (rec.top - y)) / (viewportHeight * 0.3)));
+  const progress = reduced || nightPaper ? 1 : smoothstep(clamp((viewportHeight - (rec.top - y)) / (viewportHeight * 0.15))); // floods within 15% of a screen: its content waits for it
   const radius = progress >= 1 ? rec.radius : rec.radius * progress;
   if (!(Math.abs(radius - rec.lastRadius) <= 0.5)) { // lastRadius starts as NaN, which must count as changed
     rec.el.style.setProperty('--world-radius', `${radius.toFixed(1)}px`);
@@ -530,6 +534,9 @@ function updateTitleState(rec, y, viewportHeight, force = false) {
     const alpha = spread * 15;
     echoA = `${offset.toFixed(1)}px 0 1px color-mix(in srgb, var(--accent) ${alpha.toFixed(1)}%, transparent)`;
     echoB = `${(-offset).toFixed(1)}px 1px 1px color-mix(in srgb, var(--accent) ${(alpha * 0.7).toFixed(1)}%, transparent)`;
+  } else if (rec.kind === 'faqqa') {
+    // a flash: thin as the section arrives, full weight by a third of the way through, like thunder over the dunes
+    weight = 300 + 500 * smoothstep(clamp(p / 0.35));
   } else if (rec.kind === 'daleelk') {
     width = 85 + 33 * smoothstep(clamp(p / 0.55));
   } else if (rec.kind === 'rassah') {
@@ -1213,7 +1220,7 @@ function threadAnchor(y, viewportHeight) {
   // near the end of the page the anchor slides to the bottom edge, so the last stretch can finish drawing
   const maxY = cachedDocumentHeight - viewportHeight;
   const near = clamp((y - (maxY - viewportHeight)) / viewportHeight);
-  return y + viewportHeight * (0.62 + 0.38 * near);
+  return y + viewportHeight * (PEN + (1 - PEN) * near);
 }
 
 // scroll progress through a connector's height -> fraction of its length drawn, weighting sideways runs lightly
@@ -1293,10 +1300,11 @@ function frame(now) {
   lastFrameTime = now;
   lastMotionScrollY = y;
   onScrollHeader();
-  if (reduced) smoothY = y;
+  // touch scrolling already glides; easing behind it on top left whole sections blank during a flick
+  if (reduced || touchScroll.matches) smoothY = y;
   else {
     const delta = y - smoothY;
-    if (Math.abs(delta) > viewportHeight * 1.5) smoothY = y;
+    if (Math.abs(delta) > viewportHeight * 0.6) smoothY = y; // a big jump snaps; easing is for wheel ticks, not flings
     else {
       // the loop sleeps when idle, so the first frame after a pause has a huge dt; cap it to one or two frames
       smoothY += delta * (1 - Math.exp(-Math.min(dt, 34) / SCROLL_TAU));

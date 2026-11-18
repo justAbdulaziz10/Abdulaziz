@@ -62,6 +62,7 @@ const projectKeywords = {
   rassah: 'packing gemini',
   pitlane: 'f1 formula racing',
   mara: 'health wellness',
+  faqqa: 'truffle desert llama arabic',
   daleelk: 'travel gulf',
 };
 

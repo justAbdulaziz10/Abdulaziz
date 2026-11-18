@@ -128,6 +128,7 @@ html.is-night [data-world="paper"] .scene--tracklist {
 /* label colours: the world of the hovered track */
 .scene--tracklist[data-tone="mara"] { --tl-label: var(--mara); --tl-label-ink: var(--ink); }
 .scene--tracklist[data-tone="echo"] { --tl-label: var(--echo); --tl-label-ink: var(--ink); }
+.scene--tracklist[data-tone="faqqa"] { --tl-label: var(--faqqa); --tl-label-ink: var(--faqqa-ink); }
 .scene--tracklist[data-tone="daleelk"] { --tl-label: var(--daleelk); --tl-label-ink: var(--ink); }
 .scene--tracklist[data-tone="rassah"] { --tl-label: var(--rassah); --tl-label-ink: var(--rassah-ink); }
 .scene--tracklist[data-tone="pitlane"] { --tl-label: var(--kerb-red); --tl-label-ink: var(--kerb-white); }

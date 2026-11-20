@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 7356,
-  "activeDays": 311,
-  "streak": 101,
-  "longestStreak": 101,
+  "total": 7365,
+  "activeDays": 312,
+  "streak": 102,
+  "longestStreak": 102,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-16",
-  "to": "2026-11-19"
+  "to": "2026-11-20"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-20T02:33:27.683Z",
+ "updated": "2026-11-20T11:38:07.484Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -105,11 +105,11 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 393,
+   "activeUsers": 379,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 23,
+   "activeUsers": 21,
    "period": "P28D"
   }
  },
@@ -180,8 +180,8 @@
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1856,
-  "activeDays": 85,
+  "pushes": 1863,
+  "activeDays": 86,
   "first": "2026-08-23"
  },
  "x": {

@@ -1,6 +1,6 @@
 {
  "github": {
-  "total": 7365,
+  "total": 7366,
   "activeDays": 312,
   "streak": 102,
   "longestStreak": 102,
@@ -9,17 +9,17 @@
    "count": 194
   },
   "from": "2025-11-16",
-  "to": "2026-11-20"
+  "to": "2026-11-21"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "Eddington",
-   "year": "2025",
-   "watched": "2026-11-17",
-   "rating": 3.5,
-   "url": "https://letterboxd.com/notabdulaziz/film/eddington/"
+   "title": "tick, tick... BOOM!",
+   "year": "2021",
+   "watched": "2026-11-19",
+   "rating": 5,
+   "url": "https://letterboxd.com/notabdulaziz/film/tick-tick-boom-2021/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-20T11:38:07.484Z",
+ "updated": "2026-11-21T10:59:36.558Z",
  "f1Result": {
   "raceName": "Brazilian Grand Prix",
   "round": 20,
@@ -105,7 +105,7 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 379,
+   "activeUsers": 371,
    "period": "P28D"
   },
   "docmara": {
@@ -180,8 +180,8 @@
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1863,
-  "activeDays": 86,
+  "pushes": 1864,
+  "activeDays": 87,
   "first": "2026-08-23"
  },
  "x": {

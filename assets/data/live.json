@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 7366,
-  "activeDays": 312,
-  "streak": 102,
-  "longestStreak": 102,
+  "total": 7379,
+  "activeDays": 309,
+  "streak": 104,
+  "longestStreak": 104,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
-  "from": "2025-11-16",
-  "to": "2026-11-21"
+  "from": "2025-11-23",
+  "to": "2026-11-22"
  },
  "letterboxd": {
   "films": 1657,
@@ -24,12 +24,12 @@
  },
  "f1": {
   "season": "2026",
-  "round": 21,
-  "raceName": "Las Vegas Grand Prix",
-  "circuit": "Las Vegas Strip Street Circuit",
-  "locality": "Las Vegas",
-  "country": "USA",
-  "start": "2026-11-22T04:00:00Z"
+  "round": 22,
+  "raceName": "Qatar Grand Prix",
+  "circuit": "Lusail International Circuit",
+  "locality": "Lusail",
+  "country": "Qatar",
+  "start": "2026-11-29T16:00:00Z"
  },
  "apps": {
   "echo": {
@@ -49,38 +49,38 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-21T10:59:36.558Z",
+ "updated": "2026-11-22T11:23:14.550Z",
  "f1Result": {
-  "raceName": "Brazilian Grand Prix",
-  "round": 20,
-  "date": "2026-11-08",
-  "circuit": "Autódromo José Carlos Pace",
+  "raceName": "Las Vegas Grand Prix",
+  "round": 21,
+  "date": "2026-11-22",
+  "circuit": "Las Vegas Strip Street Circuit",
   "podium": [
    {
     "pos": 1,
-    "driver": "Lando Norris",
-    "code": "NOR",
-    "team": "McLaren",
-    "time": "1:35:23.504"
-   },
-   {
-    "pos": 2,
     "driver": "Max Verstappen",
     "code": "VER",
     "team": "Red Bull",
-    "time": "+14.602"
+    "time": "1:27:39.624"
+   },
+   {
+    "pos": 2,
+    "driver": "Lando Norris",
+    "code": "NOR",
+    "team": "McLaren",
+    "time": "+0.639"
    },
    {
     "pos": 3,
-    "driver": "Isack Hadjar",
-    "code": "HAD",
-    "team": "Red Bull",
-    "time": "+24.485"
+    "driver": "Oscar Piastri",
+    "code": "PIA",
+    "team": "McLaren",
+    "time": "+1.529"
    }
   ],
   "fastestLap": {
-   "driver": "Andrea Kimi Antonelli",
-   "time": "1:12.689"
+   "driver": "Liam Lawson",
+   "time": "1:35.591"
   }
  },
  "week": {
@@ -105,11 +105,11 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 371,
+   "activeUsers": 341,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 21,
+   "activeUsers": 20,
    "period": "P28D"
   }
  },
@@ -180,8 +180,8 @@
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1864,
-  "activeDays": 87,
+  "pushes": 1903,
+  "activeDays": 88,
   "first": "2026-08-23"
  },
  "x": {

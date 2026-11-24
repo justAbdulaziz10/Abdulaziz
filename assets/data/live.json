@@ -1,25 +1,25 @@
 {
  "github": {
-  "total": 7364,
-  "activeDays": 310,
-  "streak": 105,
-  "longestStreak": 105,
+  "total": 7387,
+  "activeDays": 311,
+  "streak": 106,
+  "longestStreak": 106,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-23",
-  "to": "2026-11-23"
+  "to": "2026-11-24"
  },
  "letterboxd": {
   "films": 1657,
   "thisYear": 75,
   "latest": {
-   "title": "tick, tick... BOOM!",
-   "year": "2021",
-   "watched": "2026-11-19",
+   "title": "The Hunger Games: Sunrise on the Reaping",
+   "year": "2026",
+   "watched": "2026-11-23",
    "rating": 5,
-   "url": "https://letterboxd.com/notabdulaziz/film/tick-tick-boom-2021/"
+   "url": "https://letterboxd.com/notabdulaziz/film/the-hunger-games-sunrise-on-the-reaping/"
   }
  },
  "f1": {
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-23T12:36:02.049Z",
+ "updated": "2026-11-24T13:41:06.862Z",
  "f1Result": {
   "raceName": "Las Vegas Grand Prix",
   "round": 21,
@@ -97,7 +97,7 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 210,
+   "activeUsers": 135,
    "period": "P28D"
   },
   "docmara": {
@@ -172,8 +172,8 @@
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1917,
-  "activeDays": 89,
+  "pushes": 1948,
+  "activeDays": 90,
   "first": "2026-08-23"
  },
  "x": {

@@ -1,6 +1,6 @@
 {
  "github": {
-  "total": 7387,
+  "total": 7392,
   "activeDays": 311,
   "streak": 106,
   "longestStreak": 106,
@@ -9,7 +9,7 @@
    "count": 194
   },
   "from": "2025-11-23",
-  "to": "2026-11-24"
+  "to": "2026-11-25"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-25T01:01:36.552Z",
+ "updated": "2026-11-25T12:53:26.952Z",
  "f1Result": {
   "raceName": "Las Vegas Grand Prix",
   "round": 21,
@@ -84,20 +84,11 @@
   }
  },
  "week": {
-  "items": [
-   {
-    "kind": "push",
-    "repo": "justAbdulaziz10/Abdulaziz",
-    "label": "3 commits to Abdulaziz",
-    "count": 3,
-    "date": "2026-11-18T00:56:04Z",
-    "url": "https://github.com/justAbdulaziz10/Abdulaziz"
-   }
-  ]
+  "items": []
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 135,
+   "activeUsers": 132,
    "period": "P28D"
   },
   "docmara": {
@@ -172,7 +163,7 @@
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1948,
+  "pushes": 1953,
   "activeDays": 90,
   "first": "2026-08-23"
  },

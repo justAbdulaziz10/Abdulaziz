@@ -1,15 +1,15 @@
 {
  "github": {
-  "total": 7392,
-  "activeDays": 311,
-  "streak": 106,
+  "total": 7426,
+  "activeDays": 312,
+  "streak": 1,
   "longestStreak": 106,
   "busiest": {
    "date": "2026-09-10",
    "count": 194
   },
   "from": "2025-11-23",
-  "to": "2026-11-25"
+  "to": "2026-11-26"
  },
  "letterboxd": {
   "films": 1657,
@@ -49,7 +49,7 @@
    "url": "https://apps.apple.com/sa/app/docmara-scan-compress-pdf/id6780952627?uo=4"
   }
  },
- "updated": "2026-11-25T12:53:26.952Z",
+ "updated": "2026-11-26T12:31:32.533Z",
  "f1Result": {
   "raceName": "Las Vegas Grand Prix",
   "round": 21,
@@ -88,11 +88,11 @@
  },
  "revenuecat": {
   "echo": {
-   "activeUsers": 132,
+   "activeUsers": 129,
    "period": "P28D"
   },
   "docmara": {
-   "activeUsers": 20,
+   "activeUsers": 19,
    "period": "P28D"
   }
  },
@@ -159,12 +159,12 @@
   ]
  },
  "work": {
-  "githubPrs": 1233,
+  "githubPrs": 1235,
   "gitlabMrs": 49
  },
  "gitlab": {
-  "pushes": 1953,
-  "activeDays": 90,
+  "pushes": 2050,
+  "activeDays": 91,
   "first": "2026-08-23"
  },
  "x": {
